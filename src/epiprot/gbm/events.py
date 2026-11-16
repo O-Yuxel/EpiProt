@@ -8,7 +8,7 @@ refractory period follows (no new alarm for `refractory` windows).
 - A false alarm is an alarm fired in a clean interictal window (y_clean == 0).
 - FA/h = false alarms per hour of clean interictal recording.
 - Chance sensitivity: a random Poisson alarm generator with the same FA/h hits a
-  25-min pre-ictal window with probability 1 - exp(-FA/h * 25/60).
+  pre-ictal window of SOP minutes with probability 1 - exp(-FA/h * SOP/60).
 """
 from __future__ import annotations
 
@@ -47,7 +47,7 @@ def alarms(score: np.ndarray, thr: float, refractory: int) -> np.ndarray:
 
 
 def evaluate(series: list[PatientSeries], thr: float, k: int,
-             refractory: int = 60) -> dict:
+             refractory: int = 60, sop_min: float = 25.0) -> dict:
     n_ev = hit = fa = 0
     inter_windows = 0
     per_patient = {}
@@ -69,24 +69,25 @@ def evaluate(series: list[PatientSeries], thr: float, k: int,
         "thr": float(thr), "k": int(k), "events": n_ev, "predicted": hit,
         "sensitivity": sens, "false_alarms": fa, "interictal_hours": hours,
         "fa_per_hour": fah, "fa_per_day": fah * 24,
-        "chance_sensitivity": float(1 - np.exp(-fah * 25 / 60)),
+        "chance_sensitivity": float(1 - np.exp(-fah * sop_min / 60)),
         "per_patient": per_patient,
     }
 
 
 def pick_operating_point(series: list[PatientSeries], max_fah: float,
-                         ks=(1, 4, 8, 12), n_thr: int = 60) -> dict:
+                         ks=(1, 4, 8, 12), n_thr: int = 60, refractory: int = 60,
+                         sop_min: float = 25.0) -> dict:
     """On validation series: maximise sensitivity subject to FA/h <= max_fah."""
     allp = np.concatenate([s.prob for s in series])
     thrs = np.unique(np.quantile(allp, np.linspace(0.80, 0.9999, n_thr)))
     best = None
     for k in ks:
         for t in thrs:
-            r = evaluate(series, t, k)
+            r = evaluate(series, t, k, refractory, sop_min)
             if r["fa_per_hour"] <= max_fah:
                 key = (r["sensitivity"], -r["fa_per_hour"])
                 if best is None or key > best[0]:
                     best = (key, r)
     if best is None:  # cannot meet the FA budget: take the strictest threshold
-        return evaluate(series, float(thrs[-1]), ks[-1])
+        return evaluate(series, float(thrs[-1]), ks[-1], refractory, sop_min)
     return best[1]
