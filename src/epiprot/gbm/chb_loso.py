@@ -82,7 +82,24 @@ def seg_series(sub, prob, y_eval, events, a, b):
     return PatientSeries(sub, prob, y_eval[a:b], ev)
 
 
-def run_patient(path: Path, lead, sop, max_fah, inter_gap_h, margin_h, rounds, ctx="full"):
+def fold_groups(k: int, n_groups: int) -> list[list[int]]:
+    return [list(g) for g in np.array_split(np.arange(k), min(k, n_groups)) if len(g)]
+
+
+def ranges_of(segs, idx):
+    """Merge the segments of event indices `idx` into contiguous (a, b) ranges."""
+    out = []
+    for i in sorted(idx):
+        a, b = segs[i]
+        if out and out[-1][1] == a:
+            out[-1] = (out[-1][0], b)
+        else:
+            out.append((a, b))
+    return out
+
+
+def run_patient(path: Path, lead, sop, max_fah, inter_gap_h, margin_h, rounds, ctx="full",
+                max_outer=10, max_inner=4, min_events=3):
     z = np.load(path)
     sub = path.stem
     X = context(z["F"], ctx)
@@ -105,51 +122,63 @@ def run_patient(path: Path, lead, sop, max_fah, inter_gap_h, margin_h, rounds, c
         lo, hi = max(0, on - gap), min(n, end + gap)
         blk = y_tr[lo:hi]
         blk[blk == 0] = -1.0
-    if len(events) < 3:
+    if len(events) < min_events:
         return {"sub": sub, "lead_events": len(events), "skipped": True}
     segs = segments(events, n)
     margin = int(margin_h * 60 * WIN_PER_MIN)
     refr = int(sop * WIN_PER_MIN)
     oof = np.zeros(n, np.float32)
     folds = []
-    for e in range(len(events)):
-        # nested: choose threshold/smoothing on the other seizures only
+    outer = fold_groups(len(events), max_outer)
+    for gi, g in enumerate(outer):
+        rest = [i for i in range(len(events)) if i not in g]
         inner = []
-        for j in range(len(events)):
-            if j == e:
-                continue
-            bi = fit(X, y_tr, train_mask(n, segs, [e, j], margin), rounds)
+        for ig in fold_groups(len(rest), max_inner):
+            hold = [rest[i] for i in ig]
+            bi = fit(X, y_tr, train_mask(n, segs, g + hold, margin), rounds)
             if bi is None:
                 continue
-            a, b = segs[j]
-            inner.append(seg_series(sub, bi.predict(X[a:b]), y_eval, events, a, b))
+            for a, b in ranges_of(segs, hold):
+                inner.append(seg_series(sub, bi.predict(X[a:b]), y_eval, events, a, b))
+        bm = fit(X, y_tr, train_mask(n, segs, g, margin), rounds)
+        if not inner or bm is None:
+            continue
         op = pick_operating_point(inner, max_fah, ks=KS, refractory=refr, sop_min=sop)
-        bm = fit(X, y_tr, train_mask(n, segs, [e], margin), rounds)
-        a, b = segs[e]
-        oof[a:b] = bm.predict(X[a:b])
-        r = evaluate([seg_series(sub, oof[a:b], y_eval, events, a, b)], op["thr"], op["k"],
-                     refr, sop)
-        folds.append({"seizure": e, "thr": op["thr"], "k": op["k"],
+        series = []
+        for a, b in ranges_of(segs, g):
+            oof[a:b] = bm.predict(X[a:b])
+            series.append(seg_series(sub, oof[a:b], y_eval, events, a, b))
+        r = evaluate(series, op["thr"], op["k"], refr, sop)
+        folds.append({"fold": gi, "events": r["events"], "thr": op["thr"], "k": op["k"],
                       "inner_sens": op["sensitivity"], "inner_fah": op["fa_per_hour"],
                       "hit": r["predicted"], "fa": r["false_alarms"],
                       "inter_h": r["interictal_hours"]})
+    nev = sum(f["events"] for f in folds)
     hit = sum(f["hit"] for f in folds)
     fa = sum(f["fa"] for f in folds)
     hours = sum(f["inter_h"] for f in folds)
+    if not nev:
+        return {"sub": sub, "lead_events": len(events), "skipped": True}
     fah = fa / hours if hours else float("nan")
     m = y_eval >= 0
     auc = float(roc_auc_score(y_eval[m], oof[m])) if len(np.unique(y_eval[m])) == 2 else None
-    return {"sub": sub, "seizures": len(seizures), "lead_events": len(events),
-            "predicted": hit, "sensitivity": hit / len(events), "false_alarms": fa,
+    return {"sub": sub, "seizures": len(seizures), "lead_events": nev,
+            "predicted": hit, "sensitivity": hit / nev, "false_alarms": fa,
             "interictal_hours": hours, "fa_per_hour": fah,
             "chance_sensitivity": float(1 - np.exp(-fah * sop / 60)),
             "window_auc": auc, "folds": folds}
+
+
+def _job(args):
+    f, kw = args
+    return run_patient(f, **kw)
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--feat-dir", type=Path, required=True)
     ap.add_argument("--out-dir", type=Path, required=True)
+    ap.add_argument("--pattern", default="chb*.npz")
     ap.add_argument("--lead-min", type=float, default=30.0)
     ap.add_argument("--sop-min", type=float, default=30.0)
     ap.add_argument("--max-fah", type=float, default=0.15)
@@ -157,15 +186,30 @@ def main(argv=None):
     ap.add_argument("--margin-h", type=float, default=1.0)
     ap.add_argument("--rounds", type=int, default=300)
     ap.add_argument("--ctx", choices=["full", "short", "base"], default="full")
+    ap.add_argument("--min-events", type=int, default=3)
+    ap.add_argument("--max-outer", type=int, default=10)
+    ap.add_argument("--max-inner", type=int, default=4)
+    ap.add_argument("--workers", type=int, default=1)
+    ap.add_argument("--threads", type=int, default=10)
     a = ap.parse_args(argv)
     a.out_dir.mkdir(parents=True, exist_ok=True)
+    PARAMS["num_threads"] = a.threads
+    kw = dict(lead=a.lead_min, sop=a.sop_min, max_fah=a.max_fah, inter_gap_h=a.inter_gap_h,
+              margin_h=a.margin_h, rounds=a.rounds, ctx=a.ctx, max_outer=a.max_outer,
+              max_inner=a.max_inner, min_events=a.min_events)
+    files = sorted(a.feat_dir.glob(a.pattern))
     res = []
-    for f in sorted(a.feat_dir.glob("chb*.npz")):
-        r = run_patient(f, a.lead_min, a.sop_min, a.max_fah, a.inter_gap_h, a.margin_h,
-                        a.rounds, a.ctx)
+    if a.workers > 1:
+        from concurrent.futures import ProcessPoolExecutor
+        ex = ProcessPoolExecutor(a.workers, initializer=PARAMS.__setitem__,
+                                 initargs=("num_threads", a.threads))
+        it = ex.map(_job, [(f, kw) for f in files])
+    else:
+        it = (run_patient(f, **kw) for f in files)
+    for r in it:
         res.append(r)
         if r.get("skipped"):
-            print(f"{r['sub']}: only {r['lead_events']} lead seizures -> skipped", flush=True)
+            print(f"{r['sub']}: {r['lead_events']} lead seizures -> skipped", flush=True)
         else:
             print(f"{r['sub']}: {r['predicted']}/{r['lead_events']} predicted "
                   f"(sens {r['sensitivity']:.0%}), FA/h {r['fa_per_hour']:.3f}, "
@@ -176,10 +220,15 @@ def main(argv=None):
     fa = sum(r["false_alarms"] for r in ok)
     hrs = sum(r["interictal_hours"] for r in ok)
     fah = fa / hrs
+    sens = [r["sensitivity"] for r in ok]
     summ = {"lead_min": a.lead_min, "sop_min": a.sop_min, "max_fah": a.max_fah,
-            "patients": len(ok), "events": ev, "predicted": hit, "sensitivity": hit / ev,
+            "ctx": a.ctx, "patients": len(ok), "skipped": len(res) - len(ok),
+            "events": ev, "predicted": hit, "sensitivity": hit / ev,
+            "median_patient_sensitivity": float(np.median(sens)),
             "fa_per_hour": fah, "chance_sensitivity": float(1 - np.exp(-fah * a.sop_min / 60)),
-            "patients_sens_ge_80": sum(r["sensitivity"] >= 0.8 for r in ok)}
+            "patients_sens_ge_80": int(sum(s >= 0.8 for s in sens)),
+            "patients_above_chance": int(sum(r["sensitivity"] > r["chance_sensitivity"]
+                                             for r in ok))}
     print(json.dumps(summ, indent=2))
     (a.out_dir / "results.json").write_text(json.dumps({"summary": summ, "patients": res},
                                                        indent=2))
