@@ -1,0 +1,1 @@
+"""Veri katmanı: keşif, anotasyon, EDF okuma, denetim."""

@@ -1,0 +1,1 @@
+"""CNN tabanlı nöbet öncesi tahmin modülü."""

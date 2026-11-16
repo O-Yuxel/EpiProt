@@ -1,0 +1,36 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ipynb_checkpoints/
+*.egg-info/
+
+# Sanal ortamlar
+.venv/
+venv/
+env/
+.venv-linux/
+
+# Proje çıktıları (BÜYÜK DOSYALAR — Dockerfile'a girmesin)
+epiprot_results/
+cnn_tensors/
+*.npz
+*.npy
+*.joblib
+*.pt
+
+# Git
+.git/
+.gitignore
+
+# Testler (isteğe bağlı, ama dev build'de gerek yok)
+# tests/
+
+# IDE
+.vscode/
+.idea/
+
+# Diğer
+*.log
+*.zip
