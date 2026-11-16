@@ -79,7 +79,8 @@ def seizure_history(y_orig: np.ndarray, seizures=None) -> np.ndarray:
 
 def load_all(feat_dir: Path, postictal_min: float, pre_buffer_min: float,
              lead_min: float = 5.0, sop_min: float = 25.0, tsls: bool = False,
-             raw_dir: Path | None = None, hrv_dir: Path | None = None):
+             raw_dir: Path | None = None, hrv_dir: Path | None = None,
+             extra_oof: Path | None = None):
     """Load features, rebuild context and labels. With `raw_dir`, windows are put in true
     chronological run order and seizures come from the raw annotations (see timeline.py)."""
     data = {}
@@ -108,6 +109,12 @@ def load_all(feat_dir: Path, postictal_min: float, pre_buffer_min: float,
                 names = names + list(hz["names"]) + ["hrv_missing"]
             else:
                 print(f"WARNING: {f.stem}: HRV length {len(H)} != {len(F)}, skipped")
+        if extra_oof is not None:
+            with np.load(extra_oof) as ez:
+                pr = ez[f.stem].astype(np.float32)[:, None]
+            assert len(pr) == len(F), f"{f.stem}: oof length mismatch"
+            F = np.hstack([F, pr])
+            names = names + ["cnn_prob"]
         X, cols = build_context(F, names)
         if tsls:
             X = np.hstack([X, seizure_history(y, seizures)])
@@ -184,6 +191,8 @@ def main(argv=None) -> int:
     ap.add_argument("--only-cols", default=None,
                     help="regex: keep only matching feature columns (ablation)")
     ap.add_argument("--hrv-dir", type=Path, default=None, help="HRV features (needs --raw-dir)")
+    ap.add_argument("--extra-oof", type=Path, default=None,
+                    help="npz of out-of-fold CNN probabilities per patient (same folds)")
     ap.add_argument("--raw-dir", type=Path, default=None,
                     help="SeizeIT2 BIDS root: fixes run order and uses raw seizure times")
     ap.add_argument("--no-final", action="store_true", help="skip the all-patients final model")
@@ -193,7 +202,8 @@ def main(argv=None) -> int:
     log = lambda m: print(f"[{time.time() - t0:6.0f}s] {m}", flush=True)  # noqa: E731
 
     data, cols = load_all(args.feat_dir, args.postictal_min, args.pre_buffer_min,
-                          args.lead_min, args.sop_min, args.tsls, args.raw_dir, args.hrv_dir)
+                          args.lead_min, args.sop_min, args.tsls, args.raw_dir, args.hrv_dir,
+                          args.extra_oof)
     if args.only_cols:
         import re
         keep = [i for i, c in enumerate(cols) if re.search(args.only_cols, c)]
