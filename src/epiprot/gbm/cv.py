@@ -225,6 +225,7 @@ def main(argv=None) -> int:
 
     test_series, oof = [], {}
     fold_ops = []
+    results_train_auc = []
     importance = np.zeros(len(cols))
     for fi, test_subs in enumerate(folds):
         train_subs = [s for s in subs if s not in set(test_subs)]
@@ -243,8 +244,14 @@ def main(argv=None) -> int:
                          "ops": ops, "series": ts})
         Xte, yte = labeled(data, test_subs)
         wm = window_metrics(yte, booster.predict(Xte, num_iteration=booster.best_iteration))
-        log(f"fold {fi + 1}/{args.folds}: iters={booster.best_iteration} "
-            f"AUC={wm['auc']:.3f} PR-AUC={wm['pr_auc']:.3f} P@R0.9={wm['precision@recall0.9']:.3f}")
+        # memorisation check: AUC on (a sample of) the windows the model was trained on
+        fit_subs = [s for s in train_subs if s not in set(val_subs)]
+        Xf, yf = make_train_set(data, fit_subs, 1000, np.random.default_rng(7))
+        train_auc = float(roc_auc_score(yf, booster.predict(Xf, num_iteration=booster.best_iteration)))
+        del Xf, yf
+        log(f"fold {fi + 1}/{args.folds}: iters={booster.best_iteration} TRAIN AUC={train_auc:.3f} "
+            f"TEST AUC={wm['auc']:.3f} PR-AUC={wm['pr_auc']:.3f} P@R0.9={wm['precision@recall0.9']:.3f}")
+        results_train_auc.append(train_auc)
 
     # ---- pooled out-of-fold results over all patients ----
     y_all = np.concatenate([data[s]["y"] for s in subs])
@@ -252,7 +259,8 @@ def main(argv=None) -> int:
     m = y_all >= 0
     results = {"config": {k: str(v) for k, v in vars(args).items()},
                "n_patients": len(subs), "n_features": len(cols), "lead_seizures": n_ev,
-               "window_clean_labels": window_metrics(y_all[m], p_all[m])}
+               "window_clean_labels": window_metrics(y_all[m], p_all[m]),
+               "train_auc_per_fold": results_train_auc}
     yo = np.concatenate([data[s]["y_orig"] for s in subs])
     mo = yo >= 0
     results["window_original_labels"] = window_metrics(yo[mo], p_all[mo])
