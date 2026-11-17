@@ -50,6 +50,7 @@ PRE, POST, AFTER_END = 1, 10, 2   # windows
 FA_BUDGETS = (0.5, 1.0, 2.0, 5.0)  # false alarms per 24 h
 WIN_H = 30.0 / 3600.0
 LAST_FLAGS: list = []
+LAST_FIRST: list = []  # first alarm window per seizure (-1 = missed)
 
 
 def prev_mean(F, w):
@@ -157,14 +158,16 @@ def score_events(p, y, seizures, thr, k, refractory=10):
             nxt = i + refractory
     alarms = np.asarray(alarms, np.int64)
     hit, lat = 0, []
-    flags = []
+    flags, first = [], []
     for on, end in seizures:
         a = alarms[(alarms >= on) & (alarms < end + AFTER_END)]
         flags.append(bool(len(a)))
+        first.append(int(a[0]) if len(a) else -1)
         if len(a):
             hit += 1
             lat.append((a[0] - on) * 30.0)
     LAST_FLAGS[:] = flags
+    LAST_FIRST[:] = first
     fa = int((y[alarms] == 0).sum()) if len(alarms) else 0
     return hit, len(seizures), fa, float((y == 0).sum() * WIN_H), lat
 
@@ -216,7 +219,7 @@ def main(argv=None):
     types = {}
     if a.raw_dir is not None:
         for s in subs:
-            types[s] = seizure_types(a.raw_dir, s, len(data[s]["y"]))
+            types[s] = seizure_types(a.raw_dir, s, len(data[s]["y"]), detail=True)
             assert len(types[s]) == len(data[s]["seizures"]), s
     log(f"{len(subs)} patients, {nsz} seizures, "
         f"{sum(int((d['y'] == 1).sum()) for d in data.values())} seizure windows")
@@ -257,14 +260,20 @@ def main(argv=None):
                 agg["fa_per_day"] = agg["false_alarms"] / agg["hours"] * 24
                 agg["median_latency_s"] = float(np.median(lats)) if lats else None
                 if a.raw_dir is not None:  # sensitivity per seizure type
-                    by = {}
+                    by, rows = {}, []
                     for test, ops in fold_ops:
                         for s in test:
                             score_events(oof[s], data[s]["y"], data[s]["seizures"], *ops[b])
-                            for t, h in zip(types[s], LAST_FLAGS):
+                            for (t, on_s, dur), h, fa_w in zip(types[s], LAST_FLAGS, LAST_FIRST):
                                 g = by.setdefault(type_group(t), [0, 0])
                                 g[0] += h
                                 g[1] += 1
+                                # alarm is available at the END of its 30 s window
+                                lat = (fa_w + 1) * 30.0 - on_s if h else None
+                                rows.append({"sub": s, "type": t, "group": type_group(t),
+                                             "duration_s": dur, "detected": bool(h),
+                                             "latency_s": lat})
+                    agg["per_seizure"] = rows
                     agg["by_type"] = {g: {"detected": v[0], "seizures": v[1],
                                           "sensitivity": v[0] / v[1]} for g, v in by.items()}
                 res["event"][str(b)] = agg
@@ -284,7 +293,7 @@ def main(argv=None):
 
 
 
-def seizure_types(raw_dir, sub, n):
+def seizure_types(raw_dir, sub, n, detail=False):
     """Seizure type per seizure, in the same order as timeline.build_timeline."""
     import csv
     from .timeline import WINDOW_S, _run_num
@@ -299,10 +308,13 @@ def seizure_types(raw_dir, sub, n):
                 on = pos + int(float(r["onset"]) // WINDOW_S)
                 end = pos + int(np.ceil((float(r["onset"]) + float(r["duration"])) / WINDOW_S))
                 if on < pos + nw:
-                    out.append(((on, min(max(end, on + 1), pos + nw)), r["eventType"]))
+                    out.append(((on, min(max(end, on + 1), pos + nw)), r["eventType"],
+                                pos * WINDOW_S + float(r["onset"]), float(r["duration"])))
         pos += nw
     out.sort(key=lambda x: x[0])
-    return [t for _, t in out]
+    if detail:
+        return [(t, on_s, d) for _, t, on_s, d in out]
+    return [x[1] for x in out]
 
 
 def type_group(t):
