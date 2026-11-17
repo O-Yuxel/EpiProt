@@ -49,12 +49,22 @@ def main(argv=None):
     ap.add_argument("--oof5", type=Path, default=Path("epiprot_results/gbm/tc_detect2/oof_eeg+ecg.npz"))
     ap.add_argument("--oof30", type=Path, default=Path("epiprot_results/gbm/detect_types/oof_both_lgbm.npz"))
     ap.add_argument("--budget", type=float, default=0.25)
+    ap.add_argument("--fallback", type=Path, default=None)
     ap.add_argument("--out", type=Path, default=Path("epiprot_results/gbm/tc_errors.json"))
     a = ap.parse_args(argv)
     data = load_labels(a.data_dir)
     subs = sorted(data)
     z5, z30 = np.load(a.oof5), np.load(a.oof30)
     p5 = {s: z5[s].astype(np.float32) for s in subs}
+    fb, nomov = {}, {}
+    if a.fallback is not None:
+        zf = np.load(a.fallback)
+        for s in subs:
+            fb[s] = zf[s].astype(np.float32)
+            with np.load(a.data_dir / f"{s}.npz") as zz:
+                nm = [str(x) for x in zz["names"]]
+                nomov[s] = (np.isnan(zz["F"][:, nm.index("head_acc_std")])
+                            & np.isnan(zz["F"][:, nm.index("body_acc_std")]))
     p30 = {}
     for s in subs:
         q = map30to5(z30[s].astype(np.float32), run_lengths(a.raw_dir, s))
@@ -71,6 +81,9 @@ def main(argv=None):
         r5 = np.sort(np.concatenate([p5[s][data[s]["y"] == 0] for s in tr]))
         r30 = np.sort(np.concatenate([p30[s][data[s]["y"] == 0] for s in tr]))
         q5 = {s: qscale(p5[s], r5).astype(np.float32) for s in subs}
+        if fb:
+            rf = np.sort(np.concatenate([fb[s][data[s]["y"] == 0] for s in tr]))
+            q5 = {s: np.where(nomov[s], qscale(fb[s], rf), q5[s]).astype(np.float32) for s in subs}
         q30 = {s: qscale(p30[s], r30).astype(np.float32) for s in subs}
         sc = {s: np.maximum(q5[s], q30[s]) for s in subs}
         thr, k = T.choose(sc, data, tr, a.budget)
@@ -127,6 +140,11 @@ def main(argv=None):
 
     # ---- report ----
     det = [r for r in sz_rows if r["detected"]]
+    lat_all = np.array([r["latency_s"] for r in sz_rows if r["detected"]])
+    hours = sum(float((data[s]["y"] == 0).sum() * T.W / 3600) for s in subs)
+    print(f"latency median {np.median(lat_all):.1f}s IQR {np.percentile(lat_all,25):.1f}-{np.percentile(lat_all,75):.1f} min {lat_all.min():.1f} max {lat_all.max():.1f}; "
+          f"<=30s {(lat_all<=30).sum()} <=60s {(lat_all<=60).sum()}; before end {sum(r['latency_s'] < r['dur_s'] for r in sz_rows if r['detected'])}; "
+          f"non-seizure hours {hours:.0f}; seizure dur median {np.median([r['dur_s'] for r in sz_rows]):.0f}s")
     miss = [r for r in sz_rows if not r["detected"]]
     print(f"\nTONIC-CLONIC: detected {len(det)}/{len(sz_rows)}  (budget {a.budget}/day)")
     for v in ("awake", "asleep", "un"):
