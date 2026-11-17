@@ -42,7 +42,8 @@ REFRACTORY = 60
 TC_W = 5.0
 BUDGETS = (0.25, 0.5, 1.0, 2.0)                # false alarms per day
 GROUPS = {"eeg+ecg": r"^(eeg|ecg)", "eeg+ecg+emg": r"^(eeg|ecg|emg)",
-          "eeg+ecg+mov": r"^(eeg|ecg|head|body)", "all": r"."}
+          "eeg+ecg+mov": r"^(eeg|ecg|head|body)", "all": r".",
+          "ecg+mov": r"^(ecg|head|body)", "mov": r"^(head|body)", "ecg": r"^ecg"}
 PARAMS = {"objective": "binary", "learning_rate": 0.05, "num_leaves": 31,
           "min_child_samples": 30, "feature_fraction": 0.7, "bagging_fraction": 0.8,
           "bagging_freq": 1, "lambda_l2": 1.0, "verbose": -1, "seed": 0}
