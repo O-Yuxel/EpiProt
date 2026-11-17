@@ -95,11 +95,23 @@ def main(argv=None):
     ap.add_argument("--oof30", type=Path, default=Path("epiprot_results/gbm/detect_types/oof_both_lgbm.npz"))
     ap.add_argument("--out", type=Path, default=Path("epiprot_results/gbm/tc_ensemble.json"))
     ap.add_argument("--rules", nargs="+", default=["5s only", "30s only", "mean", "max"])
+    ap.add_argument("--fallback", type=Path, default=None,
+                    help="5 s OOF of a model WITHOUT movement, used where movement data is missing")
     a = ap.parse_args(argv)
     data = load_labels(a.data_dir)
     subs = sorted(data)
     z5, z30 = np.load(a.oof5), np.load(a.oof30)
     p5 = {s: z5[s].astype(np.float32) for s in subs}
+    fb, nomov = {}, {}
+    if a.fallback is not None:
+        zf = np.load(a.fallback)
+        for s in subs:
+            fb[s] = zf[s].astype(np.float32)
+            with np.load(a.data_dir / f"{s}.npz") as zz:
+                nm = [str(x) for x in zz["names"]]
+                F = zz["F"]
+                nomov[s] = (np.isnan(F[:, nm.index("head_acc_std")])
+                            & np.isnan(F[:, nm.index("body_acc_std")]))
     p30 = {}
     for s in subs:
         q = map30to5(z30[s].astype(np.float32), run_lengths(a.raw_dir, s))
@@ -115,10 +127,13 @@ def main(argv=None):
         for test in folds:
             tr = [s for s in subs if s not in set(test)]
             r5 = np.sort(np.concatenate([p5[s][data[s]["y"] == 0] for s in tr]))
+            rf = (np.sort(np.concatenate([fb[s][data[s]["y"] == 0] for s in tr])) if fb else None)
             r30 = np.sort(np.concatenate([p30[s][data[s]["y"] == 0] for s in tr]))
             sc = {}
             for s in subs:
                 a5, a30 = qscale(p5[s], r5), qscale(p30[s], r30)
+                if fb:  # sensor-availability fallback
+                    a5 = np.where(nomov[s], qscale(fb[s], rf), a5)
                 sc[s] = {"5s only": a5, "30s only": a30, "mean": (a5 + a30) / 2,
                          "max": np.maximum(a5, a30)}[rule].astype(np.float32)
             for b in BUD:
