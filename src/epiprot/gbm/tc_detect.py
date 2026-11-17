@@ -106,21 +106,55 @@ def load(data_dir):
     return data, cols
 
 
-def train(data, subs, colidx, rng, neg_per=5000, rounds=400, threads=10):
+OPTS = {"hard_neg": 0, "drop_ecg": 0.0, "ecg_local": np.array([], int)}
+
+
+def _fit(X, y, w, rounds, threads):
+    npos = max(1, int(y.sum()))
+    p = PARAMS | {"scale_pos_weight": (len(y) - npos) / npos, "num_threads": threads}
+    return lgb.train(p, lgb.Dataset(X, y, weight=w), rounds)
+
+
+def _assemble(data, subs, colidx, picks):
     Xs, ys, ws = [], [], []
+    for s in subs:
+        idx = picks[s]
+        Xs.append(data[s]["X"][idx][:, colidx].astype(np.float32))
+        ys.append(data[s]["ytr"][idx])
+        ws.append(data[s]["w"][idx])
+    return np.vstack(Xs), np.concatenate(ys), np.concatenate(ws)
+
+
+def train(data, subs, colidx, rng, neg_per=5000, rounds=400, threads=10):
+    picks = {}
     for s in subs:
         d = data[s]
         pos, neg = np.flatnonzero(d["ytr"] == 1), np.flatnonzero(d["ytr"] == 0)
         if len(neg) > neg_per:
             neg = rng.choice(neg, neg_per, replace=False)
-        idx = np.r_[pos, neg]
-        Xs.append(d["X"][idx][:, colidx].astype(np.float32))
-        ys.append(d["ytr"][idx])
-        ws.append(d["w"][idx])
-    X, y, w = np.vstack(Xs), np.concatenate(ys), np.concatenate(ws)
-    npos = max(1, int(y.sum()))
-    p = PARAMS | {"scale_pos_weight": (len(y) - npos) / npos, "num_threads": threads}
-    return lgb.train(p, lgb.Dataset(X, y, weight=w), rounds)
+        picks[s] = np.r_[pos, neg]
+    X, y, w = _assemble(data, subs, colidx, picks)
+    if OPTS["hard_neg"]:
+        # hard-negative mining: add the normal windows the first model finds most
+        # seizure-like (training patients only)
+        b0 = _fit(X, y, w, rounds // 2, threads)
+        for s in subs:
+            d = data[s]
+            neg = np.flatnonzero(d["ytr"] == 0)
+            if not len(neg):
+                continue
+            sc = np.concatenate([b0.predict(d["X"][neg[i:i + 50000]][:, colidx].astype(np.float32))
+                                 for i in range(0, len(neg), 50000)])
+            hard = neg[np.argsort(sc)[-OPTS["hard_neg"]:]]
+            picks[s] = np.unique(np.r_[picks[s], hard])
+        X, y, w = _assemble(data, subs, colidx, picks)
+    if OPTS["drop_ecg"] > 0 and len(OPTS["ecg_local"]):
+        # sensor-dropout augmentation: copies of windows with the ECG missing
+        m = (y == 1) | (rng.random(len(y)) < OPTS["drop_ecg"])
+        Xa = X[m].copy()
+        Xa[:, OPTS["ecg_local"]] = np.nan
+        X, y, w = np.vstack([X, Xa]), np.r_[y, y[m]], np.r_[w, w[m]]
+    return _fit(X, y, w, rounds, threads)
 
 
 def predict(b, data, subs, colidx):
@@ -190,6 +224,10 @@ def main(argv=None):
     ap.add_argument("--folds", type=int, default=5)
     ap.add_argument("--inner", type=int, default=3)
     ap.add_argument("--threads", type=int, default=10)
+    ap.add_argument("--hard-neg", type=int, default=0,
+                    help="add the N most seizure-like normal windows per training patient")
+    ap.add_argument("--drop-ecg", type=float, default=0.0,
+                    help="augment: copies of positives (+ this share of negatives) without ECG")
     a = ap.parse_args(argv)
     a.out_dir.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
@@ -206,6 +244,9 @@ def main(argv=None):
     results = {}
     for g in a.groups:
         colidx = np.array([i for i, c in enumerate(cols) if re.search(GROUPS[g], c)])
+        OPTS["hard_neg"], OPTS["drop_ecg"] = a.hard_neg, a.drop_ecg
+        OPTS["ecg_local"] = np.array([j for j, i in enumerate(colidx)
+                                      if cols[i].startswith("ecg")], int)
         oof, ops_by_fold = {}, []
         for fi, test in enumerate(folds):
             rng = np.random.default_rng(100 + fi)
