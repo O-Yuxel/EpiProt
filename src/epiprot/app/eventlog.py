@@ -26,8 +26,9 @@ CREATE TABLE IF NOT EXISTS events (
     alarm_s               REAL,               -- when the device raised the alarm
     duration_s            REAL,               -- estimated by the device or entered by hand
     cancelled_with_pin    INTEGER DEFAULT 0,
-    caregiver_notified_s  REAL,
-    emergency_s           REAL,               -- seizure > 5 min -> emergency message
+    caregiver_notified_s  REAL,               -- seizure alert + location (sent at the alarm)
+    false_alarm_sent_s    REAL,               -- follow-up "false alarm" message after a PIN
+    emergency_s          REAL,               -- seizure > 5 min -> emergency message
     recovery_response_s   REAL,               -- first correct PIN after the seizure
     recovery_escalated    INTEGER DEFAULT 0,
     confirmed             TEXT,               -- yes | no | unsure
@@ -67,6 +68,7 @@ class Event:
     duration_s: float | None = None
     cancelled_with_pin: bool = False
     caregiver_notified_s: float | None = None
+    false_alarm_sent_s: float | None = None
     emergency_s: float | None = None
     recovery_response_s: float | None = None
     recovery_escalated: bool = False

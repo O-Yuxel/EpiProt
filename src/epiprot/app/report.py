@@ -151,7 +151,9 @@ def build(log: EventLog, patient: str, start_clock: dt.datetime, monitored_h: fl
         ["Seizures longer than 5 min (emergency)", str(sum(e["emergency_s"] is not None for e in sz))],
         ["Time until the patient answered after a seizure (median)", _fmt_dur(np.median(resp)) if resp else "-"],
         ["Caregiver alerted again (no answer 15 min)", str(sum(e["recovery_escalated"] for e in sz))],
-        ["False alarms", f"{len(fa)} &nbsp;({pin} cancelled by the patient with PIN, {len(fa) - pin} checked by the caregiver)"],
+        ["Caregiver alerts (sent at the moment of the alarm)", str(sum(e["caregiver_notified_s"] is not None for e in evs))],
+        ["False alarms", f"{len(fa)} &nbsp;({pin} cancelled by the patient with PIN and a \"false alarm\" message sent "
+                         f"to the caregiver, {len(fa) - pin} checked by the caregiver)"],
         ["Other (non-convulsive) seizures that raised an alarm", str(len(other))],
     ]
     story.append(_table(summary, [7 * cm, 9.8 * cm]))
@@ -191,7 +193,7 @@ def build(log: EventLog, patient: str, start_clock: dt.datetime, monitored_h: fl
         hr = (f"{e['hr_before']:.0f} → {e['hr_peak']:.0f}" if e["hr_before"] and e["hr_peak"] else "-")
         rows.append([i, f"{_clock(start_clock, e['onset_s']):%d.%m %H:%M}", kind, e["source"],
                      _fmt_dur(e["duration_s"]) if e["kind"] == "seizure" else "-",
-                     "PIN cancel" if e["cancelled_with_pin"] else ("notified" if e["caregiver_notified_s"] else "-"),
+                     "sent + PIN" if e["cancelled_with_pin"] else ("sent" if e["caregiver_notified_s"] else "-"),
                      _fmt_dur(e["recovery_response_s"]), e["vigilance"] or "-", hr,
                      f"{e['confirmed'] or '-'} ({e['confirmed_by'] or '-'})"])
     story.append(_table(rows, [0.6 * cm, 2.0 * cm, 1.9 * cm, 1.3 * cm, 1.8 * cm, 1.7 * cm, 1.8 * cm, 1.3 * cm, 1.9 * cm, 2.5 * cm]))

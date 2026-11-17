@@ -1,11 +1,13 @@
 """Alarm and recovery-monitoring flow (Mode A), as it runs on the phone + watch.
 
 On every device alarm:
-  1. Watch vibrates: "Seizure detected. If you are fine, enter your PIN." (30 s)
+  1. At the moment of the alarm the caregiver immediately gets a seizure alert with the
+     location, and the watch vibrates: "Seizure detected. If you are fine, enter your PIN."
      A tap is NOT enough - a 4-digit PIN is required, so the watch hitting something
      during a convulsion cannot cancel the alarm.
-  2. Correct PIN within 30 s -> logged as a false alarm (confirmed by the patient).
-  3. No PIN -> caregiver gets a message with the location.
+  2. Correct PIN within 30 s -> logged as a false alarm (confirmed by the patient) and the
+     caregiver gets a second message: "False alarm, the patient entered the PIN."
+  3. No PIN in 30 s -> the alert stays active, the caregiver is expected to go.
   4. Seizure still going after 5 min (device estimate) -> emergency message
      ("call 112, give rescue medication as planned by the doctor").
   5. Recovery monitoring after the seizure: every 5 min the watch asks for the PIN
@@ -53,6 +55,8 @@ def handle_alarm(log: EventLog, alarm_s: float, est_onset_s: float, est_end_s: f
                vigilance="asleep" if asleep else "awake", **extra)
     eid = log.add(ev)
     log.step(eid, alarm_s, "alarm", "watch vibrates, PIN requested (30 s)")
+    log.step(eid, alarm_s, "caregiver notified", "seizure alert + location sent immediately")
+    log.update(eid, caregiver_notified_s=alarm_s)
 
     conscious = truth.kind == "none" or (truth.kind == "other_seizure" and rng.random() < 0.5)
     p_pin = BEHAVIOUR["pin_if_asleep" if asleep else "pin_if_awake"]
@@ -61,17 +65,18 @@ def handle_alarm(log: EventLog, alarm_s: float, est_onset_s: float, est_end_s: f
         if rng.random() < BEHAVIOUR["wrong_pin"]:
             log.step(eid, t - 3, "wrong PIN", "alarm continues")
         log.step(eid, t, "cancelled with PIN", "patient is fine")
+        log.step(eid, t, "caregiver informed: false alarm",
+                 "follow-up message: patient entered the PIN, they are fine")
         log.update(eid, kind="false_alarm" if truth.kind == "none" else "other_seizure",
-                   cancelled_with_pin=1, confirmed="no" if truth.kind == "none" else "yes",
-                   confirmed_by="patient")
+                   cancelled_with_pin=1, false_alarm_sent_s=t,
+                   confirmed="no" if truth.kind == "none" else "yes", confirmed_by="patient")
         return eid
 
-    t_notify = alarm_s + PIN_WINDOW_S
-    log.step(eid, t_notify, "caregiver notified", "message + location sent")
-    log.update(eid, caregiver_notified_s=t_notify)
+    t_window = alarm_s + PIN_WINDOW_S
+    log.step(eid, t_window, "no PIN in 30 s", "alert stays active for the caregiver")
 
     if truth.kind != "tonic_clonic":
-        t = t_notify + rng.uniform(120, 600)
+        t = t_window + rng.uniform(120, 600)
         label = "no seizure" if truth.kind == "none" else "seizure, not tonic-clonic"
         log.step(eid, t, "caregiver checked", label)
         log.update(eid, kind="false_alarm" if truth.kind == "none" else "other_seizure",
