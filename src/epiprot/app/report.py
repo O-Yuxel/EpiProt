@@ -79,6 +79,8 @@ def _fmt_dur(s):
     if s is None:
         return "-"
     s = int(round(s))
+    if s >= 3600:
+        return f"{s // 3600} h {s % 3600 // 60:02d} min"
     return f"{s // 60} min {s % 60:02d} s" if s >= 60 else f"{s} s"
 
 
@@ -125,7 +127,35 @@ def signal_figure(npz_path: Path, title: str):
     return fig
 
 
-def build(log: EventLog, patient: str, start_clock: dt.datetime, monitored_h: float, now_s: float) -> Path:
+def quality_figure(quality: dict, alerts: list, start_clock: dt.datetime, days: int):
+    """One row per signal; blue = usable, orange = missing or bad (1-minute bins). Markers = watch warnings."""
+    rows = [("brain", "Brain (headband)"), ("head_mov", "Head mov. (headband)"),
+            ("heart", "Heart rate (watch)"), ("body_mov", "Body mov. (watch)")]
+    fig, ax = plt.subplots(figsize=(7.2, 1.9))
+    for r, (k, lab) in enumerate(rows):
+        bad = quality[k] != 0
+        m = len(bad) // 12 * 12
+        b = bad[:m].reshape(-1, 12).mean(1) >= 0.5            # 1-minute bins
+        ax.broken_barh([(0, len(b) / 1440.0)], (r - 0.32, 0.64), color="#c9d6e3")
+        edges = np.flatnonzero(np.diff(np.r_[0, b.astype(int), 0]))
+        ax.broken_barh([(st / 1440.0, max((en - st) / 1440.0, 0.004)) for st, en in zip(edges[::2], edges[1::2])],
+                       (r - 0.32, 0.64), color="#d4762c")
+    for a in alerts:
+        rr = [r for r, (k, _) in enumerate(rows) if k in json.loads(a["signals"])]
+        ax.plot(a["warned_s"] / 86400, min(rr) - 0.5, marker="v", ms=4, color=INK, lw=0)
+    ax.set_yticks(range(len(rows)), [lab for _, lab in rows])
+    ax.set_ylim(len(rows) - 0.5, -0.75)
+    ax.set_xlim(0, days)
+    ax.set_xticks(range(days), [f"{_clock(start_clock, d * 86400):%d.%m}" for d in range(days)])
+    _ax_style(ax)
+    ax.yaxis.grid(False)
+    ax.set_title("Blue: usable   Orange: missing or bad   Black marker: warning sent to the watch",
+                 fontsize=8, color=INK2, loc="left")
+    return fig
+
+
+def build(log: EventLog, patient: str, start_clock: dt.datetime, monitored_h: float, now_s: float,
+          quality: dict | None = None) -> Path:
     evs = [dict(r) for r in log.events()]
     sz = [e for e in evs if e["kind"] == "seizure"]
     fa = [e for e in evs if e["kind"] == "false_alarm"]
@@ -203,6 +233,36 @@ def build(log: EventLog, patient: str, start_clock: dt.datetime, monitored_h: fl
                            "Heart rate before and peak come from the ECG.", SM))
     story.append(Paragraph("Raw EEG, ECG and movement are stored for every event (2 min before to 5 min after) and "
                            "included in the data package.", SM))
+
+    # sensor quality and the warnings that were sent to the watch
+    alerts = [dict(r) for r in log.sensor_alerts()]
+    if quality is not None:
+        story.append(PageBreak())
+        story.append(Paragraph("Sensor quality", H1))
+        story.append(Paragraph("The phone checks every 5-second window. When data from the headband or the watch is "
+                               "missing or bad for 2 minutes, the watch vibrates and tells the patient what to fix.", B))
+        story.append(Spacer(1, 4))
+        story.append(_img(quality_figure(quality, alerts, start_clock, days), 16.8))
+        labels = {"brain": "Brain signal (headband)", "head_mov": "Head movement (headband)",
+                  "heart": "Heart rate (watch)", "body_mov": "Body movement (watch)"}
+        rows = [["Signal", "Usable time", "Warnings sent"]]
+        for k, lab in labels.items():
+            rows.append([lab, f"{np.mean(quality[k] == 0):.1%}",
+                         str(sum(k in json.loads(a["signals"]) for a in alerts))])
+        story.append(_table(rows, [7 * cm, 4.9 * cm, 4.9 * cm]))
+        if alerts:
+            story.append(Paragraph("Warnings sent to the watch", H1))
+            rows = [["Warned", "Device", "Message on the watch", "Remin-ders", "Fixed after"]]
+            for a in alerts:
+                rows.append([f"{_clock(start_clock, a['warned_s']):%d.%m %H:%M}", a["device"],
+                             f"{a['message']} <font color='{INK2}'>{a['impact']}</font>",
+                             str(len(json.loads(a["reminders"]))),
+                             _fmt_dur(a["fixed_s"] - a["bad_from_s"]) if a["fixed_s"] else "still open"])
+            story.append(_table(rows, [2.0 * cm, 1.7 * cm, 9.3 * cm, 1.7 * cm, 2.1 * cm]))
+            story.append(Spacer(1, 4))
+            story.append(Paragraph("'Fixed after' is measured from the moment the data became bad. In this demo nobody "
+                                   "reacted to the warnings (recorded data), so it shows how long problems last "
+                                   "without the warning system.", SM))
 
     # signal pages
     for i, e in enumerate(evs, 1):

@@ -1,7 +1,7 @@
 """Event log stored on the phone (SQLite + compressed signal files).
 
 Everything lives in one folder on the phone:
-  epiprot.db          metadata of every event, the alarm-flow audit trail, the outbox
+  epiprot.db          metadata of every event, the alarm-flow audit trail, sensor warnings, the outbox
   signals/<id>.npz    raw EEG, ECG and movement around the event (2 min before to 5 min after)
   reports/            PDF reports generated on the phone
   outbox/             packages waiting for an internet connection to be sent to the doctor
@@ -49,6 +49,18 @@ CREATE TABLE IF NOT EXISTS flow (
     t_s       REAL NOT NULL,
     step      TEXT NOT NULL,
     detail    TEXT
+);
+CREATE TABLE IF NOT EXISTS sensor_alerts (
+    id          INTEGER PRIMARY KEY,
+    device      TEXT NOT NULL,      -- headband | watch
+    signals     TEXT NOT NULL,      -- JSON list: brain, head_mov, heart, body_mov
+    problem     TEXT NOT NULL,      -- missing | poor
+    bad_from_s  REAL NOT NULL,      -- data became bad
+    warned_s    REAL NOT NULL,      -- warning shown on the watch
+    message     TEXT,
+    impact      TEXT,
+    reminders   TEXT,               -- JSON list of reminder times
+    fixed_s     REAL                -- "fixed" message (NULL: still open)
 );
 CREATE TABLE IF NOT EXISTS outbox (
     id          INTEGER PRIMARY KEY,
@@ -124,6 +136,19 @@ class EventLog:
 
     def signal_path(self, event_id: int) -> Path:
         return self.folder / "signals" / f"event_{event_id:04d}.npz"
+
+    # ---- sensor-health warnings sent to the watch ----
+    def add_sensor_alert(self, ep) -> int:
+        cur = self.db.execute(
+            "INSERT INTO sensor_alerts (device, signals, problem, bad_from_s, warned_s, message, impact, "
+            "reminders, fixed_s) VALUES (?,?,?,?,?,?,?,?,?)",
+            (ep.device, json.dumps(sorted(ep.signals)), ep.problem, ep.bad_from_s, ep.warned_s, ep.message,
+             ep.impact, json.dumps(ep.reminders), ep.fixed_s))
+        self.db.commit()
+        return cur.lastrowid
+
+    def sensor_alerts(self) -> list[sqlite3.Row]:
+        return self.db.execute("SELECT * FROM sensor_alerts ORDER BY warned_s").fetchall()
 
     # ---- outbox: queued until the phone is online ----
     def queue(self, path: Path, t_s: float):

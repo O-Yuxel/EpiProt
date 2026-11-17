@@ -26,6 +26,7 @@ from epiprot.gbm.tc_ensemble import load_labels, map30to5, qscale, run_lengths
 
 from . import report
 from .eventlog import EventLog
+from . import health
 from .flow import Truth, handle_alarm, manual_entry
 from .signals import snippet
 
@@ -132,9 +133,25 @@ def main(argv=None):
             p = log.signal_path(eid)
             log.update(eid, signal_file=str(p), sensor_status=snippet(a.raw_dir, a.sub, o_s, p))
 
+    # sensor-health monitor: warnings to the watch, never during an alarm / recovery monitoring
+    busy = []
+    for e in log.events():
+        if e["source"] == "device":
+            steps = log.flow(e["id"])
+            end = max([r["t_s"] for r in steps if r["step"] != "confirmed"] or [e["alarm_s"]])
+            busy.append((e["alarm_s"], end))
+    q = health.window_quality(F, names)
+    eps = health.monitor(q, busy)
+    for ep in eps:
+        log.add_sensor_alert(ep)
+    usable = health.usable_share(q)
+    print(f"sensor warnings to the watch: {len(eps)} ({len(eps) / (n * T.W / 86400):.2f}/day), "
+          f"reminders {sum(len(e.reminders) for e in eps)}, usable "
+          + ", ".join(f"{k} {v:.1%}" for k, v in usable.items()))
+
     now = n * T.W
     start = dt.datetime(2026, 11, 10, 8, 0)
-    pdf = report.build(log, a.sub, start, n * T.W / 3600, now)
+    pdf = report.build(log, a.sub, start, n * T.W / 3600, now, quality=q)
     pkg = report.package(log, pdf, a.sub, now)
     print(f"report: {pdf}\npackage queued: {pkg}")
     print(f"phone offline -> sent: {log.flush_outbox(now, online=False)}")
