@@ -12,7 +12,7 @@ The real Android app (Kotlin) will be built from this prototype in `android/` (n
 mobile-app/
 ├── src/epiprot/
 │   ├── gbm/        seizure detection model: features, training, evaluation (final model lives here)
-│   ├── app/        phone app prototype: alarm flow, sensor warnings, event log, report
+│   ├── app/        phone app prototype: alarm flow, sensor warnings, event log, report, model export
 │   └── ...         earlier research (CHB-MIT pipeline, CNN, prediction experiments)
 ├── tests/
 ├── pyproject.toml
@@ -33,7 +33,16 @@ mobile-app/
 Final result (patient-wise 5-fold cross-validation, threshold chosen inside the training patients):
 **53 / 55 tonic-clonic seizures (96%), 0.20 false alarms per day, median alarm 42 s after onset.**
 
+That system's 30 s model used the raw chest ECG, which the EpiProt hardware does not have. The version that
+uses only what the headband and the watch provide (30 s features from `tc30s_features.py`, no wrist
+movement) gives **54 / 55 (98%), 0.24 false alarms per day, median 46 s**; this is the model in the Android
+app (see [`android/README.md`](android/README.md)).
+
 ### The phone app prototype (`src/epiprot/app/`)
+
+The Android app built from it is in [`android/`](android/README.md); `export_model.py` exports the final 5 s
+models and the alarm rule for it.
+
 
 | File | Role |
 |---|---|

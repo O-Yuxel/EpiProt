@@ -97,6 +97,8 @@ def main(argv=None):
     ap.add_argument("--rules", nargs="+", default=["5s only", "30s only", "mean", "max"])
     ap.add_argument("--fallback", type=Path, default=None,
                     help="5 s OOF of a model WITHOUT movement, used where movement data is missing")
+    ap.add_argument("--mov-cols", nargs="+", default=["head_acc_std", "body_acc_std"],
+                    help="fallback where ALL of these are missing")
     a = ap.parse_args(argv)
     data = load_labels(a.data_dir)
     subs = sorted(data)
@@ -110,8 +112,7 @@ def main(argv=None):
             with np.load(a.data_dir / f"{s}.npz") as zz:
                 nm = [str(x) for x in zz["names"]]
                 F = zz["F"]
-                nomov[s] = (np.isnan(F[:, nm.index("head_acc_std")])
-                            & np.isnan(F[:, nm.index("body_acc_std")]))
+                nomov[s] = np.all([np.isnan(F[:, nm.index(c)]) for c in a.mov_cols], axis=0)
     p30 = {}
     for s in subs:
         q = map30to5(z30[s].astype(np.float32), run_lengths(a.raw_dir, s))

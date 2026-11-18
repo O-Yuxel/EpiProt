@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">EpiProt</string>
+
+    <!-- navigation -->
+    <string name="tab_home">Home</string>
+    <string name="tab_events">Events</string>
+    <string name="tab_settings">Settings</string>
+
+    <!-- home -->
+    <string name="monitoring_on">Monitoring is on</string>
+    <string name="monitoring_off">Monitoring is off</string>
+    <string name="start_monitoring">Start monitoring</string>
+    <string name="stop_monitoring">Stop</string>
+    <string name="headband">Headband</string>
+    <string name="watch">Watch</string>
+    <string name="receiving">receiving data</string>
+    <string name="not_connected">not connected</string>
+    <string name="headband_none">no headband yet (prototype)</string>
+    <string name="heart_rate_value">heart rate %1$d bpm</string>
+    <string name="detection">Seizure detection</string>
+    <string name="detection_full">full (brain signal, heart rate, movement)</string>
+    <string name="detection_backup">backup model (no movement data)</string>
+    <string name="detection_limited">LIMITED: no brain signal</string>
+    <string name="detection_waiting">starting…</string>
+    <string name="open_problems">Sensor problems</string>
+    <string name="setup_missing">Add a caregiver phone number and a PIN in Settings.</string>
+    <string name="test_mode_note">Test mode: SMS are shown here, not sent. Turn on real SMS in Settings.</string>
+
+    <!-- alarm card -->
+    <string name="alarm_title">SEIZURE ALARM</string>
+    <string name="alarm_pin">Waiting for the PIN on the watch (%1$d s)…</string>
+    <string name="alarm_active">No PIN: the caregiver has been alerted and should go now.</string>
+    <string name="alarm_emergency">Seizure longer than 5 min: emergency message sent (112).</string>
+    <string name="alarm_recovery">After the seizure: \"Are you OK?\" on the watch every 5 min (asked %1$d times).</string>
+    <string name="caregiver_here">I am with the patient:</string>
+    <string name="was_seizure">It was a seizure</string>
+    <string name="no_seizure">No seizure</string>
+
+    <!-- demo -->
+    <string name="demo_title">Demo: replay a recorded seizure</string>
+    <string name="demo_text">Plays a real tonic-clonic seizure (SeizeIT2 dataset) through the whole system as if it came from the headband and the watch: detection, watch alarm, caregiver SMS. Fast until the alarm, then in real time.</string>
+    <string name="demo_start">Start demo</string>
+    <string name="demo_stop">Stop demo</string>
+    <string name="demo_progress">%1$s / %2$s · seizure starts at %3$s · score %4$s</string>
+    <string name="demo_badge">DEMO</string>
+
+    <!-- events -->
+    <string name="no_events">No events yet.</string>
+    <string name="messages">Messages to the caregiver</string>
+    <string name="sensor_alerts">Sensor warnings</string>
+    <string name="sms_sent">sent</string>
+    <string name="sms_test">not sent (test mode)</string>
+    <string name="sms_failed">FAILED</string>
+    <string name="sms_no_number">no caregiver number</string>
+    <string name="kind_unconfirmed">Alarm (not confirmed yet)</string>
+    <string name="kind_false_alarm">False alarm</string>
+    <string name="kind_seizure">Seizure</string>
+
+    <!-- settings -->
+    <string name="patient_name">Patient name</string>
+    <string name="caregiver_n">Caregiver phone %1$d</string>
+    <string name="doctor_email">Doctor e-mail (reports, later)</string>
+    <string name="pin">PIN for the watch (4 digits)</string>
+    <string name="pin_set">Set PIN</string>
+    <string name="pin_ok">PIN saved and sent to the watch.</string>
+    <string name="pin_bad">The PIN must be exactly 4 digits.</string>
+    <string name="pin_is_set">A PIN is set.</string>
+    <string name="pin_not_set">No PIN yet: the watch uses the demo PIN 1234.</string>
+    <string name="real_sms">Send real SMS</string>
+    <string name="real_sms_note">Off = test mode. Turn on only with the caregiver\'s consent: messages contain health information and the location.</string>
+    <string name="save">Save</string>
+    <string name="saved">Saved.</string>
+    <string name="permissions">Grant permissions</string>
+    <string name="privacy_note">All data stay on this phone. Messages go only to the numbers entered here.</string>
+
+    <!-- SMS texts: %1$s patient, %2$s time, %3$s location -->
+    <string name="sms_alert">EpiProt: possible SEIZURE – %1$s, %2$s. Location: %3$s. Please go now. You will get a message if %1$s cancels it with the PIN.</string>
+    <string name="sms_false_alarm">EpiProt: FALSE ALARM. %1$s entered the PIN at %2$s and is fine.</string>
+    <string name="sms_emergency">EpiProt EMERGENCY: %1$s\'s seizure has lasted more than 5 minutes (%2$s). Call 112 and give rescue medication as planned with the doctor. Location: %3$s</string>
+    <string name="sms_no_answer">EpiProt: %1$s has not answered \"Are you OK?\" 15 minutes after the seizure (%2$s). Please check on them. Location: %3$s</string>
+    <string name="sms_handover">EpiProt: no answer from %1$s for 60 minutes after the seizure (%2$s). Monitoring is handed over to you.</string>
+    <string name="location_unknown">unknown</string>
+    <string name="patient_default">the patient</string>
+
+    <!-- notification -->
+    <string name="channel_monitoring">Monitoring</string>
+    <string name="notif_monitoring">EpiProt is monitoring</string>
+    <string name="notif_monitoring_text">Headband and watch data are checked every 5 seconds.</string>
+</resources>

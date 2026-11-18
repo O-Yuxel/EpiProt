@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tab_home">Ana sayfa</string>
+    <string name="tab_events">Olaylar</string>
+    <string name="tab_settings">Ayarlar</string>
+
+    <string name="monitoring_on">İzleme açık</string>
+    <string name="monitoring_off">İzleme kapalı</string>
+    <string name="start_monitoring">İzlemeyi başlat</string>
+    <string name="stop_monitoring">Durdur</string>
+    <string name="headband">Kafa bandı</string>
+    <string name="watch">Saat</string>
+    <string name="receiving">veri geliyor</string>
+    <string name="not_connected">bağlı değil</string>
+    <string name="headband_none">henüz kafa bandı yok (prototip)</string>
+    <string name="heart_rate_value">nabız %1$d</string>
+    <string name="detection">Nöbet tespiti</string>
+    <string name="detection_full">tam (beyin sinyali, nabız, hareket)</string>
+    <string name="detection_backup">yedek model (hareket verisi yok)</string>
+    <string name="detection_limited">SINIRLI: beyin sinyali yok</string>
+    <string name="detection_waiting">başlıyor…</string>
+    <string name="open_problems">Sensör sorunları</string>
+    <string name="setup_missing">Ayarlar\'dan bakıcı telefon numarası ve PIN gir.</string>
+    <string name="test_mode_note">Test modu: SMS\'ler burada gösterilir, gönderilmez. Gerçek SMS\'i Ayarlar\'dan aç.</string>
+
+    <string name="alarm_title">NÖBET ALARMI</string>
+    <string name="alarm_pin">Saatten PIN bekleniyor (%1$d sn)…</string>
+    <string name="alarm_active">PIN girilmedi: bakıcıya haber verildi, hemen gitmeli.</string>
+    <string name="alarm_emergency">Nöbet 5 dakikayı geçti: acil durum mesajı gönderildi (112).</string>
+    <string name="alarm_recovery">Nöbet sonrası: saat 5 dakikada bir \"İyi misin?\" diye soruyor (%1$d kez soruldu).</string>
+    <string name="caregiver_here">Hastanın yanındayım:</string>
+    <string name="was_seizure">Nöbetti</string>
+    <string name="no_seizure">Nöbet değildi</string>
+
+    <string name="demo_title">Demo: kayıtlı bir nöbeti oynat</string>
+    <string name="demo_text">Gerçek bir tonik-klonik nöbeti (SeizeIT2 veri seti) kafa bandından ve saatten geliyormuş gibi tüm sistemden geçirir: tespit, saat alarmı, bakıcıya SMS. Alarma kadar hızlı, sonra gerçek zamanlı.</string>
+    <string name="demo_start">Demoyu başlat</string>
+    <string name="demo_stop">Demoyu durdur</string>
+    <string name="demo_progress">%1$s / %2$s · nöbet %3$s\'de başlıyor · skor %4$s</string>
+    <string name="demo_badge">DEMO</string>
+
+    <string name="no_events">Henüz olay yok.</string>
+    <string name="messages">Bakıcıya giden mesajlar</string>
+    <string name="sensor_alerts">Sensör uyarıları</string>
+    <string name="sms_sent">gönderildi</string>
+    <string name="sms_test">gönderilmedi (test modu)</string>
+    <string name="sms_failed">GÖNDERİLEMEDİ</string>
+    <string name="sms_no_number">bakıcı numarası yok</string>
+    <string name="kind_unconfirmed">Alarm (henüz onaylanmadı)</string>
+    <string name="kind_false_alarm">Yanlış alarm</string>
+    <string name="kind_seizure">Nöbet</string>
+
+    <string name="patient_name">Hastanın adı</string>
+    <string name="caregiver_n">Bakıcı telefonu %1$d</string>
+    <string name="doctor_email">Doktor e-postası (raporlar, sonra)</string>
+    <string name="pin">Saat için PIN (4 rakam)</string>
+    <string name="pin_set">PIN\'i kaydet</string>
+    <string name="pin_ok">PIN kaydedildi ve saate gönderildi.</string>
+    <string name="pin_bad">PIN tam olarak 4 rakam olmalı.</string>
+    <string name="pin_is_set">PIN belirlenmiş.</string>
+    <string name="pin_not_set">Henüz PIN yok: saat demo PIN\'i 1234\'ü kullanıyor.</string>
+    <string name="real_sms">Gerçek SMS gönder</string>
+    <string name="real_sms_note">Kapalı = test modu. Sadece bakıcının onayıyla aç: mesajlar sağlık bilgisi ve konum içerir.</string>
+    <string name="save">Kaydet</string>
+    <string name="saved">Kaydedildi.</string>
+    <string name="permissions">İzinleri ver</string>
+    <string name="privacy_note">Tüm veriler bu telefonda kalır. Mesajlar sadece burada girilen numaralara gider.</string>
+
+    <string name="sms_alert">EpiProt: olası NÖBET – %1$s, %2$s. Konum: %3$s. Lütfen hemen git. %1$s PIN ile iptal ederse ayrıca mesaj gelecek.</string>
+    <string name="sms_false_alarm">EpiProt: YANLIŞ ALARM. %1$s saat %2$s\'de PIN girdi, iyi.</string>
+    <string name="sms_emergency">EpiProt ACİL: %1$s\'in nöbeti 5 dakikayı geçti (%2$s). 112\'yi ara ve doktorla planlanan kurtarma ilacını ver. Konum: %3$s</string>
+    <string name="sms_no_answer">EpiProt: %1$s nöbetten 15 dakika sonra \"İyi misin?\" sorusuna cevap vermedi (%2$s). Lütfen kontrol et. Konum: %3$s</string>
+    <string name="sms_handover">EpiProt: %1$s nöbetten sonra 60 dakikadır cevap vermiyor (%2$s). Takip sana devredildi.</string>
+    <string name="location_unknown">bilinmiyor</string>
+    <string name="patient_default">hasta</string>
+
+    <string name="channel_monitoring">İzleme</string>
+    <string name="notif_monitoring">EpiProt izliyor</string>
+    <string name="notif_monitoring_text">Kafa bandı ve saat verisi 5 saniyede bir kontrol ediliyor.</string>
+</resources>

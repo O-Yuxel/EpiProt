@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- lets the watch app find this phone app over the Wear OS Data Layer -->
+    <string-array name="android_wear_capabilities" translatable="false">
+        <item>epiprot_phone</item>
+    </string-array>
+</resources>

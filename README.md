@@ -32,8 +32,10 @@ The brain of the system. Everything that decides runs here.
 - **Event log** on the phone (SQLite) with raw EEG, heart and movement around every event
 - **Doctor report** (PDF with charts) generated on the phone, sent when online
 
-Status: model trained and evaluated; app logic is a working Python prototype tested on real recordings.
-The Android app (Kotlin) is the next step.
+Status: model trained and evaluated; app logic as a Python prototype tested on real recordings. The Android app
+([`mobile-app/android/`](mobile-app/android/), Kotlin) runs the 5 s detector, alarm flow, sensor warnings, event
+log and caregiver SMS, verified against the Python code; its demo replays a real recorded seizure. Not yet tested
+with real devices.
 
 ### ⌚ [`watch-app/`](watch-app/) — EpiProt watch app
 A small companion app on a Wear OS watch. It measures and shows; it does not decide.

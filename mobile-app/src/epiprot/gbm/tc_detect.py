@@ -43,7 +43,12 @@ TC_W = 5.0
 BUDGETS = (0.25, 0.5, 1.0, 2.0)                # false alarms per day
 GROUPS = {"eeg+ecg": r"^(eeg|ecg)", "eeg+ecg+emg": r"^(eeg|ecg|emg)",
           "eeg+ecg+mov": r"^(eeg|ecg|head|body)", "all": r".",
-          "ecg+mov": r"^(ecg|head|body)", "mov": r"^(head|body)", "ecg": r"^ecg"}
+          "ecg+mov": r"^(ecg|head|body)", "mov": r"^(head|body)", "ecg": r"^ecg",
+          # EpiProt hardware: no wrist movement (only the headband's), and / or movement only as change
+          # relative to the person's own recent past + rhythmicity (independent of sensor units)
+          "eeg+ecg+head": r"^(eeg|ecg|head)",
+          "eeg+ecg+head_rel": r"^(eeg|ecg)|^head_(acc|gyr)_rhythm|^head_.*@(d1m|d10m|mean60s-d10m)$",
+          "eeg+ecg+mov_rel": r"^(eeg|ecg)|^(head|body)_(acc|gyr)_rhythm|^(head|body)_.*@(d1m|d10m|mean60s-d10m)$"}
 PARAMS = {"objective": "binary", "learning_rate": 0.05, "num_leaves": 31,
           "min_child_samples": 30, "feature_fraction": 0.7, "bagging_fraction": 0.8,
           "bagging_freq": 1, "lambda_l2": 1.0, "verbose": -1, "seed": 0}
