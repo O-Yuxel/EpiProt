@@ -3,14 +3,18 @@
 A companion app for a **Wear OS** watch (Samsung Galaxy Watch4 or newer, Google Pixel Watch).
 It measures and shows; all decisions are made by the phone app.
 
-**Status:** first version written (Kotlin, Jetpack Compose for Wear OS). Not yet compiled or run on an
-emulator or a watch; see *Next steps*.
+**Status:** first version (Kotlin, Jetpack Compose for Wear OS). Builds, all unit tests pass, and runs on the
+Wear OS 5 emulator (alarm + PIN, warnings, Turkish/English checked). Not yet tested on a real watch or with the
+phone app; see *Next steps*.
+
+Toolchain: Gradle 9.9.1 (wrapper included), Android Gradle Plugin 9.4.1 (built-in Kotlin), Kotlin 2.3.21,
+compileSdk 36, minSdk 30, targetSdk 34. Builds with the Java 25 bundled with Android Studio 2026.2.
 
 ## What it does
 
 | Task | Details |
 |---|---|
-| Heart rate | Reads the heart-rate sensor continuously (~1 Hz) |
+| Heart rate | Reads the heart-rate sensor continuously. The sensor only reports changes, so a value stays valid for 30 s; losing skin contact clears it at once |
 | Movement | Accelerometer + gyroscope at 25 Hz, delivered in 1 s batches so the processor can sleep in between |
 | Sending | One small sensor packet per second to the phone app (Wear OS Data Layer, Bluetooth) |
 | Backup | If the phone is out of reach, keeps the last ~10 minutes and sends them first when it is back |
@@ -63,12 +67,14 @@ otherwise Wear OS does not connect the two apps.
 
 Requirements: **Android Studio** (includes Java, the Android SDK and the Wear OS emulator).
 
-1. Android Studio → *Open* → the `watch-app` folder. Let it sync (it creates the Gradle wrapper files if asked).
-2. *Device Manager* → create a **Wear OS** virtual device (e.g. "Wear OS Large Round", API 33 or 34).
+1. Android Studio → *Open* → the `watch-app` folder. Let it sync.
+2. *Device Manager* → create a **Wear OS** virtual device (e.g. "Wear OS Large Round", Wear OS 5 / API 34).
+   On the development PC this exists already as `EpiProt_Watch`.
 3. Run the `app` configuration on it. Allow body sensors when asked.
+   Emulator heart rate: *Extended controls* → *Virtual sensors*, or `adb emu sensor set heart-rate 72`.
 4. On the home screen, scroll down to **Demo** and try: seizure alarm → PIN 1234; check-in; sensor warning.
 
-Unit tests: `gradlew test` (or right-click `app/src/test` → *Run tests*).
+Command line: `gradlew assembleDebug` (APK in `app/build/outputs/apk/debug/`). Unit tests: `gradlew test` (or right-click `app/src/test` → *Run tests*).
 
 Connecting the emulator watch to a real Android phone (for the phone app later): install the *Wear OS by Google*
 companion app on the phone, connect the phone by USB, run `adb forward tcp:5601 tcp:5601`, then pair in the
@@ -76,7 +82,6 @@ companion app.
 
 ## Next steps
 
-- Compile and run on the emulator; fix what the compiler finds.
 - Test on a real Galaxy Watch: battery use with continuous heart rate, waking the screen for an alarm when the
   watch is idle, heart-rate quality during strong movement.
 - Build the phone app side of the protocol (mobile-app, Kotlin).

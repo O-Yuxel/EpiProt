@@ -26,7 +26,9 @@ class BackupBuffer<T>(private val capacity: Int) {
  * Collects raw sensor events and turns them into one [SensorBatch] per second.
  * Times are wall-clock milliseconds.
  */
-class SensorBatcher(private val heartRateMaxAgeMs: Long = 5_000) {
+class SensorBatcher(private val heartRateMaxAgeMs: Long = 30_000) {
+    // Android's heart-rate sensor is "on-change": a steady pulse produces no new events, so the last
+    // value stays valid for up to 30 s. An unreliable / no-contact event clears it at once.
     private var seq = 0
     private var heartRate = Float.NaN
     private var heartRateTimeMs = Long.MIN_VALUE
@@ -38,6 +40,8 @@ class SensorBatcher(private val heartRateMaxAgeMs: Long = 5_000) {
         if (reliable && bpm in 25f..250f) {
             heartRate = bpm
             heartRateTimeMs = tMs
+        } else {
+            heartRate = Float.NaN
         }
     }
 

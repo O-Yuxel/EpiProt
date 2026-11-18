@@ -42,7 +42,7 @@ A small companion app on a Wear OS watch. It measures and shows; it does not dec
 - Shows the "Are you OK?" check-ins and the sensor warnings
 - Warns by itself when the phone is out of reach (then there are no alarms)
 
-Status: first version written (Kotlin, Compose for Wear OS) with a demo mode; not yet run on a watch.
+Status: first version (Kotlin, Compose for Wear OS) with a demo mode. Builds, unit tests pass, runs on the Wear OS emulator; not yet tested on a real watch.
 
 ### 🎧 [`device-firmware/`](device-firmware/) — headband software
 Runs on the small processor inside the headband.

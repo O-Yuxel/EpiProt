@@ -217,4 +217,15 @@ class BuffersTest {
         s.addHeartRate(1_000, 75f, reliable = false)
         assertTrue(s.currentHeartRate(1_500).isNaN())
     }
+
+    @Test
+    fun steadyHeartRateStaysValidButLostContactClearsIt() {
+        val s = SensorBatcher()                      // default: on-change sensor, 30 s
+        s.addHeartRate(1_000, 72f, reliable = true)
+        assertEquals(72f, s.currentHeartRate(20_000))
+        assertTrue(s.currentHeartRate(32_000).isNaN())
+        s.addHeartRate(40_000, 70f, reliable = true)
+        s.addHeartRate(41_000, 0f, reliable = false)  // watch taken off
+        assertTrue(s.currentHeartRate(41_500).isNaN())
+    }
 }
