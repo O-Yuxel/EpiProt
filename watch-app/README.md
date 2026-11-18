@@ -1,50 +1,84 @@
 # EpiProt watch app
 
-A small companion app for a **Wear OS** watch (for example Samsung Galaxy Watch or Google Pixel Watch).
+A companion app for a **Wear OS** watch (Samsung Galaxy Watch4 or newer, Google Pixel Watch).
 It measures and shows; all decisions are made by the phone app.
 
-**Status:** specification only, not built yet.
-
-## Why our own watch app?
-
-The watch makers' health apps sync heart rate to the phone in batches, minutes later. Seizure detection needs
-**live** data, and the alarm needs a PIN screen on the watch. Wear OS lets us install our own app and gives a
-ready-made message channel between the watch app and the phone app (Data Layer API over Bluetooth).
+**Status:** first version written (Kotlin, Jetpack Compose for Wear OS). Not yet compiled or run on an
+emulator or a watch; see *Next steps*.
 
 ## What it does
 
 | Task | Details |
 |---|---|
-| Heart rate | Reads the heart-rate sensor continuously and sends it to the phone |
-| Movement | Reads the accelerometer and gyroscope and sends them to the phone |
-| Alarm | Vibrates and shows "Seizure detected. If you are fine, enter your PIN." (30 s) |
-| PIN | 4-digit PIN entered and checked on the watch, so it works even if the connection drops for a moment; a tap is not enough |
-| Check-ins | "Are you OK?" every 5 minutes after a seizure, answered with the PIN |
-| Sensor warnings | Shows the phone's warnings, e.g. "Heart rate is not measured. Tighten the watch strap." |
-| Status | Sends battery level and wear status to the phone |
-| Backup | Keeps the last 10 minutes of data if the connection drops and sends them later |
+| Heart rate | Reads the heart-rate sensor continuously (~1 Hz) |
+| Movement | Accelerometer + gyroscope at 25 Hz, delivered in 1 s batches so the processor can sleep in between |
+| Sending | One small sensor packet per second to the phone app (Wear OS Data Layer, Bluetooth) |
+| Backup | If the phone is out of reach, keeps the last ~10 minutes and sends them first when it is back |
+| Alarm | Strong repeating vibration + red screen: "Seizure detected. Caregiver alerted. If you are fine, enter your PIN." (30 s) |
+| PIN | 4 digits, checked on the watch (salted SHA-256 hash from the phone). A tap is never enough. Wrong PINs are counted and reported. |
+| After the PIN window | "Help is on the way"; the alarm can no longer be cancelled on the watch |
+| Check-ins | "Are you OK?" during recovery monitoring, answered with the PIN |
+| Sensor warnings | Shows the phone's warnings with what to do and what it means for detection; never on top of an alarm |
+| Phone lost | If the phone has not been reachable for 60 s, the watch itself warns: "Phone not connected. Seizure alarms do NOT work until this is fixed." |
+| Status | Battery, charging and on-body status to the phone once a minute |
+| Languages | English and Turkish (follows the watch language) |
+| Demo mode | Buttons on the home screen simulate the phone's messages (alarm, check-in, warnings), so the app can be shown without a phone app. Without a heart-rate sensor (emulator) sensors are simulated, including convulsion-like shaking. |
 
-The PIN and other settings are entered in the phone app and copied to the watch automatically.
+## Code
 
-## Messages between watch and phone (proposal)
+```
+app/src/main/java/org/epiprot/watch/
+├── protocol/Protocol.kt         message paths and formats shared with the phone app
+├── core/WatchStateMachine.kt    alarm / PIN / check-in / warning logic (no Android code, unit-tested)
+├── core/PinVerifier.kt          PIN check (salted hash; demo PIN 1234 until the phone sends one)
+├── core/Buffers.kt              1 s sensor batches, 10 min backup buffer
+├── core/Warnings.kt             warning codes (same as mobile-app/src/epiprot/app/health.py)
+├── sensors/Sensors.kt           real watch sensors, or simulated ones
+├── link/PhoneLink.kt            Data Layer connection to the phone app + message receiver
+├── service/MonitoringService.kt foreground service that keeps monitoring with the screen off
+├── feedback/Feedback.kt         vibration patterns, notifications, waking the screen
+├── WatchController.kt           connects logic, sensors, phone link and screens
+└── ui/                          screens (home, alarm + PIN pad, check-in, warnings)
+app/src/test/                    unit tests for the logic and the message formats
+```
 
-| Direction | Message |
-|---|---|
-| watch → phone | `sensor`: time stamp, heart rate, movement samples |
-| watch → phone | `pin_ok` / `pin_wrong` with time stamp |
-| watch → phone | `status`: battery, worn / not worn |
-| phone → watch | `alarm_start`, `alarm_end` |
-| phone → watch | `checkin` ("Are you OK?") |
-| phone → watch | `sensor_warning` with the text to show, `sensor_fixed` |
-| phone → watch | `settings` (PIN hash, language) |
+## Messages between watch and phone
 
-## Open points
+| Direction | Path | Content |
+|---|---|---|
+| watch → phone | `/epiprot/sensor` | binary, once per second: sequence number, start time, heart rate, on-body flag, accelerometer and gyroscope samples |
+| watch → phone | `/epiprot/pin` | `{context: alarm\|checkin, alarm_id, ok, attempt, time_ms}` |
+| watch → phone | `/epiprot/status` | `{battery_pct, charging, on_body, heart_sensor, time_ms}` |
+| phone → watch | `/epiprot/alarm_start` | `{alarm_id, pin_window_s}` |
+| phone → watch | `/epiprot/alarm_end` | `{alarm_id, reason}` |
+| phone → watch | `/epiprot/checkin` | `{alarm_id, number}` |
+| phone → watch | `/epiprot/sensor_warning` | `{code, impact}`; codes: `headband_missing`, `brain_weak`, `head_mov_missing`, `watch_missing`, `heart_missing`, `body_mov_missing`; impact: `limited`, `weaker`, `backup`, `none` |
+| phone → watch | `/epiprot/sensor_fixed` | `{code}` |
+| phone → watch | `/epiprot/settings` | `{pin_salt, pin_hash, pin_window_s}` |
 
-- The model learned heart rate from a chest ECG. A watch measures it with light (PPG), which can fail during
-  convulsions. This must be tested and the model retrained with watch data.
-- Continuous heart rate will likely need daily charging.
+The phone app must use the **same application id** (`org.epiprot.app`) and the **same signing key**,
+otherwise Wear OS does not connect the two apps.
 
-## Technology
+## Running it
 
-Kotlin, Wear OS 3+, Health Services / SensorManager, Wearable Data Layer API. Published together with the
-phone app under the same app listing, so the two apps find each other automatically.
+Requirements: **Android Studio** (includes Java, the Android SDK and the Wear OS emulator).
+
+1. Android Studio → *Open* → the `watch-app` folder. Let it sync (it creates the Gradle wrapper files if asked).
+2. *Device Manager* → create a **Wear OS** virtual device (e.g. "Wear OS Large Round", API 33 or 34).
+3. Run the `app` configuration on it. Allow body sensors when asked.
+4. On the home screen, scroll down to **Demo** and try: seizure alarm → PIN 1234; check-in; sensor warning.
+
+Unit tests: `gradlew test` (or right-click `app/src/test` → *Run tests*).
+
+Connecting the emulator watch to a real Android phone (for the phone app later): install the *Wear OS by Google*
+companion app on the phone, connect the phone by USB, run `adb forward tcp:5601 tcp:5601`, then pair in the
+companion app.
+
+## Next steps
+
+- Compile and run on the emulator; fix what the compiler finds.
+- Test on a real Galaxy Watch: battery use with continuous heart rate, waking the screen for an alarm when the
+  watch is idle, heart-rate quality during strong movement.
+- Build the phone app side of the protocol (mobile-app, Kotlin).
+- The model learned heart rate from a chest ECG; a watch measures it with light (PPG). This must be validated
+  and the model retrained with watch data.

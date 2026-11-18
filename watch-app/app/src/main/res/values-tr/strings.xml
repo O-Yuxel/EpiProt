@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">EpiProt</string>
+
+    <string name="home_monitoring">Takip açık</string>
+    <string name="home_phone_ok">Telefon bağlı</string>
+    <string name="home_phone_missing">Telefon bağlı değil</string>
+    <string name="home_hr">Nabız %1$s</string>
+    <string name="home_hr_none">ölçüm yok</string>
+    <string name="home_simulated">Simüle sensör (nabız sensörü yok)</string>
+    <string name="home_demo_pin">Demo PIN: 1234. PIN kodunu telefondaki uygulamadan belirle.</string>
+    <string name="home_active_warnings">Açık sorunlar</string>
+    <string name="home_demo">Demo (telefonsuz)</string>
+    <string name="demo_alarm">Nöbet alarmı</string>
+    <string name="demo_checkin">\"İyi misin?\" sorusu</string>
+    <string name="demo_warning">Sensör uyarısı</string>
+    <string name="demo_fixed">Uyarı düzeldi</string>
+    <string name="demo_alarm_end">Alarmı bitir</string>
+    <string name="demo_seizure_motion">Sarsılma simüle et</string>
+    <string name="permission_needed">Saatin nabzını ölçebilmesi için vücut sensörlerine izin ver.</string>
+    <string name="permission_button">İzin ver</string>
+
+    <string name="alarm_title">Nöbet algılandı</string>
+    <string name="alarm_text">Bakıcına haber verildi. İyiysen PIN gir (%1$d sn).</string>
+    <string name="alarm_active_title">Yardım geliyor</string>
+    <string name="alarm_active_text">Bakıcına konumunla birlikte haber verildi.</string>
+    <string name="checkin_title">İyi misin?</string>
+    <string name="checkin_text">PIN kodunu gir</string>
+    <string name="pin_wrong">Yanlış PIN</string>
+
+    <string name="info_false_alarm">Yanlış alarm. Bakıcına iyi olduğun bildiriliyor.</string>
+    <string name="info_recovery_ok">Teşekkürler. Nöbet sonrası takip bitti.</string>
+    <string name="info_sensor_fixed">Düzeldi. Teşekkürler.</string>
+    <string name="info_alarm_ended">Alarm bitti.</string>
+    <string name="ok">Tamam</string>
+
+    <string name="warn_headband_missing">Kafa bandı veri göndermiyor. Açık, takılı ve şarjlı mı kontrol et.</string>
+    <string name="warn_brain_weak">Beyin sinyali zayıf. Bandı, sensörler cilde değecek şekilde düzelt.</string>
+    <string name="warn_head_mov_missing">Kafa bandının hareket sensörü veri göndermiyor. Bandı yeniden başlat.</string>
+    <string name="warn_watch_missing">Saatin verileri telefona ulaşmıyor. Telefonu yakında tut.</string>
+    <string name="warn_heart_missing">Nabız ölçülemiyor. Saat kayışını sıkılaştır.</string>
+    <string name="warn_body_mov_missing">Saatin hareket sensörü veri göndermiyor. Saati yeniden başlat.</string>
+    <string name="warn_phone_disconnected">Telefon bağlı değil. Telefonu yakında ve EpiProt uygulamasını açık tut.</string>
+    <string name="impact_limited">Bu düzelene kadar nöbet tespiti SINIRLI.</string>
+    <string name="impact_weaker">Bu düzelene kadar nöbet tespiti zayıflayabilir.</string>
+    <string name="impact_backup">Tespit hareket verisi olmadan devam ediyor.</string>
+    <string name="impact_no_alarms">Bu düzelene kadar nöbet alarmı ÇALIŞMAZ.</string>
+    <string name="impact_none">Tespit devam ediyor.</string>
+
+    <string name="channel_monitoring">Takip</string>
+    <string name="channel_alarm">Nöbet alarmları</string>
+    <string name="notif_monitoring">EpiProt takipte</string>
+</resources>

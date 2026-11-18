@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">EpiProt</string>
+
+    <!-- home -->
+    <string name="home_monitoring">Monitoring on</string>
+    <string name="home_phone_ok">Phone connected</string>
+    <string name="home_phone_missing">Phone not connected</string>
+    <string name="home_hr">Heart rate %1$s</string>
+    <string name="home_hr_none">no reading</string>
+    <string name="home_simulated">Simulated sensors (no heart-rate sensor)</string>
+    <string name="home_demo_pin">Demo PIN: 1234. Set your PIN in the phone app.</string>
+    <string name="home_active_warnings">Open problems</string>
+    <string name="home_demo">Demo (without phone)</string>
+    <string name="demo_alarm">Seizure alarm</string>
+    <string name="demo_checkin">\"Are you OK?\" check-in</string>
+    <string name="demo_warning">Sensor warning</string>
+    <string name="demo_fixed">Warning fixed</string>
+    <string name="demo_alarm_end">End alarm</string>
+    <string name="demo_seizure_motion">Simulate shaking</string>
+    <string name="permission_needed">Allow body sensors so the watch can measure your heart rate.</string>
+    <string name="permission_button">Allow</string>
+
+    <!-- alarm -->
+    <string name="alarm_title">Seizure detected</string>
+    <string name="alarm_text">Caregiver alerted. If you are fine, enter your PIN (%1$d s).</string>
+    <string name="alarm_active_title">Help is on the way</string>
+    <string name="alarm_active_text">Your caregiver has been alerted with your location.</string>
+    <string name="checkin_title">Are you OK?</string>
+    <string name="checkin_text">Enter your PIN</string>
+    <string name="pin_wrong">Wrong PIN</string>
+
+    <!-- info -->
+    <string name="info_false_alarm">False alarm. Your caregiver is being told you are fine.</string>
+    <string name="info_recovery_ok">Thank you. Recovery monitoring ends.</string>
+    <string name="info_sensor_fixed">Fixed. Thank you.</string>
+    <string name="info_alarm_ended">Alarm ended.</string>
+    <string name="ok">OK</string>
+
+    <!-- sensor warnings (codes sent by the phone) -->
+    <string name="warn_headband_missing">Headband is not sending data. Check that it is on, worn and charged.</string>
+    <string name="warn_brain_weak">Brain signal is weak. Adjust the headband so the sensors touch the skin.</string>
+    <string name="warn_head_mov_missing">Headband movement sensor is not sending data. Restart the headband.</string>
+    <string name="warn_watch_missing">Watch data are not reaching the phone. Keep the phone close.</string>
+    <string name="warn_heart_missing">Heart rate is not measured. Tighten the watch strap.</string>
+    <string name="warn_body_mov_missing">Watch movement sensor is not sending data. Restart the watch.</string>
+    <string name="warn_phone_disconnected">Phone not connected. Keep the phone close and the EpiProt app on.</string>
+    <string name="impact_limited">Seizure detection is LIMITED until this is fixed.</string>
+    <string name="impact_weaker">Seizure detection may be weaker until this is fixed.</string>
+    <string name="impact_backup">Detection continues without movement.</string>
+    <string name="impact_no_alarms">Seizure alarms do NOT work until this is fixed.</string>
+    <string name="impact_none">Detection continues.</string>
+
+    <!-- notifications -->
+    <string name="channel_monitoring">Monitoring</string>
+    <string name="channel_alarm">Seizure alarms</string>
+    <string name="notif_monitoring">EpiProt is monitoring</string>
+</resources>

@@ -56,29 +56,50 @@ def window_quality(F: np.ndarray, names: list[str]) -> dict[str, np.ndarray]:
     return q
 
 
-def impact(signals: set[str], other_bad: set[str]) -> str:
+# Codes sent to the watch app (watch-app/.../core/Warnings.kt); the watch shows the text in its own language.
+IMPACT_TEXT = {
+    "limited": "Seizure detection is LIMITED until this is fixed.",
+    "weaker": "Seizure detection may be weaker until this is fixed.",
+    "backup": "Detection continues without movement (backup model).",
+    "none": "Detection continues.",
+}
+WARNING_TEXT = {
+    "headband_missing": "Headband is not sending data. Check that it is on, worn and charged.",
+    "brain_weak": "Brain signal is weak. Adjust the headband so the sensors touch the skin.",
+    "head_mov_missing": "Headband movement sensor is not sending data. Restart the headband.",
+    "watch_missing": "Watch is not sending data. Check that it is worn and charged.",
+    "heart_missing": "Heart rate is not measured. Tighten the watch strap.",
+    "body_mov_missing": "Watch movement sensor is not sending data. Restart the watch.",
+}
+
+
+def impact_code(signals: set[str], other_bad: set[str]) -> str:
     bad = signals | other_bad
     if "brain" in bad:
-        return "Seizure detection is LIMITED until this is fixed."
+        return "limited"
     if "heart" in bad:
-        return "Seizure detection may be weaker until this is fixed."
+        return "weaker"
     if {"head_mov", "body_mov"} <= bad:
-        return "Detection continues without movement (backup model)."
-    return "Detection continues."
+        return "backup"
+    return "none"
+
+
+def warning_code(device: str, signals: set[str], problem: str) -> str:
+    if device == "headband":
+        if problem == "missing" and signals == {"brain", "head_mov"}:
+            return "headband_missing"
+        return "brain_weak" if "brain" in signals else "head_mov_missing"
+    if problem == "missing" and signals == {"heart", "body_mov"}:
+        return "watch_missing"
+    return "heart_missing" if "heart" in signals else "body_mov_missing"
+
+
+def impact(signals: set[str], other_bad: set[str]) -> str:
+    return IMPACT_TEXT[impact_code(signals, other_bad)]
 
 
 def advice(device: str, signals: set[str], problem: str) -> str:
-    if device == "headband":
-        if problem == "missing" and signals == {"brain", "head_mov"}:
-            return "Headband is not sending data. Check that it is on, worn and charged."
-        if "brain" in signals:
-            return "Brain signal is weak. Adjust the headband so the sensors touch the skin."
-        return "Headband movement sensor is not sending data. Restart the headband."
-    if problem == "missing" and signals == {"heart", "body_mov"}:
-        return "Watch is not sending data. Check that it is worn and charged."
-    if "heart" in signals:
-        return "Heart rate is not measured. Tighten the watch strap."
-    return "Watch movement sensor is not sending data. Restart the watch."
+    return WARNING_TEXT[warning_code(device, signals, problem)]
 
 
 @dataclass
@@ -92,6 +113,8 @@ class Episode:
     impact: str
     reminders: list[float] = field(default_factory=list)
     fixed_s: float | None = None
+    code: str = ""             # warning code sent to the watch
+    impact_code: str = "none"
 
 
 def _busy_mask(n: int, busy: list[tuple[float, float]]) -> np.ndarray:
@@ -136,7 +159,8 @@ def monitor(q: dict[str, np.ndarray], busy: list[tuple[float, float]] = ()) -> l
                         problem = "missing" if miss else "poor"
                         other_bad = {k for k in others if (q[k][lo:i + 1] != OK).mean() >= 0.5}
                         ep = Episode(dev, lo * W, t, sig, problem, advice(dev, sig, problem),
-                                     impact(sig, other_bad))
+                                     impact(sig, other_bad), code=warning_code(dev, sig, problem),
+                                     impact_code=impact_code(sig, other_bad))
                         good_run = 0
             else:
                 good_run = 0 if bad[i] else good_run + 1
