@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>EpiProt brand</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { overflow: hidden; }
+  body { font-family: "Segoe UI", "Segoe UI Variable", system-ui, sans-serif; }
+  .stage { display: flex; align-items: center; justify-content: center; gap: 0.32em; width: 100vw; height: 100vh; }
+  .dark  { background: radial-gradient(circle at 50% 45%, #0B4656 0%, #062F3A 55%, #041F27 100%); color: #F2FAFA; }
+  .light { background: #FFFFFF; color: #0B3B48; }
+  .clear { background: transparent; color: #0B3B48; }
+  .logo { width: 1.25em; height: 1.25em; flex: none; }
+  .word { font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+  .word b { font-weight: 700; color: #1590B0; }
+  .dark .word b { color: #5FD0E6; }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <svg class="logo" viewBox="0 0 48 48" aria-hidden="true">
+    <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1590B0"/><stop offset="1" stop-color="#0F6F8F"/></linearGradient></defs>
+    <circle cx="24" cy="24" r="22" fill="url(#lg)"/>
+    <path d="M9,26h8l3,-8l5,16l4,-12l2,4h8" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <div class="word">Epi<b>Prot</b></div>
+</div>
+<script>
+  const p = new URLSearchParams(location.search);
+  const s = document.getElementById('stage');
+  s.className = 'stage ' + (p.get('theme') || 'dark');
+  if (p.get('theme') === 'clear') document.documentElement.style.background = 'transparent';
+  s.style.fontSize = (p.get('size') || '160') + 'px';
+</script>
+</body>
+</html>

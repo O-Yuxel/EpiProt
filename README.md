@@ -1,15 +1,21 @@
+<p align="center"><img src="docs/media/epiprot-light.png" alt="EpiProt" width="520"></p>
+
 # EpiProt
 
 **A wearable system that detects tonic-clonic (big convulsive) seizures while they happen, alerts a
 caregiver with the location, watches over the patient after the seizure, and keeps a seizure diary
 with raw brain, heart and movement signals for the doctor.**
 
-| 96% | 0.20 / day | 42 s |
+| 98% | 0.24 / day | 46 s |
 |:---:|:---:|:---:|
-| tonic-clonic seizures detected (53 of 55) | false alarms per day (about 1 every 5 days) | median time from seizure onset to alarm |
+| tonic-clonic seizures detected (54 of 55) | false alarms per day (about 1 every 4 days) | median time from seizure onset to alarm |
 
 Results on the SeizeIT2 wearable dataset (125 patients, 11,538 hours), patient-wise cross-validation:
-every patient was tested by models that never saw them in training.
+every patient was tested by models that never saw them in training. Only data the EpiProt hardware provides
+(headband EEG + headband movement + the watch's heart rate).
+
+Robust to a failing watch: with the watch heart rate missing during every seizure 54/55, without a watch at all
+53/55 (headband alone), with the heart-rate sensor stuck during seizures 53/55.
 
 ---
 
@@ -20,22 +26,23 @@ every patient was tested by models that never saw them in training.
  (EEG + head movement)       (the brain)                   (heart rate, movement, PIN)
                                 │
                                 ├── SMS + location ──► caregiver
-                                └── report (e-mail) ──► doctor
+                                └── PDF report (WhatsApp, e-mail ...) ──► doctor
 ```
 
 ### 📱 [`mobile-app/`](mobile-app/) — EpiProt phone app
 The brain of the system. Everything that decides runs here.
-- **Seizure detection model** (5 s + 30 s LightGBM models, with a fallback when movement data is missing)
+- **Seizure detection model** (5 s + 30 s LightGBM models; backup models when the movement sensor or the watch
+  heart rate is missing or stuck)
 - **Alarm flow:** caregiver alerted at the moment of the alarm; a 4-digit PIN cancels a false alarm and sends a
   "false alarm" message; emergency message after 5 minutes; "Are you OK?" check-ins after the seizure
 - **Sensor-health monitor:** warns on the watch when the headband or watch is not measuring properly
-- **Event log** on the phone (SQLite) with raw EEG, heart and movement around every event
-- **Doctor report** (PDF with charts) generated on the phone, sent when online
+- **Event log** on the phone (encrypted) and, with consent, the signals from 2 min before to 5 min after each alarm
+- **Doctor report** (PDF with charts and signal graphs), sent by the patient with any app when the doctor asks
+- **Consent system:** first-start setup per country (Türkiye, EU, US), separate consents, privacy centre
 
-Status: model trained and evaluated; app logic as a Python prototype tested on real recordings. The Android app
-([`mobile-app/android/`](mobile-app/android/), Kotlin) runs the 5 s detector, alarm flow, sensor warnings, event
-log and caregiver SMS, verified against the Python code; its demo replays a real recorded seizure. Not yet tested
-with real devices.
+Status: the Android app ([`mobile-app/android/`](mobile-app/android/), Kotlin) runs the full chain, verified
+against the Python code (38 unit tests, 24 h endurance test); its demo replays a real recorded seizure. Not yet
+tested with real devices; the headband does not exist yet.
 
 ### ⌚ [`watch-app/`](watch-app/) — EpiProt watch app
 A small companion app on a Wear OS watch. It measures and shows; it does not decide.
@@ -44,7 +51,8 @@ A small companion app on a Wear OS watch. It measures and shows; it does not dec
 - Shows the "Are you OK?" check-ins and the sensor warnings
 - Warns by itself when the phone is out of reach (then there are no alarms)
 
-Status: first version (Kotlin, Compose for Wear OS) with a demo mode. Builds, unit tests pass, runs on the Wear OS emulator; not yet tested on a real watch.
+Status: first version (Kotlin, Compose for Wear OS) with a demo mode. Builds, unit tests pass, runs on the Wear OS
+emulator and was tested together with a real Android phone; not yet tested on a real watch.
 
 ### 🎧 [`device-firmware/`](device-firmware/) — headband software
 Runs on the small processor inside the headband.
@@ -66,7 +74,7 @@ Status: specification written, not built yet.
 | Detection model | | | ✔ |
 | Alarm and recovery flow, SMS to the caregiver | | | ✔ |
 | Sensor-health monitor | | warnings | ✔ |
-| Event log, 48 h raw buffer, doctor report | | | ✔ |
+| Event log, signals around alarms (with consent), doctor report | | | ✔ |
 
 The phone is the hub because all sensors meet there, the raw data for the event log arrives there anyway
 (about 1.8 kB/s), and messages to the caregiver leave from the phone.
@@ -78,12 +86,15 @@ The phone is the hub because all sensors meet there, the raw data for the event 
 | Brain signal + head movement | headband → phone | Bluetooth Low Energy; paired once, then reconnects automatically |
 | Heart rate, movement, PIN result | watch ↔ phone | Wear OS Data Layer (Bluetooth) between the two EpiProt apps |
 | Caregiver alert | phone → caregiver's phone | SMS with a map link of the location; numbers entered in the app |
-| Doctor report | phone → doctor | encrypted zip (PDF + event table + raw signals) by e-mail, with the patient's consent |
+| Doctor report | phone → doctor | PDF (summary, charts, event table, signal graphs) shared by the patient with any app (WhatsApp, e-mail ...), each time confirmed |
 
 ## Privacy
 
-Health data stay on the patient's phone, encrypted. Nothing is uploaded to a server. Data are sent to the
-doctor only with the patient's consent (KVKK / GDPR special category data).
+Health data stay on the patient's phone, encrypted (SQLCipher, key in the Android Keystore). Nothing is uploaded to
+a server. Separate consents for processing, caregiver SMS, location and keeping signals; the doctor report is sent
+only by the patient. Texts per country: KVKK (Türkiye), GDPR (EU), US federal and state rules. Details:
+[`mobile-app/android/PRIVACY.md`](mobile-app/android/PRIVACY.md); what is still needed before real use:
+[`docs/`](docs/).
 
 ## Disclaimer
 

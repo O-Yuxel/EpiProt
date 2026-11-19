@@ -3,8 +3,8 @@
 The brain of EpiProt: it receives the data from the headband and the watch, runs the seizure detection
 model, handles the alarm, keeps the event log and builds the doctor report.
 
-**Status:** the model and all app logic are written in Python and tested on real SeizeIT2 recordings.
-The real Android app (Kotlin) will be built from this prototype in `android/` (not started).
+**Status:** the model and the app logic were developed in Python and tested on real SeizeIT2 recordings; the
+Android app built from them is in [`android/`](android/README.md) (Kotlin, verified against the Python code).
 
 ## What is in this folder
 
@@ -24,27 +24,30 @@ mobile-app/
 | File | Role |
 |---|---|
 | `tc_features.py` | 5 s window features from raw EEG, ECG and movement |
-| `tc_detect.py` | 5 s model (EEG + heart + movement, 280 features) and fallback (EEG + heart, 120 features); hard-negative mining, ECG-dropout training |
-| `detect.py` | 30 s model (316 features) |
-| `tc_ensemble.py` | final system: max of the two scores, fallback when movement is missing |
+| `tc_detect.py` | 5 s models (feature groups, e.g. EEG + heart + headband movement); hard-negative mining, ECG-dropout training |
+| `detect.py` | 30 s model |
+| `tc_ensemble.py` | final system: max of the 5 s and 30 s scores, backups when movement or heart rate is missing / stuck |
 | `tc30s_features.py` | 30 s features the phone computes itself (EEG spectrum, watch-like heart rate) |
-| `hr_robustness.py` | what happens when the watch heart rate is missing; backup models without heart rate |
+| `hr_robustness.py` | missing or wrong watch heart rate (missing, random, stuck, false high); backup models without heart rate |
 | `tc_errors.py` | error analysis: missed seizures, false alarms, latency |
 | `cluster_risk.py` | seizure recurrence after a seizure (why the cluster warning was dropped) |
 
-Final result (patient-wise 5-fold cross-validation, threshold chosen inside the training patients):
-**53 / 55 tonic-clonic seizures (96%), 0.20 false alarms per day, median alarm 42 s after onset.**
+Final result, the model in the Android app (patient-wise 5-fold cross-validation, threshold chosen inside the
+training patients), using only what the EpiProt hardware provides (headband EEG + headband movement + the watch's
+1 Hz heart rate): **54 / 55 tonic-clonic seizures (98%), 0.24 false alarms per day, median alarm 46 s after
+onset.**
 
-That system's 30 s model used the raw chest ECG, which the EpiProt hardware does not have. The version that
-uses only what the headband and the watch provide (30 s features from `tc30s_features.py`, no wrist
-movement) gives **54 / 55 (98%), 0.24 false alarms per day, median 46 s**; this is the model in the Android
-app (see [`android/README.md`](android/README.md)). Backup models without heart rate take over whenever the watch
-sends none (`hr_robustness.py`): 54/55 with the heart rate lost during every seizure, 53/55 without a watch.
+Robustness (`hr_robustness.py`): backup models without heart rate take over whenever the watch sends none or its
+heart rate is stuck: 54/55 with the heart rate lost during every seizure, 53/55 without a watch, 53/55 with the
+sensor stuck during seizures (before the stuck check: 40/55). Details: [`android/README.md`](android/README.md).
+
+An earlier version whose 30 s model used the raw chest ECG (not available on the EpiProt hardware) reached
+53/55, 0.20 false alarms per day, 42 s.
 
 ### The phone app prototype (`src/epiprot/app/`)
 
-The Android app built from it is in [`android/`](android/README.md); `export_model.py` exports the final 5 s
-models and the alarm rule for it.
+The Android app built from it is in [`android/`](android/README.md); `export_model.py` exports the final models
+(5 s, 30 s and the no-heart-rate backups) and the alarm rule for it.
 
 
 | File | Role |
@@ -76,7 +79,6 @@ docker run --rm -v "$PWD:/app" -w /app/mobile-app -e PYTHONPATH=/app/mobile-app/
 
 ## Next steps
 
-1. Retrain the final models once on all 125 patients with a fixed threshold.
-2. Export them to a phone format (ONNX or generated C/Kotlin code).
-3. Build the Android app: foreground service, Bluetooth connection to the headband, Wear OS Data Layer to the
-   watch, SMS to caregivers, encrypted database, e-mail of the doctor package.
+1. Headband: Bluetooth connection once the device and its packet format exist.
+2. Data from the real EpiProt headband and watch; tune the heart-rate checks and fine-tune the models.
+3. Everything needed before real use (legal, ethics, medical-device process): [`../docs/`](../docs/).

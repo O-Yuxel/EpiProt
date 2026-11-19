@@ -3,7 +3,7 @@
 The hub of the system: receives the watch (and later the headband) data, runs the seizure detector every 5 s,
 handles alarms and sends the caregiver messages. Kotlin, Jetpack Compose (Material 3).
 
-**Status:** first version. Builds, 37 unit tests pass (including parity with the Python code), runs on the
+**Status:** first version. Builds, 38 unit tests pass (including parity with the Python code), runs on the
 Android emulator: the demo replays a real recorded seizure → alarm → caregiver message with location → audit
 trail. Not yet tested together with the watch on real devices; the headband does not exist yet.
 
@@ -45,8 +45,9 @@ rate**. No chest ECG, no wrist movement.
 | B_nohr (30 s, same) | EEG spectrum | 184 |
 
 Rule: max of the scaled 5 s and 30 s scores, threshold for 0.25 false alarms/day. In every window without a heart
-rate the phone uses A_nohr and B_nohr: models that never saw a heart rate, so a heart rate that drops out (watch
-taken off, optical sensor lost during a convulsion) cannot fool them.
+rate, or with a stuck heart rate (varied < 1 bpm over the last minute), the phone uses A_nohr and B_nohr: models
+that never saw a heart rate, so a heart rate that drops out or freezes (watch taken off, optical sensor lost
+during a convulsion) cannot fool them.
 **Cross-validated: 54 / 55 tonic-clonic seizures (98%), 0.24 false alarms/day, median alarm 46 s after onset.**
 
 How we got there (all patient-wise 5-fold cross-validation, 0.25/day budget):
@@ -89,15 +90,15 @@ Training model A with simulated heart-rate dropouts instead was tried and reject
 heart rate). So the headband is the core sensor; the watch heart rate adds about one seizure and ~7 s earlier alarms.
 
 The wrist movement is not needed for detection; the watch's movement is only used to tell whether the watch is
-worn and sending. `assets/model/` is made by `export_model.py --group5 eeg+ecg+head --mov-cols head_acc_std --nohr5 ... --nohr30 ...`
-(final models trained on all 125 patients; threshold chosen on the out-of-fold scores of all patients:
-53/55, 0.22/day there).
+worn and sending. `assets/model/` is made by `export_model.py --group5 eeg+ecg+head --mov-cols head_acc_std --nohr5 ... --nohr30 ...
+--stuck-hr 1.0` (final models trained on all 125 patients; threshold chosen on the out-of-fold scores of all
+patients: 54/55, 0.23/day there).
 
 ## Not validated yet (honest list)
 
-* **Heart rate:** the model learned it from a chest ECG; the watch measures it optically. Missing heart rate is
-  handled by the backup models; a heart rate that is present but WRONG (optical sensor locked onto the movement)
-  is not tested yet.
+* **Heart rate:** the model learned it from a chest ECG; the watch measures it optically. Missing and stuck heart
+  rates are handled by the backup models (tested in simulation); the stuck threshold must be tuned with real
+  watch data, and a false high rate during activity still raises false alarms (0.24 -> 0.39/day in simulation).
 * **Movement:** in SeizeIT2 the "head" movement sensor was the EEG device on the **upper back**. Putting the
   headband's electronics at the back of the neck keeps it close to that. Units differ between recordings;
   `Calibration` in `engine/WindowAssembler.kt` holds assumed conversion factors (the unit-free variant was
@@ -160,7 +161,7 @@ python -m epiprot.gbm.hr_robustness --out-dir epiprot_results/gbm/hr_nohr --part
 O=epiprot_results/gbm/hr_robust; H=epiprot_results/gbm/hr_nohr
 python -m epiprot.app.export_model --raw-dir /raw --group5 eeg+ecg+head --mov-cols head_acc_std \
     --oof5 $O/a_eeg+ecg+head_clean.npz --fallback $O/a_eeg+ecg_clean.npz --oof30 $O/b_clean.npz \
-    --nohr5 $H/a_eeg+head_clean.npz --nohr30 $H/b_clean.npz \
+    --nohr5 $H/a_eeg+head_clean.npz --nohr30 $H/b_clean.npz --stuck-hr 1.0 \
     --assets mobile-app/android/app/src/main/assets/model \
     --fixtures mobile-app/android/app/src/test/resources/fixtures
 python mobile-app/android/tools/make_30s_fixture.py /raw mobile-app/android/app/src/test/resources/fixtures
