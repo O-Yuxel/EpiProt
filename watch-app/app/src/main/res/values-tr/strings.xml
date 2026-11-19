@@ -52,4 +52,6 @@
     <string name="channel_monitoring">Takip</string>
     <string name="channel_alarm">Nöbet alarmları</string>
     <string name="notif_monitoring">EpiProt takipte</string>
+    <string name="home_no_consent">Sensörler kapalı</string>
+    <string name="home_no_consent_text">İzleme için henüz onay yok. EpiProt telefon uygulamasından ver (Ayarlar → Gizlilik ve onaylar).</string>
 </resources>

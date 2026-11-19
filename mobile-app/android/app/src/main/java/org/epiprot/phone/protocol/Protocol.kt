@@ -27,6 +27,8 @@ object Paths {
     const val SENSOR_WARNING = "/epiprot/sensor_warning"
     const val SENSOR_FIXED = "/epiprot/sensor_fixed"
     const val SETTINGS = "/epiprot/settings"
+    /** Whether the user's consent allows monitoring; without it the watch does not run its sensors. */
+    const val CONSENT = "/epiprot/consent"
 }
 
 /** Capability names declared in res/values/wear.xml of each app. */
@@ -135,11 +137,13 @@ data class WatchStatus(
     val heartSensor: String,       // "device" | "simulated"
     val timeMs: Long,
     val alarmId: Long? = null,     // alarm the watch is showing / keeping, so the phone can end a stale one
+    val monitoringAllowed: Boolean? = null,  // what the watch last heard about the consent
 ) {
     fun encode(): ByteArray = JSONObject()
         .put("battery_pct", batteryPct).put("charging", charging)
         .put("on_body", onBody ?: JSONObject.NULL).put("heart_sensor", heartSensor).put("time_ms", timeMs)
         .put("alarm_id", alarmId ?: JSONObject.NULL)
+        .put("monitoring_allowed", monitoringAllowed ?: JSONObject.NULL)
         .toString().toByteArray()
 }
 
@@ -151,6 +155,7 @@ sealed interface PhoneMessage {
     data class SensorWarning(val code: String, val impact: String) : PhoneMessage
     data class SensorFixed(val code: String) : PhoneMessage
     data class Settings(val pinSalt: String, val pinHash: String, val pinWindowS: Int) : PhoneMessage
+    data class ConsentState(val monitoringAllowed: Boolean) : PhoneMessage
 
     companion object {
         fun decode(path: String, bytes: ByteArray): PhoneMessage? = try {
@@ -162,6 +167,7 @@ sealed interface PhoneMessage {
                 Paths.SENSOR_WARNING -> SensorWarning(j.getString("code"), j.optString("impact", "none"))
                 Paths.SENSOR_FIXED -> SensorFixed(j.getString("code"))
                 Paths.SETTINGS -> Settings(j.getString("pin_salt"), j.getString("pin_hash"), j.optInt("pin_window_s", 30))
+                Paths.CONSENT -> ConsentState(j.getBoolean("monitoring_allowed"))
                 else -> null
             }
         } catch (e: Exception) {
@@ -178,6 +184,7 @@ sealed interface PhoneMessage {
                 is SensorFixed -> Paths.SENSOR_FIXED to JSONObject().put("code", msg.code)
                 is Settings -> Paths.SETTINGS to JSONObject().put("pin_salt", msg.pinSalt).put("pin_hash", msg.pinHash)
                     .put("pin_window_s", msg.pinWindowS)
+                is ConsentState -> Paths.CONSENT to JSONObject().put("monitoring_allowed", msg.monitoringAllowed)
             }
             return path to j.toString().toByteArray()
         }

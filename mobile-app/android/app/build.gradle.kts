@@ -57,6 +57,8 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.play.services)
+    implementation("net.zetetic:sqlcipher-android:4.6.1@aar")   // encrypted event log
+    implementation(libs.androidx.sqlite)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)

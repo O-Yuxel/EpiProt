@@ -1,0 +1,191 @@
+{
+  "draft_note": "TASLAK – gerçek kullanımdan önce ABD'li bir avukat tarafından kontrol edilmelidir. Hukuki görüş değildir.",
+  "welcome": [
+    "EpiProt, kafa bandı ve akıllı saatten gelen verilerle tonik-klonik nöbetleri algılar ve bakıcılarını uyarır.",
+    "Kullandığı veriler tüketici sağlık verisidir. ABD federal hukuku (FTC Yasası ve FTC Sağlık Verisi İhlali Bildirim Kuralı) ve bazı eyaletlerin yasaları (örneğin Washington'ın My Health My Data Act'i, Nevada ve Connecticut) bu verilerin toplanması ve paylaşılması için onayını ister.",
+    "Sonraki birkaç ekranda önce neyin, neden ve nasıl işlendiğini okuyacaksın. Sonra her konuda AYRI AYRI karar vereceksin.",
+    "Hiçbir seçenek önceden işaretli değil. Kararlarını istediğin zaman Ayarlar → Gizlilik ve onaylar bölümünden değiştirebilirsin.",
+    "Bu kurulum bitene kadar hiçbir sensör verisi toplanmaz veya işlenmez."
+  ],
+  "roles": {
+    "self": {
+      "title": "Hastayım ve reşitim",
+      "text": "18 yaş veya eyaletindeki reşit olma yaşı. Kararları kendin verirsin."
+    },
+    "parent": {
+      "title": "18 yaş altı bir hastanın velisi veya yasal vasisiyim",
+      "text": "Kararları çocuğun adına sen verirsin. Çocuğun 13 yaşından küçükse ayrıca bir veli onayı imzalaman istenir (COPPA – Çocukların Çevrimiçi Gizliliğini Koruma Yasası). Lütfen bunları çocuğunla da konuş: çocuğun bir onayın geri alınmasını her zaman isteyebilir."
+    },
+    "guardian": {
+      "title": "Hastanın yasal vasisi / yetkili temsilcisiyim",
+      "text": "Hasta karar veremiyorsa (örneğin vesayet veya sağlık vekâletnamesi ile) kararları yetkili temsilcisi olarak sen verirsin. Hasta karar verebilecek durumdaysa kurulumu kendisi yapmalı."
+    }
+  },
+  "notice_summary": [
+    "Topladıklarımız: kafa bandından beyin sinyali (EEG) ve hareket, saatten nabız ve hareket, nöbet ve alarm kayıtları, girdiğin ad, bakıcı telefon numaraları, doktorunun e-postası ve – sadece izin verirsen – alarm anında telefonun konumu.",
+    "Neden: sadece nöbet algılamak, seni ve bakıcılarını uyarmak ve olayların kaydını tutmak için.",
+    "Nerede: tüm veriler bu telefonda kalır. EpiProt'un sunucusu yoktur ve verilerinden hiçbirini almaz.",
+    "Paylaşım: onay verirsen sadece seçtiğin bakıcılara SMS; doktoruna rapor sadece sen gönderdiğinde. Verilerini asla satmayız ve reklam için kullanmayız.",
+    "Ne kadar: ham sensör sinyalleri işlendikten hemen sonra silinir. Olay kayıtları sen silene kadar telefonda kalır.",
+    "Hakların: verilerini görebilir, indirebilir, silebilir ve onaylarını istediğin zaman uygulama içinden geri alabilirsin."
+  ],
+  "notice_full": [
+    "# 1. Biz kimiz",
+    "EpiProt proje ekibi (NYAS Junior Academy). İletişim: [proje iletişim adresi eklenecek]. EpiProt bir araştırma prototipidir.",
+    "# 2. Topladığımız tüketici sağlık verileri",
+    "- Kafa bandından: beyin sinyali (EEG) ve baş hareketi. Saatten: nabız ve bilek hareketi.",
+    "- Telefonda hesaplanan: nöbet olasılığı, nöbet ve alarm kayıtları (zaman, süre, atılan adımlar), sensör uyarıları.",
+    "- Senin girdiklerin: hastanın adı, karar veren kişinin adı ve hastaya yakınlığı, bakıcı telefon numaraları, doktor e-posta adresi.",
+    "- Konum: kesin konum yalnızca alarm anında ve konum onayınla, bakıcı SMS'ine eklemek için. Kesin konum birçok eyalet yasasına göre hassas veridir.",
+    "- Saat PIN'i: saklanmaz; yalnızca geri çevrilemeyen bir özeti (tuzlanmış SHA-256) saklanır.",
+    "- Onay kayıtları: neyi ne zaman kabul ettiğin veya geri aldığın ve kimin karar verdiği.",
+    "# 3. Nasıl kullanıyoruz",
+    "- Tonik-klonik nöbetleri algılamak ve alarm vermek; saatte PIN sormak; bakıcılarını uyarmak; nöbet sonrası takip.",
+    "- Sensörlerin takılı olup olmadığını kontrol etmek ve değilse uyarmak.",
+    "- Olay geçmişini tutmak ve istersen doktoruna rapor hazırlamak.",
+    "- Başka hiçbir şey. Reklam yok, profil çıkarma yok, satış yok; sana yeniden sormadan başka bir amaçla kullanım yok.",
+    "# 4. Onayların",
+    "- Sağlık verilerinin toplanıp işlenmesi onayını gerektirir (\"toplama onayı\"). Bakıcılarla paylaşılması ayrı bir onay (\"paylaşma onayı\"), konumun eklenmesi ise bir başka onay gerektirir. Her biri ayrı sorulur; herhangi birini reddedebilir, istediğin zaman geri alabilirsin.",
+    "# 5. Nasıl paylaşıyoruz",
+    "- EpiProt'un sunucusu yok; biz, geliştiriciler, verilerinden hiçbirini almayız.",
+    "- Bakıcılar: sadece onay verirsen, sadece alarm ve takip mesajları SMS ile, sadece girdiğin ve kabul ettiğini işaretlediğin numaralara. SMS'ler mobil operatörün üzerinden iletilir.",
+    "- Doktorun: sadece sen rapor gönderdiğinde, her seferinde.",
+    "- Telefonun konum servisi ve saat bağlantısı Google Play Hizmetleri'ni kullanır; Google'ın kendi koşulları geçerlidir.",
+    "- Tüketici sağlık verilerini satmaz, kiralamaz ve hedefli reklam için paylaşmayız.",
+    "# 6. HIPAA",
+    "EpiProt sana doktorun, hastanen veya sigortan tarafından değil doğrudan sunulduğu için HIPAA genellikle uygulanmaz. EpiProt bir gün sana HIPAA kapsamındaki bir kurum tarafından verilirse, o kurumun gizlilik uygulamaları bildirimi de geçerli olur.",
+    "# 7. Saklama süresi",
+    "- Ham sensör sinyalleri: yalnızca işlenirken bellekte tutulur, kaydedilmez.",
+    "- Olay kayıtları, mesaj kayıtları, sensör uyarıları: sen silene kadar bu telefonda (şifreli olarak).",
+    "- Onay kayıtları: tüm verilerini silene kadar (neyi kabul edip geri aldığının kanıtı olarak).",
+    "- Uygulamayı kaldırmak telefondaki tüm EpiProt verilerini siler.",
+    "# 8. Güvenlik ve ihlal bildirimi",
+    "Veriler yalnızca bu uygulamanın erişebildiği alanda, şifreli olarak saklanır; anahtar telefonun güvenli donanımındadır. PIN yalnızca özet olarak saklanır. Telefonuna ekran kilidi koymanı öneririz. EpiProt üzerinden sağlık verilerinin izinsiz ifşası olursa seni (ve Sağlık Verisi İhlali Bildirim Kuralı gerektirdiğinde FTC'yi) bilgilendiririz.",
+    "# 9. Hakların",
+    "Eyaletine göre (örneğin Washington, Nevada, Connecticut, Kaliforniya, Colorado, Virginia, Teksas) şu hakların vardır:",
+    "- sağlık verilerinin işlenip işlenmediğini öğrenmek ve erişmek: Geçmiş sekmesi, Ayarlar → Gizlilik ve onaylar;",
+    "- bir kopyasını almak: Ayarlar → Gizlilik ve onaylar → Verilerimi indir;",
+    "- düzeltmek: Ayarlar ekranlarından;",
+    "- silmek: Ayarlar → Gizlilik ve onaylar → Tüm verilerimi sil;",
+    "- onayını istediğin zaman, aynı yerden geri almak;",
+    "- bu hakları kullandığın için ayrımcılığa uğramamak.",
+    "Tüm veriler telefonunda olduğu için bu hakları doğrudan uygulamada kullanırsın; yukarıdaki adresten bize de ulaşabilir ve verdiğimiz bir karara itiraz edebilirsin. Eyaletinin başsavcılığına veya FTC'ye şikâyette bulunabilirsin.",
+    "# 10. Çocuklar",
+    "Hasta 18 yaşından küçükse onayları veli veya yasal vasi verir. 13 yaş altı bir hasta için ayrıca imzalı veli onayı isteriz (COPPA). Çocuk bir onayın geri alınmasını her zaman isteyebilir.",
+    "# 11. Değişiklikler",
+    "Bu bildirim veya bir onay metni değişirse uygulama kurulumu sana yeniden gösterir ve kararlarını yeniden sorar."
+  ],
+  "limits": [
+    "EpiProt bir araştırma prototipidir. ABD Gıda ve İlaç Dairesi (FDA) tarafından onaylanmamıştır.",
+    "Bazı nöbetleri KAÇIRABİLİR. Nöbet olmadığı halde alarm verebilir.",
+    "Doktorunun tedavisinin ve bakıcı gözetiminin yerine geçmez. İlaçlarını ve doktorunun önerilerini değiştirme.",
+    "Yalnızca kafa bandı ve saat takılı, şarjlı ve telefona bağlıyken çalışır. SMS internet olmadan da gider, ama şebeke olmadan gitmez.",
+    "Acil bir durumda beklemeden 911'i ara."
+  ],
+  "consents": {
+    "health_data": {
+      "title": "Nöbet algılama için sağlık verilerimin toplanmasına onay",
+      "badge": "İzleme için gerekli",
+      "what": "Kafa bandından gelen beyin sinyali ve hareket, saatten gelen nabız ve hareket bu telefonda işlenir. Nöbet olasılığı hesaplanır, nöbet ve alarm kayıtları telefonda saklanır. Hiçbir veri sunucuya gönderilmez.",
+      "yes": [
+        "İzleme açılabilir. Nöbet algılanınca saatin titrer ve PIN sorar.",
+        "Nöbet ve alarm kayıtların Geçmiş'te tutulur.",
+        "Sensör takılı değilse veya veri kesilirse uyarı alırsın.",
+        "Onayı istediğin zaman geri alabilirsin. Geri alırsan izleme o anda durur."
+      ],
+      "no": [
+        "İzleme açılamaz. EpiProt nöbet ALGILAYAMAZ ve kimseyi uyaramaz.",
+        "Sadece demoyu (kayıtlı bir hastanın verisiyle) ve bilgi ekranlarını kullanabilirsin.",
+        "Hiçbir sensör verin işlenmez.",
+        "Daha sonra Ayarlar → Gizlilik ve onaylar'dan onay verebilirsin."
+      ]
+    },
+    "caregiver_sms": {
+      "title": "Alarmların bakıcılarımla SMS ile paylaşılmasına onay",
+      "badge": "İsteğe bağlı – önerilir",
+      "what": "Alarm olduğunda girdiğin bakıcı numaralarına SMS gider: olası nöbet, yanlış alarm (PIN girildiyse), 5 dakikayı geçen nöbette acil durum (\"911'i arayın\"), nöbet sonrası cevap gelmezse yeniden uyarı. Bu mesajlar senin adını ve bir sağlık bilgisini (olası nöbet) içerir. Yalnızca kabul ettiğini işaretlediğin bakıcılara gider.",
+      "yes": [
+        "Nöbet algılanınca bakıcıların HEMEN haberdar olur.",
+        "PIN girersen bakıcılara 'yanlış alarm, iyi' mesajı gider.",
+        "Mesajlar telefonunun SMS'i ile gider. Normal SMS ücreti uygulanabilir.",
+        "Bakıcı numaralarının sahiplerinin bu mesajları almayı kabul etmiş olması gerekir. Bunu her numara için ayrıca işaretlersin."
+      ],
+      "no": [
+        "Alarm SADECE telefonunda ve saatinde görünür. Kimse uyarılmaz.",
+        "Nöbet sırasında kendin yardım isteyemeyebileceğin için bu, EpiProt'un en önemli korumasını kapatır.",
+        "Ana ekranda 'bakıcılar uyarılmayacak' diye bir uyarı görünmeye devam eder.",
+        "Daha sonra istediğin zaman açabilirsin."
+      ]
+    },
+    "location": {
+      "title": "Alarm SMS'ine kesin konumumun eklenmesine onay",
+      "badge": "İsteğe bağlı",
+      "what": "Yalnızca bir alarm olduğunda telefonun konumu bir kez alınır ve bakıcıya giden SMS'e harita bağlantısı olarak eklenir. Konum sürekli takip edilmez ve saklanmaz.",
+      "yes": [
+        "Bakıcıların seni nerede olursan ol bulabilir.",
+        "Konum sadece alarm anında, bir kez alınır.",
+        "Telefon ayrıca konum izni isteyecek."
+      ],
+      "no": [
+        "SMS'ler konum OLMADAN gider ('konum paylaşılmadı' yazar).",
+        "Evden uzaktayken bakıcılarının seni bulması zorlaşabilir.",
+        "Konum hiç okunmaz."
+      ],
+      "needs_sms": "Bu onay, bakıcılara SMS onayı verildiyse anlamlıdır. SMS onayı vermediğin için konum kullanılmayacak."
+    },
+    "research": {
+      "title": "Kimliksizleştirilmiş verilerin araştırmada kullanılmasına onay",
+      "badge": "İsteğe bağlı – varsayılan kapalı",
+      "what": "İleride bir araştırma çalışması yapılırsa, kimliğini belirleyecek bilgiler (ad, numara, konum) çıkarılmış nöbet kayıtlarının modeli geliştirmek için kullanılması. ŞU AN hiçbir veri gönderilmiyor. Böyle bir çalışma başlarsa, veri telefondan çıkmadan önce sana ayrıca ve ayrıntılı olarak sorulur (gerektiğinde bir etik kurul da inceler).",
+      "yes": [
+        "İleride bir çalışma başlarsa sana sorulabilir.",
+        "Şimdilik hiçbir şey değişmez, hiçbir veri gönderilmez."
+      ],
+      "no": [
+        "Hiçbir şey değişmez. Uygulamanın tüm özellikleri aynen çalışır.",
+        "Verilerin hiçbir araştırmada kullanılmaz."
+      ]
+    }
+  },
+  "permissions": {
+    "intro": "Şimdi telefonun bazı izinler isteyecek. Her birinin ne için kullanıldığı aşağıda. Bir izni vermezsen sadece ilgili özellik çalışmaz.",
+    "notifications": {
+      "title": "Bildirimler",
+      "why": "Alarm ve 'izleme açık' bildirimi için.",
+      "no": "Alarm bildirimi görünmeyebilir. Önerilir."
+    },
+    "bluetooth": {
+      "title": "Yakındaki cihazlar",
+      "why": "Kafa bandına Bluetooth ile bağlanmak için.",
+      "no": "Kafa bandı bağlanamaz."
+    },
+    "sms": {
+      "title": "SMS gönderme",
+      "why": "Sadece alarmda, sadece bakıcılarına SMS göndermek için. EpiProt mesajlarını OKUMAZ.",
+      "no": "Bakıcılara SMS gidemez."
+    },
+    "location": {
+      "title": "Konum",
+      "why": "Sadece alarm anında, konumu bakıcı SMS'ine eklemek için.",
+      "no": "SMS'ler konum olmadan gider."
+    }
+  },
+  "where_later": "Bu kararların hepsini istediğin zaman Ayarlar → Gizlilik ve onaylar bölümünde görebilir ve değiştirebilirsin. Aydınlatma metni, sınırlar sayfası, onay geçmişi, verilerini indirme ve silme de orada.",
+  "region_name": "Amerika Birleşik Devletleri",
+  "emergency_number": "911",
+  "child_summary": [
+    "EpiProt, nöbet geçirdiğinde bunu fark etmeye çalışan bir yardımcı.",
+    "Kafa bandı beyninden gelen sinyalleri, saat de kalp atışını ölçer.",
+    "Bu bilgiler sadece telefonda kalır. Başka kimse görmez, internete gönderilmez.",
+    "Nöbet olduğunu düşünürse saat titrer. İyiysen şifreni girersin, o kadar.",
+    "Nöbet olursa velinin seçtiği kişilere mesaj gider, sana yardıma gelsinler diye.",
+    "Bir şeyi istemezsen velinle konuş. Ayarları birlikte değiştirebilir, hatta her şeyi silebilirsiniz."
+  ],
+  "coppa": [
+    "Hasta 13 yaşından küçük olduğu için ABD yasası (COPPA), çocuğun herhangi bir kişisel bilgisi toplanmadan önce velinin veya yasal vasinin onayını ister.",
+    "Çocuğun hakkında toplananlar: kafa bandı ve saatten beyin sinyali, hareket ve nabız, nöbet ve alarm kayıtları, çocuğunun adı. Hepsi bu telefonda kalır; EpiProt'a veya herhangi bir sunucuya gönderilmez.",
+    "Paylaşılanlar: sadece sonraki ekranlarda izin verdiklerin (girdiğin bakıcılara alarm SMS'i; izin verirsen konum).",
+    "Veli olarak hakların: saklananları görmek (Geçmiş, Verilerimi indir), silmek (Tüm verilerimi sil) ve onayını istediğin zaman geri almak; uygulama o zaman çocuğunun verilerini toplamayı bırakır.",
+    "ABD'de herkese açık yayından önce EpiProt, veli olduğunu doğrulayan FTC onaylı bir yöntem eklemelidir (örneğin imzalı form veya eğitimli personelin kontrolü). Bu prototip yazdığın imzayı kaydeder."
+  ]
+}

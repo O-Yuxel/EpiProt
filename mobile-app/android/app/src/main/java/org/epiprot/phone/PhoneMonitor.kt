@@ -51,9 +51,13 @@ data class WatchState(val lastDataMs: Long = 0, val heartRate: Float = Float.NaN
  */
 class PhoneMonitor(private val app: Context) {
     val settings = Settings(app)
-    val log = EventLog(app)
+    val log = EventLog.open(app)
+    val consentStore = org.epiprot.phone.privacy.ConsentStore(app)
+    private val _consents = MutableStateFlow(consentStore.state())
+    /** Current consent answers (the screens and every data flow check these). */
+    val consents: StateFlow<org.epiprot.phone.privacy.ConsentState> = _consents
     private val watchLink = WatchLink(app)
-    private val messenger = CaregiverMessenger(app, settings, log, LocationProvider(app))
+    private val messenger = CaregiverMessenger(app, settings, log, LocationProvider(app)) { _consents.value }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -110,10 +114,75 @@ class PhoneMonitor(private val app: Context) {
     }
 
     private fun changed() { _logVersion.value++ }
+
+    // ------------------------------------------------------------------ consents
+
+    /** Re-reads the stored answers after a change. Withdrawing the health-data consent stops monitoring at once. */
+    fun consentsChanged() {
+        _consents.value = consentStore.state()
+        actions.watch(PhoneMessage.ConsentState(_consents.value.canMonitor))
+        if (!_consents.value.canMonitor && _running.value) {
+            org.epiprot.phone.service.MonitoringService.stop(app)
+            stop()
+        }
+        changed()
+    }
+
+    /** Newly added caregivers get one SMS telling them who added them and how to opt out (only with the SMS consent). */
+    fun sendCaregiverIntro(numbers: List<String>) {
+        if (numbers.isEmpty()) return
+        scope.launch(Dispatchers.IO) { for (n in numbers) messenger.sendIntro(n); changed() }
+    }
+
+    /** True while an alarm or the recovery follow-up is running: consents cannot be changed then (safety). */
+    val alarmBusy: Boolean get() = engine.flow.state != AlarmFlow.State.Idle
+
+    /** "Delete all my data": stops monitoring, erases the log, settings, consents and their history. */
+    fun deleteAllData() {
+        org.epiprot.phone.service.MonitoringService.stop(app)
+        stop()
+        demoJob?.cancel()
+        log.clearAll()
+        settings.clearAll()
+        consentStore.clearAll()
+        _demo.value = null
+        consentsChanged()
+    }
+
+    /** "Download my data": one JSON file in the phone's Downloads folder. Returns its name, or null on failure. */
+    fun exportData(): String? = try {
+        val json = org.json.JSONObject()
+            .put("exported_at", java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", java.util.Locale.US).format(java.util.Date()))
+            .put("app", "EpiProt").put("note", "All data EpiProt keeps on this phone.")
+            .put("settings", settings.exportJson())
+            .put("consents", org.json.JSONObject()
+                .put("current", consentJson())
+                .put("history", consentStore.historyJson()))
+            .put("log", log.exportJson())
+        val name = "epiprot-data-" + java.text.SimpleDateFormat("yyyyMMdd-HHmm", java.util.Locale.US).format(java.util.Date()) + ".json"
+        val values = android.content.ContentValues().apply {
+            put(android.provider.MediaStore.Downloads.DISPLAY_NAME, name)
+            put(android.provider.MediaStore.Downloads.MIME_TYPE, "application/json")
+        }
+        val uri = app.contentResolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)!!
+        app.contentResolver.openOutputStream(uri)!!.use { it.write(json.toString(2).toByteArray()) }
+        name
+    } catch (e: Exception) {
+        Log.w("EpiProt", "export failed", e); null
+    }
+
+    private fun consentJson(): org.json.JSONObject {
+        val c = _consents.value
+        return org.json.JSONObject().put("region", c.region?.key).put("child_under13", c.childUnder13).put("role", c.role?.key).put("consenter", c.consenter).put("text_version", c.doneVersion)
+            .put("acknowledged", org.json.JSONArray(c.acks.map { it.key }))
+            .put("granted", org.json.JSONArray(c.granted.map { it.key }))
+            .put("declined", org.json.JSONArray((c.decided - c.granted).map { it.key }))
+    }
     private fun publish() { _status.value = engine.status }
 
     fun start() {
         if (_running.value) return
+        if (!_consents.value.canMonitor) return          // no health-data consent: nothing is processed
         _running.value = true
         sendSettingsToWatch()
         loop = scope.launch(engineThread) {
@@ -155,6 +224,10 @@ class PhoneMonitor(private val app: Context) {
                         _watch.value = _watch.value.copy(batteryPct = j.optInt("battery_pct"))
                         // messages are not queued: a watch that was off / not listening missed the PIN
                         if (now - lastSettingsSentMs > 60_000) sendSettingsToWatch()
+                        // the watch's idea of the consent differs (message missed): tell it again
+                        val allowed = _consents.value.canMonitor
+                        if (j.isNull("monitoring_allowed") || j.optBoolean("monitoring_allowed") != allowed)
+                            actions.watch(PhoneMessage.ConsentState(allowed))
                         // the watch still shows an alarm the phone no longer has (phone restarted, demo stopped)
                         if (!j.isNull("alarm_id")) {
                             val wa = j.optLong("alarm_id")

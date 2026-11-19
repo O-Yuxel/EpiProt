@@ -2,8 +2,9 @@ package org.epiprot.phone.data
 
 import android.content.ContentValues
 import android.content.Context
-import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteOpenHelper
+import net.zetetic.database.sqlcipher.SQLiteDatabase
+import net.zetetic.database.sqlcipher.SQLiteOpenHelper
+import org.epiprot.phone.privacy.Vault
 import org.epiprot.phone.health.HealthMonitor
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -12,22 +13,35 @@ import java.security.SecureRandom
 class Settings(context: Context) {
     private val p = context.getSharedPreferences("epiprot", Context.MODE_PRIVATE)
 
+    // personal fields are stored encrypted (Vault, Android Keystore)
     var patientName: String
-        get() = p.getString("patient", "") ?: ""
-        set(v) = p.edit().putString("patient", v.trim()).apply()
+        get() = Vault.decrypt(p.getString("patient", null))
+        set(v) = p.edit().putString("patient", Vault.encrypt(v.trim())).apply()
 
     var caregivers: List<String>
-        get() = (p.getString("caregivers", "") ?: "").split('\n').filter { it.isNotBlank() }
-        set(v) = p.edit().putString("caregivers", v.map { it.trim() }.filter { it.isNotEmpty() }.joinToString("\n")).apply()
+        get() = Vault.decrypt(p.getString("caregivers", null)).split('\n').filter { it.isNotBlank() }
+        set(v) = p.edit().putString("caregivers", Vault.encrypt(v.map { it.trim() }.filter { it.isNotEmpty() }.joinToString("\n"))).apply()
 
     var doctorEmail: String
-        get() = p.getString("doctor", "") ?: ""
-        set(v) = p.edit().putString("doctor", v.trim()).apply()
+        get() = Vault.decrypt(p.getString("doctor", null))
+        set(v) = p.edit().putString("doctor", Vault.encrypt(v.trim())).apply()
+
+    /** History and Settings open only after the phone's own screen lock / fingerprint (if the phone has one). */
+    var appLock: Boolean
+        get() = p.getBoolean("app_lock", true)
+        set(v) = p.edit().putBoolean("app_lock", v).apply()
 
     /** Off = test mode: messages are logged and shown, not sent. */
     var realSms: Boolean
         get() = p.getBoolean("real_sms", false)
         set(v) = p.edit().putBoolean("real_sms", v).apply()
+
+    /** "Delete all my data". */
+    fun clearAll() { p.edit().clear().apply() }
+
+    fun exportJson(): org.json.JSONObject = org.json.JSONObject()
+        .put("patient_name", patientName).put("caregivers", org.json.JSONArray(caregivers))
+        .put("doctor_email", doctorEmail).put("real_sms", realSms).put("pin_set", pinHash != null)
 
     val pinSalt: String? get() = p.getString("pin_salt", null)
     val pinHash: String? get() = p.getString("pin_hash", null)
@@ -60,7 +74,47 @@ data class SensorAlertRow(val warnedMs: Long, val device: String, val code: Stri
  * Event log on the phone (SQLite), same content as mobile-app/src/epiprot/app/eventlog.py:
  * events, the alarm audit trail (steps), messages to the caregiver, sensor warnings.
  */
-class EventLog(context: Context) : SQLiteOpenHelper(context, "epiprot.db", null, 1) {
+/**
+ * The event log, in an SQLCipher database encrypted with AES-256 (passphrase from [Vault], key in the Android Keystore).
+ * Create it with [EventLog.open].
+ */
+class EventLog private constructor(context: Context, passphrase: String) :
+    SQLiteOpenHelper(context, NAME, passphrase, null, 1, 0, null, null, false) {
+
+    companion object {
+        private const val NAME = "epiprot.db"
+
+        fun open(context: Context): EventLog {
+            System.loadLibrary("sqlcipher")
+            val pass = Vault.databasePassphrase(context)
+            encryptOldPlaintextDatabase(context, pass)
+            return EventLog(context, pass)
+        }
+
+        /** Databases written before encryption existed are converted once (sqlcipher_export); on failure they are removed. */
+        private fun encryptOldPlaintextDatabase(context: Context, pass: String) {
+            val f = context.getDatabasePath(NAME)
+            if (!f.exists()) return
+            val head = f.inputStream().use { s -> ByteArray(16).also { s.read(it) } }
+            if (String(head, Charsets.ISO_8859_1) != "SQLite format 3\u0000") return
+            val tmp = context.getDatabasePath("$NAME.enc")
+            tmp.delete()
+            try {
+                val db = SQLiteDatabase.openOrCreateDatabase(f, "", null, null, null)
+                db.execSQL("ATTACH DATABASE '${tmp.path}' AS enc KEY '$pass'")
+                db.rawQuery("SELECT sqlcipher_export('enc')", null).use { it.moveToFirst() }
+                db.execSQL("PRAGMA enc.user_version = 1")
+                db.execSQL("DETACH DATABASE enc")
+                db.close()
+                if (!tmp.renameTo(f.also { it.delete() })) throw IllegalStateException("rename failed")
+            } catch (e: Exception) {
+                android.util.Log.w("EpiProt", "could not encrypt the old log; removing it", e)
+                f.delete(); tmp.delete()
+            }
+            context.getDatabasePath("$NAME-journal").delete()
+        }
+    }
+
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("""CREATE TABLE events (id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT, source TEXT, demo INTEGER,
             alarm_ms INTEGER, onset_ms INTEGER, end_ms INTEGER, caregiver_notified_ms INTEGER, false_alarm_sent_ms INTEGER,
@@ -156,5 +210,34 @@ class EventLog(context: Context) : SQLiteOpenHelper(context, "epiprot.db", null,
             while (c.moveToNext()) add(SensorAlertRow(c.getLong(0), c.getString(1), c.getString(2), c.getString(3),
                 if (c.isNull(4)) null else c.getLong(4), c.getInt(5), c.getInt(6) == 1))
         }
+    }
+
+    /** "Delete all my data": every event, step, message and sensor warning. */
+    fun clearAll() {
+        writableDatabase.apply {
+            for (t in listOf("events", "steps", "messages", "sensor_alerts")) delete(t, null, null)
+            execSQL("VACUUM")
+        }
+    }
+
+    /** "Download my data": the whole log as JSON (KVKK m.11 / GDPR art. 15 and 20). */
+    fun exportJson(): org.json.JSONObject {
+        fun table(sql: String) = org.json.JSONArray().also { arr ->
+            readableDatabase.rawQuery(sql, null).use { c ->
+                while (c.moveToNext()) arr.put(org.json.JSONObject().also { o ->
+                    for (i in 0 until c.columnCount) o.put(c.getColumnName(i), when (c.getType(i)) {
+                        android.database.Cursor.FIELD_TYPE_NULL -> org.json.JSONObject.NULL
+                        android.database.Cursor.FIELD_TYPE_INTEGER -> c.getLong(i)
+                        android.database.Cursor.FIELD_TYPE_FLOAT -> c.getDouble(i)
+                        else -> c.getString(i)
+                    })
+                })
+            }
+        }
+        return org.json.JSONObject()
+            .put("events", table("SELECT * FROM events ORDER BY id"))
+            .put("steps", table("SELECT * FROM steps ORDER BY event_id, t_ms"))
+            .put("messages", table("SELECT * FROM messages ORDER BY t_ms"))
+            .put("sensor_alerts", table("SELECT * FROM sensor_alerts ORDER BY warned_ms"))
     }
 }

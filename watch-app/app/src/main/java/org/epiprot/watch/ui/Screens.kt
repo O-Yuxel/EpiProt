@@ -94,6 +94,7 @@ private fun HomeScreen(controller: WatchController, sensorPermission: Boolean, o
     val demoPin by controller.demoPin.collectAsStateWithLifecycle()
     val warnings by controller.warnings.collectAsStateWithLifecycle()
     val activeAlarm by controller.activeAlarm.collectAsStateWithLifecycle()
+    val allowed by controller.monitoringAllowed.collectAsStateWithLifecycle()
     var shaking by remember { mutableStateOf(false) }
     val listState = rememberScalingLazyListState()
 
@@ -115,7 +116,16 @@ private fun HomeScreen(controller: WatchController, sensorPermission: Boolean, o
                     color = if (phone) Color(0xFF81C995) else Color(0xFFF2B8B5), fontSize = 13.sp,
                 )
             }
-            item {
+            if (!allowed) item {
+                Chip(
+                    onClick = {},
+                    label = { Text(stringResource(R.string.home_no_consent), fontWeight = FontWeight.Bold) },
+                    secondaryLabel = { Text(stringResource(R.string.home_no_consent_text), maxLines = 3) },
+                    colors = ChipDefaults.chipColors(backgroundColor = Amber),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            if (allowed) item {
                 val value = if (hr.isNaN()) stringResource(R.string.home_hr_none) else "${hr.toInt()} bpm"
                 Text(stringResource(R.string.home_hr, value), fontSize = 13.sp)
             }

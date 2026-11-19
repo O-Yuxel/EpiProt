@@ -3,7 +3,7 @@
 The hub of the system: receives the watch (and later the headband) data, runs the seizure detector every 5 s,
 handles alarms and sends the caregiver messages. Kotlin, Jetpack Compose (Material 3).
 
-**Status:** first version. Builds, 18 unit tests pass (including parity with the Python code), runs on the
+**Status:** first version. Builds, 30 unit tests pass (including parity with the Python code), runs on the
 Android emulator: the demo replays a real recorded seizure → alarm → caregiver message with location → audit
 trail. Not yet tested together with the watch on real devices; the headband does not exist yet.
 
@@ -94,6 +94,8 @@ worn and sending. `assets/model/` is made by `export_model.py --group5 eeg+ecg+h
   working, it is not a performance test.
 
 ## Safety and privacy
+
+Consent system (first-start setup, privacy centre, every scenario): see [`PRIVACY.md`](PRIVACY.md).
 
 * **Test mode by default:** messages are written to the log and shown in the app, not sent. Real SMS only after
   turning it on in Settings (with the caregiver's consent: health data + location).

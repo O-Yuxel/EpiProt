@@ -55,13 +55,42 @@ class LocationProvider(private val context: Context) {
  * In test mode (default) they are only written to the log and shown in the app.
  */
 class CaregiverMessenger(private val context: Context, private val settings: Settings, private val log: EventLog,
-                         private val location: LocationProvider) {
+                         private val location: LocationProvider,
+                         private val consents: () -> org.epiprot.phone.privacy.ConsentState) {
+
+    /** One information SMS to a newly added caregiver: who added them, what they will receive, how to opt out. */
+    fun sendIntro(to: String, nowMs: Long = System.currentTimeMillis()) {
+        val consent = consents()
+        if (!consent.smsAllowed || !consent.caregiverConfirmed(to)) return
+        val name = settings.patientName.ifBlank { context.getString(R.string.patient_default) }
+        val text = context.getString(R.string.sms_intro, name,
+            context.getString(if (consent.locationAllowed) R.string.sms_intro_with_location else R.string.sms_intro_no_location))
+        log.message(nowMs, 0, to, text, deliver(to, text))
+    }
+
+    private fun deliver(to: String, text: String): String = when {
+        !settings.realSms -> "test"
+        ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED -> "failed"
+        else -> try {
+            val sms = if (Build.VERSION.SDK_INT >= 31) context.getSystemService(SmsManager::class.java)
+                      else @Suppress("DEPRECATION") SmsManager.getDefault()
+            sms.sendMultipartTextMessage(to, null, sms.divideMessage(text), null, null)
+            "sent"
+        } catch (e: Exception) {
+            Log.e(TAG, "SMS failed", e); "failed"
+        }
+    }
 
     suspend fun send(eventId: Long, kind: CaregiverMessage, demo: Boolean, nowMs: Long = System.currentTimeMillis()) {
         val name = settings.patientName.ifBlank { context.getString(R.string.patient_default) }
         val time = DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(nowMs))
+        val consent = consents()
         val needsLocation = kind != CaregiverMessage.FALSE_ALARM && kind != CaregiverMessage.HANDOVER
-        val where = if (needsLocation) location.mapsLink() ?: context.getString(R.string.location_unknown) else ""
+        val where = when {
+            !needsLocation -> ""
+            !consent.locationAllowed -> context.getString(R.string.location_not_shared)   // no location consent: not even read
+            else -> location.mapsLink() ?: context.getString(R.string.location_unknown)
+        }
         val res = when (kind) {
             CaregiverMessage.SEIZURE_ALERT -> R.string.sms_alert
             CaregiverMessage.FALSE_ALARM -> R.string.sms_false_alarm
@@ -69,24 +98,14 @@ class CaregiverMessenger(private val context: Context, private val settings: Set
             CaregiverMessage.NO_ANSWER -> R.string.sms_no_answer
             CaregiverMessage.HANDOVER -> R.string.sms_handover
         }
-        val text = (if (demo) "[DEMO] " else "") + context.getString(res, name, time, where)
+        val emergency = consent.region?.emergency ?: context.getString(R.string.emergency_local)
+        val text = (if (demo) "[DEMO] " else "") + context.getString(res, name, time, where, emergency)
         val numbers = settings.caregivers
         if (numbers.isEmpty()) { log.message(nowMs, eventId, "-", text, "no_number"); return }
-        for (to in numbers) {
-            val status = when {
-                !settings.realSms -> "test"
-                ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED -> "failed"
-                else -> try {
-                    val sms = if (Build.VERSION.SDK_INT >= 31) context.getSystemService(SmsManager::class.java)
-                              else @Suppress("DEPRECATION") SmsManager.getDefault()
-                    sms.sendMultipartTextMessage(to, null, sms.divideMessage(text), null, null)
-                    "sent"
-                } catch (e: Exception) {
-                    Log.e(TAG, "SMS failed", e); "failed"
-                }
-            }
-            log.message(nowMs, eventId, to, text, status)
-        }
+        // no SMS consent: nothing leaves the phone, the message is only kept in the log
+        if (!consent.smsAllowed) { log.message(nowMs, eventId, "-", text, "no_consent"); return }
+        for (n in numbers.filterNot(consent::caregiverConfirmed)) log.message(nowMs, eventId, n, text, "not_confirmed")
+        for (to in consent.recipients(numbers)) log.message(nowMs, eventId, to, text, deliver(to, text))
     }
 }
 

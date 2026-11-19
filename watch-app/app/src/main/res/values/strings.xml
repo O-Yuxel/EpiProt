@@ -57,4 +57,6 @@
     <string name="channel_monitoring">Monitoring</string>
     <string name="channel_alarm">Seizure alarms</string>
     <string name="notif_monitoring">EpiProt is monitoring</string>
+    <string name="home_no_consent">Sensors off</string>
+    <string name="home_no_consent_text">No consent for monitoring yet. Give it in the EpiProt phone app (Settings → Privacy &amp; consents).</string>
 </resources>

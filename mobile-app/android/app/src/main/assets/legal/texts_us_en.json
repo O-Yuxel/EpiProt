@@ -1,0 +1,191 @@
+{
+  "region_name": "United States",
+  "emergency_number": "911",
+  "draft_note": "DRAFT – must be reviewed by a US attorney before real use. Not legal advice.",
+  "welcome": [
+    "EpiProt detects tonic-clonic seizures from the headband and the smartwatch and alerts your caregivers.",
+    "The data it uses are consumer health data. Federal law (the FTC Act and the FTC Health Breach Notification Rule) and the laws of several states (for example Washington's My Health My Data Act, Nevada and Connecticut) require your consent before such data are collected or shared.",
+    "On the next screens you first read what is collected, why and how. Then you decide on each point SEPARATELY.",
+    "Nothing is pre-selected. You can change every decision at any time in Settings → Privacy & consents.",
+    "No sensor data are collected or processed until this setup is finished."
+  ],
+  "roles": {
+    "self": {
+      "title": "I am the patient and an adult",
+      "text": "18 or older (or the age of majority in your state). You make the decisions yourself."
+    },
+    "parent": {
+      "title": "I am the parent or legal guardian of a patient under 18",
+      "text": "You decide on behalf of your child. If your child is under 13, you will also be asked to sign a parental consent (Children's Online Privacy Protection Act, COPPA). Please talk about it with your child: your child can always ask you to withdraw a consent."
+    },
+    "guardian": {
+      "title": "I am the patient's legal guardian / authorized representative",
+      "text": "If the patient cannot decide (for example under a guardianship or a health-care power of attorney), you decide as their authorized representative. If the patient is able to decide, they should do this setup themselves."
+    }
+  },
+  "coppa": [
+    "Because the patient is under 13, US law (COPPA) requires the consent of a parent or legal guardian before any personal information of the child is collected.",
+    "What is collected about your child: the brain signal, movement and heart rate from the headband and the watch, seizure and alarm records, your child's name. Everything stays on this phone; nothing is sent to EpiProt or any server.",
+    "What is shared: only what you allow on the next screens (alarm SMS to the caregivers you enter; the location if you allow it).",
+    "Your rights as a parent: review what is stored (History, Download my data), delete it (Delete all my data), and withdraw your consent at any time; the app then stops collecting your child's data.",
+    "Before a public US release, EpiProt must add an FTC-approved method to verify that you are the parent (for example a signed form or a check by trained staff). This prototype records your typed signature."
+  ],
+  "notice_summary": [
+    "What we collect: brain signal (EEG) and movement from the headband, heart rate and movement from the watch, seizure and alarm records, the name you enter, caregiver phone numbers, your doctor's e-mail, and – only if you allow it – the phone's location at the moment of an alarm.",
+    "Why: only to detect seizures, alert you and your caregivers, and keep a record of the events.",
+    "Where: all data stay on this phone. EpiProt has no server and receives none of your data.",
+    "Sharing: SMS to the caregivers you choose, only if you consent; reports to your doctor only when you send them. We never sell your data and never use it for advertising.",
+    "How long: raw sensor signals are discarded right after processing. Event records stay on the phone until you delete them.",
+    "Your rights: see, download and delete your data and withdraw your consents at any time, in the app."
+  ],
+  "notice_full": [
+    "# 1. Who we are",
+    "The EpiProt project team (NYAS Junior Academy). Contact: [project contact address to be added]. EpiProt is a research prototype.",
+    "# 2. Consumer health data we collect",
+    "- From the headband: brain signal (EEG) and head movement. From the watch: heart rate and wrist movement.",
+    "- Computed on the phone: the seizure probability, seizure and alarm records (time, duration, steps taken), sensor warnings.",
+    "- Entered by you: the patient's name, the name of the person deciding and their relation to the patient, caregiver phone numbers, the doctor's e-mail address.",
+    "- Location: precise location only at the moment of an alarm and only with your location consent, to add it to the caregiver SMS. Precise location is sensitive data under several state laws.",
+    "- Watch PIN: not stored; only an irreversible digest (salted SHA-256).",
+    "- Consent records: what you agreed to or withdrew, when, and who decided.",
+    "# 3. How we use it",
+    "- To detect tonic-clonic seizures and raise an alarm; to ask for the PIN on the watch; to alert your caregivers; to follow up after a seizure.",
+    "- To check that the sensors are worn and warn you when they are not.",
+    "- To keep your event history and, if you choose, prepare a report for your doctor.",
+    "- Nothing else. No advertising, no profiling, no sale, no use for any other purpose without asking you again.",
+    "# 4. Your consents",
+    "- Collecting and processing your health data needs your consent (\"consent to collect\"). Sharing them with caregivers needs a separate consent (\"consent to share\"), and adding your location another one. Each is asked separately; you can refuse any of them and withdraw any of them at any time.",
+    "# 5. How we share it",
+    "- EpiProt has no server; we, the developers, receive none of your data.",
+    "- Caregivers: only if you consent, only alarm and follow-up messages by SMS, only to the numbers you enter and mark as agreed. SMS are carried by your mobile carrier.",
+    "- Your doctor: only when you send a report, each time.",
+    "- The phone's location service and the watch connection use Google Play services; Google's own terms apply.",
+    "- We do not sell or rent consumer health data, and we do not share it for targeted advertising.",
+    "# 6. HIPAA",
+    "EpiProt is offered directly to you, not by your doctor, hospital or health plan, so HIPAA generally does not apply to it. If EpiProt is ever provided to you by a HIPAA covered entity, that entity's notice of privacy practices will also apply.",
+    "# 7. Retention",
+    "- Raw sensor signals: kept in memory only while being processed, not stored.",
+    "- Event records, message records, sensor warnings: on this phone until you delete them.",
+    "- Consent records: until you delete all your data (as proof of what you agreed to and withdrew).",
+    "- Uninstalling the app deletes all EpiProt data on the phone.",
+    "# 8. Security and breach notification",
+    "Data are stored where only this app can access them; the PIN is stored only as a digest. We recommend a screen lock on your phone. If an unauthorized disclosure of your health data ever happened through EpiProt, we would notify you (and the FTC where the Health Breach Notification Rule requires it).",
+    "# 9. Your rights",
+    "Depending on your state (for example Washington, Nevada, Connecticut, California, Colorado, Virginia, Texas), you have the right to:",
+    "- confirm whether we process your health data and access it: History tab, Settings → Privacy & consents;",
+    "- get a copy: Settings → Privacy & consents → Download my data;",
+    "- correct it: in the Settings screens;",
+    "- delete it: Settings → Privacy & consents → Delete all my data;",
+    "- withdraw consent at any time, in the same place;",
+    "- not be discriminated against for exercising these rights.",
+    "Because all data are on your phone, you exercise these rights directly in the app; you can also contact us at the address above, and appeal a decision we make. You can complain to your state Attorney General or to the FTC.",
+    "# 10. Children",
+    "If the patient is under 18, a parent or legal guardian gives the consents. For a patient under 13 we also ask for a signed parental consent (COPPA). The child can always ask for a consent to be withdrawn.",
+    "# 11. Changes",
+    "If this notice or a consent text changes, the app shows you the setup again and asks for your decisions again."
+  ],
+  "limits": [
+    "EpiProt is a research prototype. It has NOT been cleared or approved by the U.S. Food and Drug Administration (FDA).",
+    "It can MISS seizures. It can raise an alarm when there is no seizure.",
+    "It does not replace your doctor's treatment or supervision by a caregiver. Do not change your medication or your doctor's advice.",
+    "It works only while the headband and the watch are worn, charged and connected to the phone. SMS work without internet, but not without mobile network.",
+    "In an emergency, call 911 without waiting."
+  ],
+  "consents": {
+    "health_data": {
+      "title": "Consent to collect my health data to detect seizures",
+      "badge": "Needed for monitoring",
+      "what": "EpiProt collects the brain signal and movement from the headband and the heart rate and movement from the watch, and processes them on this phone to compute a seizure probability. Seizure and alarm records are kept on the phone. Nothing is sent to EpiProt or any server.",
+      "yes": [
+        "Monitoring can be turned on. When a seizure is detected your watch vibrates and asks for the PIN.",
+        "Your seizure and alarm records are kept in History.",
+        "You are warned when a sensor is not worn or data stop arriving.",
+        "You can withdraw at any time; monitoring stops immediately."
+      ],
+      "no": [
+        "Monitoring cannot be turned on. EpiProt CANNOT detect seizures or alert anyone.",
+        "You can only use the demo (with a recorded patient's data) and the information screens.",
+        "None of your sensor data are collected.",
+        "You can agree later in Settings → Privacy & consents."
+      ]
+    },
+    "caregiver_sms": {
+      "title": "Consent to share alarms with my caregivers by SMS",
+      "badge": "Optional – recommended",
+      "what": "In an alarm, SMS go to the caregiver numbers you enter: possible seizure, false alarm (if the PIN was entered), emergency for a seizure longer than 5 minutes (\"call 911\"), a new alert if there is no answer after the seizure. These messages share your name and health information (a possible seizure) with those caregivers. They go only to caregivers you mark as agreed.",
+      "yes": [
+        "Your caregivers know IMMEDIATELY when a seizure is detected.",
+        "If you enter the PIN, they get a 'false alarm, all fine' message.",
+        "Messages are sent as normal SMS from your phone; your carrier's message rates may apply.",
+        "The owners of the numbers must have agreed to receive these messages; you confirm this for each number."
+      ],
+      "no": [
+        "The alarm appears ONLY on your phone and watch. Nobody is alerted.",
+        "Since you may not be able to call for help during a seizure, this turns off EpiProt's most important protection.",
+        "A 'caregivers will not be alerted' warning stays on the home screen.",
+        "You can turn it on later at any time."
+      ]
+    },
+    "location": {
+      "title": "Consent to add my precise location to the alarm SMS",
+      "badge": "Optional",
+      "what": "Only when there is an alarm, the phone's precise location is read once and added to the caregiver SMS as a map link. Your location is not tracked continuously and not stored.",
+      "yes": [
+        "Your caregivers can find you wherever you are.",
+        "The location is read once, only at the moment of an alarm.",
+        "The phone will also ask for the location permission."
+      ],
+      "no": [
+        "SMS are sent WITHOUT a location ('location not shared').",
+        "It can be harder for your caregivers to find you when you are away from home.",
+        "The location is never read."
+      ],
+      "needs_sms": "This consent only matters together with the consent to share alarms by SMS. You did not agree to SMS, so the location will not be used."
+    },
+    "research": {
+      "title": "Consent to use de-identified data for research",
+      "badge": "Optional – off by default",
+      "what": "If a research study takes place in the future: using seizure records with everything that identifies you removed (name, numbers, location) to improve the model. NO data are sent today. If such a study starts, you will be asked again in detail (and, where required, an ethics board will review it) before any data leave the phone.",
+      "yes": [
+        "You may be asked if a study starts in the future.",
+        "Nothing changes for now; no data are sent."
+      ],
+      "no": [
+        "Nothing changes; every feature of the app works the same.",
+        "Your data are not used in any research."
+      ]
+    }
+  },
+  "permissions": {
+    "intro": "Your phone will now ask for some permissions. What each one is used for is shown below. If you refuse one, only the related feature does not work.",
+    "notifications": {
+      "title": "Notifications",
+      "why": "For the alarm and the 'monitoring is on' notice.",
+      "no": "The alarm notification may not appear. Recommended."
+    },
+    "bluetooth": {
+      "title": "Nearby devices",
+      "why": "To connect to the headband over Bluetooth.",
+      "no": "The headband cannot connect."
+    },
+    "sms": {
+      "title": "Send SMS",
+      "why": "Only in an alarm, only to your caregivers. EpiProt never READS your messages.",
+      "no": "No SMS can be sent to caregivers."
+    },
+    "location": {
+      "title": "Location",
+      "why": "Only at the moment of an alarm, to add it to the caregiver SMS.",
+      "no": "SMS are sent without a location."
+    }
+  },
+  "where_later": "You can see and change all these decisions at any time in Settings → Privacy & consents. The privacy notice, the limits, the consent history and downloading or deleting your data are there too.",
+  "child_summary": [
+    "EpiProt is a helper that tries to notice when you have a seizure.",
+    "The headband measures signals from your brain, the watch measures your heartbeat.",
+    "This information stays on the phone. Nobody else sees it and it is not sent over the internet.",
+    "If it thinks you are having a seizure, the watch vibrates. If you are fine, you just type your code.",
+    "If there is a seizure, the people your parent chose get a message, so they can come and help you.",
+    "If you do not want something, talk to your parent. You can change the settings together, or even delete everything."
+  ]
+}

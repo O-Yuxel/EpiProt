@@ -32,8 +32,9 @@ class MonitoringService : LifecycleService() {
         nm.createNotificationChannel(NotificationChannel(CHANNEL, getString(R.string.channel_monitoring),
             NotificationManager.IMPORTANCE_LOW))
         var types = ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+        if (EpiProtPhoneApp.monitor(this).consents.value.locationAllowed &&
+            (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED))
             types = types or ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
         ServiceCompat.startForeground(this, NOTIFICATION_ID, notification(), types)
         wakeLock = getSystemService(PowerManager::class.java)

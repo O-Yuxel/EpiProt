@@ -59,6 +59,11 @@ class WatchController(private val app: Context) {
     private val _demoPin = MutableStateFlow(pin.isDemo)
     val demoPin: StateFlow<Boolean> = _demoPin
     val phoneConnected: StateFlow<Boolean> get() = link.connected
+    /** The phone's consent state: without it the sensors stay off (privacy first: off until the phone says yes). */
+    private val _monitoringAllowed = MutableStateFlow(prefs.getBoolean("monitoring_allowed", false))
+    val monitoringAllowed: StateFlow<Boolean> = _monitoringAllowed
+    private var running = false
+    private var sensorJob: Job? = null
 
     private var phoneLostSinceMs: Long? = null
 
@@ -75,21 +80,9 @@ class WatchController(private val app: Context) {
     // ---------------------------------------------------------------- monitoring (from MonitoringService)
 
     fun startMonitoring() {
-        if (sensors != null) return
-        val device = DeviceSensors(app, batcher)
-        val src: SensorSource = if (device.isReal) device else SimulatedSensors(batcher, scope)
-        _simulated.value = !src.isReal
-        src.start()
-        sensors = src
-
-        jobs += scope.launch {        // one sensor batch per second
-            while (isActive) {
-                delay(1000)
-                val batch = batcher.flush(now(), src.onBody)
-                _heartRate.value = batch.heartRate
-                link.send(Paths.SENSOR, batch.encode())
-            }
-        }
+        if (running) return
+        running = true
+        updateSensors()
         jobs += scope.launch {        // find the phone, watch the connection
             while (isActive) {
                 link.refresh()
@@ -106,10 +99,40 @@ class WatchController(private val app: Context) {
     }
 
     fun stopMonitoring() {
+        running = false
         jobs.forEach { it.cancel() }
         jobs.clear()
+        stopSensors()
+    }
+
+    /** Sensors run only while monitoring is on AND the phone says the consent allows it. */
+    private fun updateSensors() {
+        if (running && _monitoringAllowed.value) startSensors() else stopSensors()
+    }
+
+    private fun startSensors() {
+        if (sensors != null) return
+        val device = DeviceSensors(app, batcher)
+        val src: SensorSource = if (device.isReal) device else SimulatedSensors(batcher, scope)
+        _simulated.value = !src.isReal
+        src.start()
+        sensors = src
+        sensorJob = scope.launch {    // one sensor batch per second
+            while (isActive) {
+                delay(1000)
+                val batch = batcher.flush(now(), src.onBody)
+                _heartRate.value = batch.heartRate
+                link.send(Paths.SENSOR, batch.encode())
+            }
+        }
+    }
+
+    private fun stopSensors() {
+        sensorJob?.cancel()
+        sensorJob = null
         sensors?.stop()
         sensors = null
+        _heartRate.value = Float.NaN
     }
 
     // ---------------------------------------------------------------- phone messages
@@ -131,6 +154,11 @@ class WatchController(private val app: Context) {
             is PhoneMessage.SensorWarning ->
                 WarningCode.fromWire(msg.code)?.let { apply(machine.sensorWarning(it, Impact.fromWire(msg.impact), t)) }
             is PhoneMessage.SensorFixed -> WarningCode.fromWire(msg.code)?.let { apply(machine.sensorFixed(it, t)) }
+            is PhoneMessage.ConsentState -> {
+                prefs.edit().putBoolean("monitoring_allowed", msg.monitoringAllowed).apply()
+                _monitoringAllowed.value = msg.monitoringAllowed
+                updateSensors()
+            }
             is PhoneMessage.Settings -> {
                 prefs.edit().putString("pin_salt", msg.pinSalt).putString("pin_hash", msg.pinHash)
                     .putInt("pin_window_s", msg.pinWindowS).apply()
@@ -208,6 +236,7 @@ class WatchController(private val app: Context) {
             heartSensor = if (_simulated.value) "simulated" else "device",
             timeMs = now(),
             alarmId = machine.runningAlarm(),
+            monitoringAllowed = _monitoringAllowed.value,
         )
         link.send(Paths.STATUS, status.encode(), keepIfOffline = false)
     }

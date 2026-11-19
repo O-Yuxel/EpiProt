@@ -20,7 +20,7 @@ sealed interface FlowEffect {
  *  1. Alarm: the caregiver gets the seizure alert + location IMMEDIATELY, the watch asks for the PIN.
  *  2. Correct PIN within 30 s -> false alarm; the caregiver gets a follow-up "false alarm" message.
  *  3. No PIN in 30 s -> the alert stays active.
- *  4. Seizure still going 5 min after its estimated start -> emergency message (112, rescue medication).
+ *  4. Seizure still going 5 min after its estimated start -> emergency message (emergency services, rescue medication).
  *  5. After the seizure: "Are you OK?" on the watch every 5 min (answered with the PIN);
  *     no answer 15 min after the seizure -> caregiver alerted again; after 60 min handed to the caregiver.
  * Pure logic (no Android): times in wall-clock milliseconds, decisions returned as [FlowEffect]s.
@@ -114,7 +114,7 @@ class AlarmFlow(
                 if (!s.emergencySent && nowMs >= s.onsetMs + emergencyAfterMs) {
                     state = s.copy(emergencySent = true)
                     out += FlowEffect.Sms(s.id, CaregiverMessage.EMERGENCY)
-                    out += FlowEffect.Step(s.id, nowMs, "EMERGENCY", "seizure > 5 min: call 112, give rescue medication")
+                    out += FlowEffect.Step(s.id, nowMs, "EMERGENCY", "seizure > 5 min: call emergency services, give rescue medication")
                     out += FlowEffect.Update(s.id, mapOf("emergency_ms" to nowMs))
                 }
                 if (nowMs >= s.onsetMs + maxSeizureMs) out += startRecovery(s.id, nowMs, nowMs)
