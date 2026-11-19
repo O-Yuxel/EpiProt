@@ -53,5 +53,13 @@
                 <data android:scheme="wear" android:host="*" android:pathPrefix="/epiprot" />
             </intent-filter>
         </service>
+        <!-- the doctor report is shared as a temporary file, readable only by the app the patient chooses -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.reports"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/report_paths" />
+        </provider>
     </application>
 </manifest>

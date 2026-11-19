@@ -31,6 +31,11 @@ class Settings(context: Context) {
         get() = p.getBoolean("app_lock", true)
         set(v) = p.edit().putBoolean("app_lock", v).apply()
 
+    /** Time of the last doctor report (the default period starts there). */
+    var lastReportMs: Long
+        get() = p.getLong("last_report", 0)
+        set(v) = p.edit().putLong("last_report", v).apply()
+
     /** Off = test mode: messages are logged and shown, not sent. */
     var realSms: Boolean
         get() = p.getBoolean("real_sms", false)
@@ -64,6 +69,7 @@ data class EventRow(
     val id: Long, val kind: String, val source: String, val demo: Boolean, val alarmMs: Long?, val onsetMs: Long?,
     val endMs: Long?, val caregiverNotifiedMs: Long?, val falseAlarmSentMs: Long?, val emergencyMs: Long?,
     val cancelledWithPin: Boolean, val confirmed: String?, val steps: List<StepRow>,
+    val confirmedBy: String? = null, val recoveryResponseMs: Long? = null,
 )
 data class StepRow(val timeMs: Long, val step: String, val detail: String)
 data class MessageRow(val timeMs: Long, val eventId: Long, val to: String, val text: String, val status: String)
@@ -79,7 +85,7 @@ data class SensorAlertRow(val warnedMs: Long, val device: String, val code: Stri
  * Create it with [EventLog.open].
  */
 class EventLog private constructor(context: Context, passphrase: String) :
-    SQLiteOpenHelper(context, NAME, passphrase, null, 1, 0, null, null, false) {
+    SQLiteOpenHelper(context, NAME, passphrase, null, 2, 0, null, null, false) {
 
     companion object {
         private const val NAME = "epiprot.db"
@@ -124,9 +130,35 @@ class EventLog private constructor(context: Context, passphrase: String) :
         db.execSQL("CREATE TABLE messages (t_ms INTEGER, event_id INTEGER, to_number TEXT, text TEXT, status TEXT)")
         db.execSQL("""CREATE TABLE sensor_alerts (id INTEGER PRIMARY KEY AUTOINCREMENT, device TEXT, code TEXT, impact TEXT,
             problem TEXT, bad_from_ms INTEGER, warned_ms INTEGER, fixed_ms INTEGER, reminders INTEGER DEFAULT 0, demo INTEGER)""")
+        createSignals(db)
     }
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+    /** Signals around each alarm (only with the "signals" consent), compressed, inside the encrypted database. */
+    private fun createSignals(db: SQLiteDatabase) =
+        db.execSQL("CREATE TABLE IF NOT EXISTS signals (event_id INTEGER PRIMARY KEY, created_ms INTEGER, data BLOB)")
+
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) { if (oldVersion < 2) createSignals(db) }
+
+    fun saveSignal(eventId: Long, data: ByteArray, nowMs: Long = System.currentTimeMillis()) {
+        writableDatabase.insertWithOnConflict("signals", null, ContentValues().apply {
+            put("event_id", eventId); put("created_ms", nowMs); put("data", data)
+        }, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    fun signal(eventId: Long): ByteArray? = readableDatabase.rawQuery("SELECT data FROM signals WHERE event_id = ?",
+        arrayOf(eventId.toString())).use { if (it.moveToFirst()) it.getBlob(0) else null }
+
+    fun signalIds(): Set<Long> = readableDatabase.rawQuery("SELECT event_id FROM signals", null).use { c ->
+        buildSet { while (c.moveToNext()) add(c.getLong(0)) }
+    }
+
+    /** Consent withdrawn: every stored signal is deleted. */
+    fun deleteSignals() { writableDatabase.delete("signals", null, null) }
+
+    /** Retention: signals older than [maxAgeMs] are deleted automatically. */
+    fun deleteSignalsOlderThan(maxAgeMs: Long, nowMs: Long = System.currentTimeMillis()) {
+        writableDatabase.delete("signals", "created_ms < ?", arrayOf((nowMs - maxAgeMs).toString()))
+    }
 
     fun addDeviceEvent(alarmMs: Long, onsetMs: Long, demo: Boolean): Long = writableDatabase.insert("events", null,
         ContentValues().apply {
@@ -180,11 +212,25 @@ class EventLog private constructor(context: Context, passphrase: String) :
             arrayOf<Any?>(e.fixedMs, e.warnedMs, e.code))
     }
 
-    fun events(limit: Int = 50): List<EventRow> {
+    fun events(limit: Int = 50): List<EventRow> = eventsWhere("1", limit)
+
+    /** Every event whose alarm time is in [fromMs, toMs] (doctor report). */
+    fun eventsBetween(fromMs: Long, toMs: Long): List<EventRow> = eventsWhere("alarm_ms BETWEEN $fromMs AND $toMs", 100_000)
+
+    fun sensorAlertsBetween(fromMs: Long, toMs: Long): List<SensorAlertRow> = readableDatabase.rawQuery(
+        "SELECT warned_ms, device, code, impact, fixed_ms, reminders, demo FROM sensor_alerts WHERE warned_ms BETWEEN $fromMs AND $toMs", null).use { c ->
+        buildList {
+            while (c.moveToNext()) add(SensorAlertRow(c.getLong(0), c.getString(1), c.getString(2), c.getString(3),
+                if (c.isNull(4)) null else c.getLong(4), c.getInt(5), c.getInt(6) == 1))
+        }
+    }
+
+    private fun eventsWhere(where: String, limit: Int): List<EventRow> {
         val db = readableDatabase
         val out = ArrayList<EventRow>()
         db.rawQuery("SELECT id, kind, source, demo, alarm_ms, onset_ms, end_ms, caregiver_notified_ms, " +
-            "false_alarm_sent_ms, emergency_ms, cancelled_with_pin, confirmed FROM events ORDER BY id DESC LIMIT $limit", null).use { c ->
+            "false_alarm_sent_ms, emergency_ms, cancelled_with_pin, confirmed, confirmed_by, recovery_response_ms " +
+            "FROM events WHERE $where ORDER BY id DESC LIMIT $limit", null).use { c ->
             fun long(i: Int) = if (c.isNull(i)) null else c.getLong(i)
             while (c.moveToNext()) {
                 val id = c.getLong(0)
@@ -193,7 +239,7 @@ class EventLog private constructor(context: Context, passphrase: String) :
                     while (s.moveToNext()) steps += StepRow(s.getLong(0), s.getString(1), s.getString(2))
                 }
                 out += EventRow(id, c.getString(1), c.getString(2), c.getInt(3) == 1, long(4), long(5), long(6), long(7),
-                    long(8), long(9), c.getInt(10) == 1, c.getString(11), steps)
+                    long(8), long(9), c.getInt(10) == 1, c.getString(11), steps, c.getString(12), long(13))
             }
         }
         return out
@@ -215,7 +261,7 @@ class EventLog private constructor(context: Context, passphrase: String) :
     /** "Delete all my data": every event, step, message and sensor warning. */
     fun clearAll() {
         writableDatabase.apply {
-            for (t in listOf("events", "steps", "messages", "sensor_alerts")) delete(t, null, null)
+            for (t in listOf("events", "steps", "messages", "sensor_alerts", "signals")) delete(t, null, null)
             execSQL("VACUUM")
         }
     }
@@ -229,6 +275,7 @@ class EventLog private constructor(context: Context, passphrase: String) :
                         android.database.Cursor.FIELD_TYPE_NULL -> org.json.JSONObject.NULL
                         android.database.Cursor.FIELD_TYPE_INTEGER -> c.getLong(i)
                         android.database.Cursor.FIELD_TYPE_FLOAT -> c.getDouble(i)
+                        android.database.Cursor.FIELD_TYPE_BLOB -> android.util.Base64.encodeToString(c.getBlob(i), android.util.Base64.NO_WRAP)
                         else -> c.getString(i)
                     })
                 })
@@ -239,5 +286,7 @@ class EventLog private constructor(context: Context, passphrase: String) :
             .put("steps", table("SELECT * FROM steps ORDER BY event_id, t_ms"))
             .put("messages", table("SELECT * FROM messages ORDER BY t_ms"))
             .put("sensor_alerts", table("SELECT * FROM sensor_alerts ORDER BY warned_ms"))
+            .put("signals_note", "signals: zlib-compressed SignalSnippet (see signals/Signals.kt), base64")
+            .put("signals", table("SELECT * FROM signals ORDER BY event_id"))
     }
 }

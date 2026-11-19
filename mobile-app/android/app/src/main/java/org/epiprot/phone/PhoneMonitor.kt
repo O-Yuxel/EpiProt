@@ -57,6 +57,10 @@ class PhoneMonitor(private val app: Context) {
     /** Current consent answers (the screens and every data flow check these). */
     val consents: StateFlow<org.epiprot.phone.privacy.ConsentState> = _consents
     private val watchLink = WatchLink(app)
+    /** Signals around alarms (only with consent) -> encrypted database. */
+    private val recorder = org.epiprot.phone.signals.SignalRecorder({ _consents.value.signalsAllowed }) { s ->
+        scope.launch(Dispatchers.IO) { log.saveSignal(s.eventId, org.epiprot.phone.signals.SignalSnippet.encode(s)); changed() }
+    }
     private val messenger = CaregiverMessenger(app, settings, log, LocationProvider(app)) { _consents.value }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -81,7 +85,7 @@ class PhoneMonitor(private val app: Context) {
 
     private val actions = object : EngineActions {
         override fun newDeviceEvent(alarmMs: Long, onsetMs: Long, demo: Boolean) =
-            log.addDeviceEvent(alarmMs, onsetMs, demo).also { changed() }
+            log.addDeviceEvent(alarmMs, onsetMs, demo).also { id -> recorder.onAlarm(id, alarmMs, onsetMs); changed() }
 
         override fun flow(effect: FlowEffect, demo: Boolean) {
             when (effect) {
@@ -121,6 +125,7 @@ class PhoneMonitor(private val app: Context) {
     fun consentsChanged() {
         _consents.value = consentStore.state()
         actions.watch(PhoneMessage.ConsentState(_consents.value.canMonitor))
+        if (!_consents.value.signalsAllowed) scope.launch(Dispatchers.IO) { log.deleteSignals() }   // withdrawn: delete them
         if (!_consents.value.canMonitor && _running.value) {
             org.epiprot.phone.service.MonitoringService.stop(app)
             stop()
@@ -134,6 +139,41 @@ class PhoneMonitor(private val app: Context) {
         scope.launch(Dispatchers.IO) { for (n in numbers) messenger.sendIntro(n); changed() }
     }
 
+    // ------------------------------------------------------------------ doctor report
+
+    private val reportDir get() = java.io.File(app.cacheDir, "reports")
+
+    init {   // retention: signals around alarms are kept for at most 12 months
+        scope.launch(Dispatchers.IO) { runCatching { log.deleteSignalsOlderThan(365L * 86_400_000) } }
+    }
+
+    /** Stored signal snippets of the given events (at most [max], newest first). */
+    fun signalsFor(eventIds: List<Long>, max: Int = 12): Map<Long, org.epiprot.phone.signals.SignalSnippet> {
+        val have = log.signalIds()
+        return eventIds.filter { it in have }.sortedDescending().take(max).mapNotNull { id ->
+            log.signal(id)?.let { runCatching { org.epiprot.phone.signals.SignalSnippet.decode(it) }.getOrNull() }?.let { id to it }
+        }.toMap()
+    }
+
+    fun reportData(fromMs: Long, toMs: Long, includeDemo: Boolean) = org.epiprot.phone.report.ReportData.build(
+        log.eventsBetween(fromMs, toMs), log.sensorAlertsBetween(fromMs, toMs), fromMs, toMs, includeDemo)
+
+    /** Writes the PDF into the app's cache (old reports are removed first). */
+    fun createReport(d: org.epiprot.phone.report.ReportData, withSignals: Boolean = true): java.io.File {
+        reportDir.listFiles()?.forEach { it.delete() }
+        val name = "EpiProt-report-" + java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date()) + ".pdf"
+        val f = java.io.File(reportDir, name)
+        val signals = if (withSignals) signalsFor(d.events.map { it.eventId }) else emptyMap()
+        org.epiprot.phone.report.ReportPdf.write(app, d, settings.patientName, f, signals)
+        return f
+    }
+
+    fun reportShared(d: org.epiprot.phone.report.ReportData) {
+        settings.lastReportMs = d.toMs
+        consentStore.reportShared(d.fromMs, d.toMs, d.events.size)
+        consentsChanged()
+    }
+
     /** True while an alarm or the recovery follow-up is running: consents cannot be changed then (safety). */
     val alarmBusy: Boolean get() = engine.flow.state != AlarmFlow.State.Idle
 
@@ -144,6 +184,7 @@ class PhoneMonitor(private val app: Context) {
         demoJob?.cancel()
         log.clearAll()
         settings.clearAll()
+        reportDir.listFiles()?.forEach { it.delete() }
         consentStore.clearAll()
         _demo.value = null
         consentsChanged()
@@ -190,7 +231,7 @@ class PhoneMonitor(private val app: Context) {
             while (isActive) {
                 val now = System.currentTimeMillis()
                 try {
-                    for ((w, end) in assembler!!.closeReady(now)) if (!engine.demo) engine.onWindow(w, end)
+                    for ((w, end) in assembler!!.closeReady(now)) if (!engine.demo) { recorder.add(w, end); engine.onWindow(w, end) }
                     engine.tick(now)
                     publish()
                 } catch (e: Exception) {
@@ -265,7 +306,9 @@ class PhoneMonitor(private val app: Context) {
             engine.reset(demo = true)
             var realTime = false
             for ((i, w) in rec.windows.withIndex()) {
-                val r = engine.onWindow(w, System.currentTimeMillis())
+                val endMs = System.currentTimeMillis()
+                recorder.add(w, endMs)
+                val r = engine.onWindow(w, endMs)
                 if (r.alarm) realTime = true
                 _demo.value = DemoProgress(i + 1, rec.windows.size, rec.onsetS, r.score, false)
                 publish()
@@ -289,6 +332,7 @@ class PhoneMonitor(private val app: Context) {
     }
 
     private fun endDemo() {
+        recorder.flush()
         engine.reset(demo = false)
         _demo.value = null
         publish()

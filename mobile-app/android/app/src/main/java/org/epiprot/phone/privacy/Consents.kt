@@ -24,6 +24,8 @@ enum class Consent(val key: String, val required: Boolean) {
     CAREGIVER_SMS("caregiver_sms", false),
     /** Adding the phone's location to the alarm SMS. Only meaningful together with CAREGIVER_SMS. */
     LOCATION("location", false),
+    /** Keeping the signals of 2 min before to 5 min after each alarm (encrypted, max 12 months) for the doctor report. */
+    SIGNALS("signals", false),
     /** Anonymised data for research / improving the model. Nothing is sent today; default off. */
     RESEARCH("research", false),
 }
@@ -109,6 +111,9 @@ data class ConsentState(
 
     val smsAllowed: Boolean get() = has(Consent.CAREGIVER_SMS)
 
+    /** Signals around alarms are kept only with the health-data consent AND the signals consent. */
+    val signalsAllowed: Boolean get() = has(Consent.HEALTH_DATA) && has(Consent.SIGNALS)
+
     /** The location is added to the SMS only with both consents. */
     val locationAllowed: Boolean get() = smsAllowed && has(Consent.LOCATION)
 
@@ -120,7 +125,7 @@ data class ConsentState(
 
     companion object {
         /** Increase when the notice or a consent text changes: everybody sees the setup again. */
-        const val TEXT_VERSION = 2          // 2: country / region choice and region-specific texts
+        const val TEXT_VERSION = 3          // 2: country / region choice; 3: signals around alarms
 
         fun normalize(number: String) = number.filter { it.isDigit() || it == '+' }
     }
@@ -189,6 +194,10 @@ class ConsentStore(context: Context) {
         p.edit().putStringSet("cg_ok", s).apply()
         record(now, "caregiver_agreed:${mask(n)}", ok)
     }
+
+    /** The patient confirmed and shared a doctor report (each sharing is its own decision). */
+    fun reportShared(fromMs: Long, toMs: Long, events: Int, now: Long = System.currentTimeMillis()) =
+        record(now, "report_shared:$fromMs-$toMs:$events", true)
 
     fun finishSetup(now: Long = System.currentTimeMillis()) {
         p.edit().putInt("done_version", ConsentState.TEXT_VERSION).apply()

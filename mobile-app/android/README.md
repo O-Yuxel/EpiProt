@@ -3,7 +3,7 @@
 The hub of the system: receives the watch (and later the headband) data, runs the seizure detector every 5 s,
 handles alarms and sends the caregiver messages. Kotlin, Jetpack Compose (Material 3).
 
-**Status:** first version. Builds, 30 unit tests pass (including parity with the Python code), runs on the
+**Status:** first version. Builds, 36 unit tests pass (including parity with the Python code), runs on the
 Android emulator: the demo replays a real recorded seizure → alarm → caregiver message with location → audit
 trail. Not yet tested together with the watch on real devices; the headband does not exist yet.
 
@@ -143,6 +143,5 @@ python mobile-app/android/tools/make_demo_asset.py --raw-dir /raw --sub sub-115 
 ## Next steps
 
 * Pair the watch emulator with the phone (emulator or the real phone) and test alarm + PIN end to end.
-* Doctor report (PDF) and encrypted data package from the phone (`app/report.py`), 48 h raw-data buffer.
 * Headband: BLE connection once the device and its packet format exist (`device-firmware/README.md`).
 * "Install on watch" button (opens the Play Store on the watch when the watch app is missing).

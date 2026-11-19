@@ -75,4 +75,5 @@ uzmanla (avukat, düzenleyici danışman, etik kurul) kontrol edilmelidir.
 özet) · Gizlilik Merkezi (rızaları değiştirme, onay geçmişi, verilerimi indir, tüm verilerimi sil) · ülkeye göre
 metinler (Türkiye, AB, ABD) · 13 yaş altı için veli onayı ekranı (ABD) · çocuklar için sade anlatım · 18 yaş hatırlatması ·
 bakıcı onayı ve bakıcıya bilgilendirme SMS’i · şifreli veritabanı ve şifreli ayarlar · yedekleme ve cihaz taşımada veri
-dışarı çıkmıyor · uygulama kilidi · rıza yoksa saat sensörleri kapalı. Ayrıntılar: `mobile-app/android/PRIVACY.md`.
+dışarı çıkmıyor · uygulama kilidi · rıza yoksa saat sensörleri kapalı · doktor raporu (PDF, hasta istediği uygulamayla
+gönderir; ayrı onayla alarm anının EEG, hareket ve nabız grafikleri). Ayrıntılar: `mobile-app/android/PRIVACY.md`.

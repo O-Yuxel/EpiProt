@@ -37,7 +37,7 @@ class LegalTexts(private val j: JSONObject) {
 
     fun consent(c: Consent): ConsentText = j.getJSONObject("consents").getJSONObject(c.key).let {
         ConsentText(it.getString("title"), it.getString("badge"), it.getString("what"), list(it.getJSONArray("yes")),
-            list(it.getJSONArray("no")), it.optString("needs_sms").ifEmpty { null })
+            list(it.getJSONArray("no")), it.optString("needs_sms").ifEmpty { it.optString("needs_health") }.ifEmpty { null })
     }
 
     fun permission(key: String): PermissionText = j.getJSONObject("permissions").getJSONObject(key).let {

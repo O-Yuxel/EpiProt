@@ -35,7 +35,7 @@
     "Why: only to detect seizures, alert you and your caregivers, and keep a record of the events.",
     "Where: all data stay on this phone. EpiProt has no server and receives none of your data.",
     "Sharing: SMS to the caregivers you choose, only if you consent; reports to your doctor only when you send them. We never sell your data and never use it for advertising.",
-    "How long: raw sensor signals are discarded right after processing. Event records stay on the phone until you delete them.",
+    "How long: raw sensor signals are discarded right after processing; with your consent only 2 min before – 5 min after each alarm are kept, encrypted (at most 12 months). Event records stay on the phone until you delete them.",
     "Your rights: see, download and delete your data and withdraw your consents at any time, in the app."
   ],
   "notice_full": [
@@ -46,6 +46,7 @@
     "- Computed on the phone: the seizure probability, seizure and alarm records (time, duration, steps taken), sensor warnings.",
     "- Entered by you: the patient's name, the name of the person deciding and their relation to the patient, caregiver phone numbers, the doctor's e-mail address.",
     "- Location: precise location only at the moment of an alarm and only with your location consent, to add it to the caregiver SMS. Precise location is sensitive data under several state laws.",
+    "- Signals around alarms (only with a separate consent): brain signal, movement and heart rate from 2 minutes before to 5 minutes after each alarm, to be added to the doctor report as graphs.",
     "- Watch PIN: not stored; only an irreversible digest (salted SHA-256).",
     "- Consent records: what you agreed to or withdrew, when, and who decided.",
     "# 3. How we use it",
@@ -65,6 +66,7 @@
     "EpiProt is offered directly to you, not by your doctor, hospital or health plan, so HIPAA generally does not apply to it. If EpiProt is ever provided to you by a HIPAA covered entity, that entity's notice of privacy practices will also apply.",
     "# 7. Retention",
     "- Raw sensor signals: kept in memory only while being processed, not stored.",
+    "- Signals around alarms (if you consented): encrypted, at most 12 months; deleted immediately if you withdraw the consent.",
     "- Event records, message records, sensor warnings: on this phone until you delete them.",
     "- Consent records: until you delete all your data (as proof of what you agreed to and withdrew).",
     "- Uninstalling the app deletes all EpiProt data on the phone.",
@@ -141,6 +143,24 @@
         "The location is never read."
       ],
       "needs_sms": "This consent only matters together with the consent to share alarms by SMS. You did not agree to SMS, so the location will not be used."
+    },
+    "signals": {
+      "title": "Consent to keep the signals around each alarm for the doctor report",
+      "badge": "Optional",
+      "what": "At each alarm, the brain signal, movement and heart rate from 2 minutes before to 5 minutes after the alarm are kept on this phone. They are encrypted and deleted automatically after 12 months. They are shared only inside a doctor report, as graphs, when you send one. Nothing is recorded around the clock.",
+      "yes": [
+        "Your doctor can see the brain signal, movement and heart rate of the seizure as graphs and judge its type and duration better.",
+        "Only the 7 minutes around alarms are kept (about 0.5 MB per alarm).",
+        "They are stored encrypted and deleted by themselves after 12 months.",
+        "If you withdraw this consent, every stored signal is deleted immediately."
+      ],
+      "no": [
+        "No signals are kept; raw data continue to be discarded right after processing.",
+        "The doctor report has no graphs of the seizure; the table and summary are still there.",
+        "Seizure detection and alarms work exactly the same.",
+        "You can turn it on later; alarms from then on are kept."
+      ],
+      "needs_health": "This consent only matters together with the health-data consent. Without it, no signals are kept."
     },
     "research": {
       "title": "Consent to use de-identified data for research",

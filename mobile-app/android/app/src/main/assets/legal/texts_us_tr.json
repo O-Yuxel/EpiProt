@@ -26,7 +26,7 @@
     "Neden: sadece nöbet algılamak, seni ve bakıcılarını uyarmak ve olayların kaydını tutmak için.",
     "Nerede: tüm veriler bu telefonda kalır. EpiProt'un sunucusu yoktur ve verilerinden hiçbirini almaz.",
     "Paylaşım: onay verirsen sadece seçtiğin bakıcılara SMS; doktoruna rapor sadece sen gönderdiğinde. Verilerini asla satmayız ve reklam için kullanmayız.",
-    "Ne kadar: ham sensör sinyalleri işlendikten hemen sonra silinir. Olay kayıtları sen silene kadar telefonda kalır.",
+    "Ne kadar: ham sensör sinyalleri işlendikten hemen sonra silinir; onay verirsen sadece her alarmın 2 dk öncesi – 5 dk sonrası şifreli saklanır (en fazla 12 ay). Olay kayıtları sen silene kadar telefonda kalır.",
     "Hakların: verilerini görebilir, indirebilir, silebilir ve onaylarını istediğin zaman uygulama içinden geri alabilirsin."
   ],
   "notice_full": [
@@ -37,6 +37,7 @@
     "- Telefonda hesaplanan: nöbet olasılığı, nöbet ve alarm kayıtları (zaman, süre, atılan adımlar), sensör uyarıları.",
     "- Senin girdiklerin: hastanın adı, karar veren kişinin adı ve hastaya yakınlığı, bakıcı telefon numaraları, doktor e-posta adresi.",
     "- Konum: kesin konum yalnızca alarm anında ve konum onayınla, bakıcı SMS'ine eklemek için. Kesin konum birçok eyalet yasasına göre hassas veridir.",
+    "- Alarm anındaki sinyaller (sadece ayrı onayla): her alarmın 2 dakika öncesi ile 5 dakika sonrası arasındaki beyin sinyali, hareket ve nabız; doktor raporuna grafik olarak eklenmek için.",
     "- Saat PIN'i: saklanmaz; yalnızca geri çevrilemeyen bir özeti (tuzlanmış SHA-256) saklanır.",
     "- Onay kayıtları: neyi ne zaman kabul ettiğin veya geri aldığın ve kimin karar verdiği.",
     "# 3. Nasıl kullanıyoruz",
@@ -56,6 +57,7 @@
     "EpiProt sana doktorun, hastanen veya sigortan tarafından değil doğrudan sunulduğu için HIPAA genellikle uygulanmaz. EpiProt bir gün sana HIPAA kapsamındaki bir kurum tarafından verilirse, o kurumun gizlilik uygulamaları bildirimi de geçerli olur.",
     "# 7. Saklama süresi",
     "- Ham sensör sinyalleri: yalnızca işlenirken bellekte tutulur, kaydedilmez.",
+    "- Alarm anındaki sinyaller (onay verdiysen): şifreli olarak en fazla 12 ay; onayı geri alırsan hemen silinir.",
     "- Olay kayıtları, mesaj kayıtları, sensör uyarıları: sen silene kadar bu telefonda (şifreli olarak).",
     "- Onay kayıtları: tüm verilerini silene kadar (neyi kabul edip geri aldığının kanıtı olarak).",
     "- Uygulamayı kaldırmak telefondaki tüm EpiProt verilerini siler.",
@@ -132,6 +134,24 @@
         "Konum hiç okunmaz."
       ],
       "needs_sms": "Bu onay, bakıcılara SMS onayı verildiyse anlamlıdır. SMS onayı vermediğin için konum kullanılmayacak."
+    },
+    "signals": {
+      "title": "Alarm anındaki sinyallerin doktor raporu için saklanmasına onay",
+      "badge": "İsteğe bağlı",
+      "what": "Her alarmda, alarmdan 2 dakika öncesi ile 5 dakika sonrası arasındaki beyin sinyali, hareket ve nabız bu telefonda saklanır. Kayıtlar şifrelidir, 12 ay sonra otomatik silinir. Sadece sen doktor raporu gönderdiğinde, raporun içinde grafik olarak paylaşılır. Tüm gün kaydedilmez.",
+      "yes": [
+        "Doktorun nöbet anının beyin sinyalini, hareketi ve nabzı grafik olarak görebilir; nöbetin türünü ve süresini daha iyi değerlendirebilir.",
+        "Sadece alarmlar etrafındaki 7 dakika saklanır (alarm başına yaklaşık 0,5 MB).",
+        "Kayıtlar şifreli saklanır ve 12 ay sonra kendiliğinden silinir.",
+        "Onayı geri alırsan kayıtlı tüm sinyaller hemen silinir."
+      ],
+      "no": [
+        "Hiçbir sinyal saklanmaz; ham veri işlendikten hemen sonra silinmeye devam eder.",
+        "Doktor raporunda nöbet anının grafikleri olmaz; tablo ve özet yine olur.",
+        "Nöbet algılama ve alarmlar aynen çalışır.",
+        "Daha sonra istediğin zaman açabilirsin; o andan sonraki alarmlar kaydedilir."
+      ],
+      "needs_health": "Bu onay, sağlık verisi onayıyla birlikte anlamlıdır. Sağlık verisi onayı olmadığı için sinyal saklanmayacak."
     },
     "research": {
       "title": "Kimliksizleştirilmiş verilerin araştırmada kullanılmasına onay",

@@ -646,7 +646,18 @@ private fun Events(m: PhoneMonitor) {
     val alerts by produceState(emptyList<SensorAlertRow>(), version) { value = withContext(Dispatchers.IO) { m.log.sensorAlerts() } }
     val messages by produceState(emptyList<MessageRow>(), version) { value = withContext(Dispatchers.IO) { m.log.messages() } }
 
+    var reportOpen by rememberSaveable { mutableStateOf(false) }
+    if (reportOpen) {
+        androidx.activity.compose.BackHandler { reportOpen = false }
+        ReportPage(m) { reportOpen = false }
+        return
+    }
     SectionTitle(stringResource(R.string.events_title), stringResource(R.string.events_sub))
+    EpiCard(container = C.TealSoft) {
+        CardHeader(Icons.Rounded.Send, stringResource(R.string.rep_card_title), bubble = Color.White)
+        Text(stringResource(R.string.rep_card_text), color = C.InkSoft, style = MaterialTheme.typography.bodyMedium)
+        PrimaryButton(stringResource(R.string.rep_card_button), Icons.Rounded.Send) { reportOpen = true }
+    }
     if (events.isEmpty()) EpiCard {
         Column(Modifier.fillMaxWidth().padding(vertical = 18.dp), horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -683,10 +694,11 @@ private fun Events(m: PhoneMonitor) {
 @Composable
 private fun EventCard(e: EventRow) {
     var open by remember { mutableStateOf(false) }
-    val (label, icon, color, bg) = when (e.kind) {
-        "false_alarm" -> Quad(stringResource(R.string.kind_false_alarm), Icons.Rounded.CheckCircle, C.Teal, C.TealSoft)
-        "seizure" -> Quad(stringResource(R.string.kind_seizure), Icons.Rounded.Notifications, C.Coral, C.CoralSoft)
-        else -> Quad(stringResource(R.string.kind_unconfirmed), Icons.Rounded.Warning, C.Amber, C.AmberSoft)
+    // same classification as the doctor report
+    val (label, icon, color, bg) = when (org.epiprot.phone.report.ReportData.kindOf(e)) {
+        org.epiprot.phone.report.ReportKind.FALSE_ALARM -> Quad(stringResource(R.string.kind_false_alarm), Icons.Rounded.CheckCircle, C.Teal, C.TealSoft)
+        org.epiprot.phone.report.ReportKind.SEIZURE -> Quad(stringResource(R.string.kind_seizure), Icons.Rounded.Notifications, C.Coral, C.CoralSoft)
+        org.epiprot.phone.report.ReportKind.UNCONFIRMED -> Quad(stringResource(R.string.kind_unconfirmed), Icons.Rounded.Warning, C.Amber, C.AmberSoft)
     }
     EpiCard(Modifier.clickable { open = !open }) {
         Row(verticalAlignment = Alignment.CenterVertically) {

@@ -67,7 +67,7 @@ import org.epiprot.phone.privacy.Region
 import org.epiprot.phone.privacy.Role
 import org.epiprot.phone.ui.EpiColors as C
 
-private enum class Step { REGION, WELCOME, WHO, COPPA, CHILD, NOTICE, LIMITS, HEALTH, SMS, LOCATION, RESEARCH, PERMISSIONS, DONE }
+private enum class Step { REGION, WELCOME, WHO, COPPA, CHILD, NOTICE, LIMITS, HEALTH, SMS, LOCATION, SIGNALS, RESEARCH, PERMISSIONS, DONE }
 
 /**
  * First-start setup, shown before anything is processed and again whenever the texts change:
@@ -117,6 +117,8 @@ fun Onboarding(m: PhoneMonitor, activity: MainActivity) {
                 Step.SMS -> ConsentStep(m, t, Consent.CAREGIVER_SMS, c.role) { next() }
                 Step.LOCATION -> if (c.smsAllowed) ConsentStep(m, t, Consent.LOCATION, c.role) { next() }
                     else NotApplicable(t.consent(Consent.LOCATION)) { m.consentStore.set(Consent.LOCATION, false); m.consentsChanged(); next() }
+                Step.SIGNALS -> if (c.has(Consent.HEALTH_DATA)) ConsentStep(m, t, Consent.SIGNALS, c.role) { next() }
+                    else NotApplicable(t.consent(Consent.SIGNALS)) { m.consentStore.set(Consent.SIGNALS, false); m.consentsChanged(); next() }
                 Step.RESEARCH -> ConsentStep(m, t, Consent.RESEARCH, c.role) { next() }
                 Step.PERMISSIONS -> Permissions(t, activity, c.smsAllowed, c.locationAllowed) { next() }
                 Step.DONE -> Done(t, c.granted) { m.consentStore.finishSetup(); m.consentsChanged() }

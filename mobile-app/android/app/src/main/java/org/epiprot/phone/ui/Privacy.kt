@@ -183,7 +183,8 @@ fun ConsentDetail(m: PhoneMonitor, consent: Consent) {
         Text(stringResource(R.string.consent_current), color = C.InkSoft, modifier = Modifier.padding(end = 8.dp))
         statusPill(on, consent.required)
     }
-    if (consent == Consent.LOCATION && !c.smsAllowed) EpiCard(container = C.GreySoft) { Text(text.needsSms ?: "", color = C.InkSoft) }
+    if ((consent == Consent.LOCATION && !c.smsAllowed) || (consent == Consent.SIGNALS && !c.has(Consent.HEALTH_DATA)))
+        EpiCard(container = C.GreySoft) { Text(text.needsSms ?: "", color = C.InkSoft) }
     ConsentContent(text, consent, c.role)
     if (on) SoftButton(stringResource(R.string.consent_withdraw), C.Coral) { if (m.alarmBusy) busy = true else confirm = false }
     else PrimaryButton(stringResource(R.string.consent_give)) { if (m.alarmBusy) busy = true else confirm = true }
@@ -260,6 +261,7 @@ fun HistoryPage(m: PhoneMonitor) {
                 r.item == "ack:parental" -> ctx.getString(R.string.hist_parental)
                 r.item == "child_under13" -> ctx.getString(R.string.hist_under13)
                 r.item == "birth_year" -> ctx.getString(R.string.hist_birth_year)
+                r.item.startsWith("report_shared:") -> ctx.getString(R.string.hist_report, r.item.substringAfterLast(':'))
                 r.item.startsWith("caregiver_agreed:") -> ctx.getString(R.string.hist_caregiver, r.item.substringAfter(':'))
                 r.item == "setup_completed" -> ctx.getString(R.string.hist_setup_done)
                 r.item == "setup_restarted" -> ctx.getString(R.string.hist_setup_redo)

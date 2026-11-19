@@ -26,7 +26,7 @@
     "Why: only to detect seizures, alert you and your caregivers, and keep a record of the events.",
     "Where: all data stay on this phone. EpiProt has no server; nothing is sent to any server.",
     "To whom: SMS to your caregivers in an alarm only if you agree; reports to your doctor only when you send them.",
-    "How long: raw sensor signals are discarded right after processing. Event records stay on the phone until you delete them.",
+    "How long: raw sensor signals are discarded right after processing; with your consent only 2 min before – 5 min after each alarm are kept, encrypted (at most 12 months). Event records stay on the phone until you delete them.",
     "Your rights: you can see, download and delete your data and withdraw your consents at any time."
   ],
   "notice_full": [
@@ -36,6 +36,7 @@
     "- Health data (special category): brain signal (EEG) and movement from the headband, heart rate and movement from the watch, the seizure probability computed from them, seizure and alarm records (time, duration, steps taken), sensor warnings.",
     "- Identity and contact: the patient's name, the name of the person giving consent and their relation to the patient, caregiver phone numbers, the doctor's e-mail address.",
     "- Location: only at the moment of an alarm and only with the location consent, to be added to the caregiver SMS.",
+    "- Signals around alarms (only with a separate consent): brain signal, movement and heart rate from 2 minutes before to 5 minutes after each alarm, to be added to the doctor report as graphs.",
     "- Watch PIN: the PIN itself is not stored, only an irreversible digest (salted SHA-256).",
     "- Consent records: which consent was given or withdrawn, when and by whom.",
     "# 3. Purposes",
@@ -57,6 +58,7 @@
     "- Transfers outside the EEA: none by EpiProt.",
     "# 7. Retention",
     "- Raw sensor signals: kept in memory only while being processed, not stored.",
+    "- Signals around alarms (if you consented): encrypted, at most 12 months; deleted immediately if you withdraw the consent.",
     "- Event records, message records, sensor warnings: on this phone until you delete them.",
     "- Consent records: until you delete all your data (as proof of what you agreed to and withdrew).",
     "- Uninstalling the app deletes all EpiProt data on the phone.",
@@ -132,6 +134,24 @@
         "The location is never read."
       ],
       "needs_sms": "This consent only matters together with the caregiver SMS consent. You did not agree to SMS, so the location will not be used."
+    },
+    "signals": {
+      "title": "Keeping the signals around each alarm for the doctor report",
+      "badge": "Optional",
+      "what": "At each alarm, the brain signal, movement and heart rate from 2 minutes before to 5 minutes after the alarm are kept on this phone. They are encrypted and deleted automatically after 12 months. They are shared only inside a doctor report, as graphs, when you send one. Nothing is recorded around the clock.",
+      "yes": [
+        "Your doctor can see the brain signal, movement and heart rate of the seizure as graphs and judge its type and duration better.",
+        "Only the 7 minutes around alarms are kept (about 0.5 MB per alarm).",
+        "They are stored encrypted and deleted by themselves after 12 months.",
+        "If you withdraw this consent, every stored signal is deleted immediately."
+      ],
+      "no": [
+        "No signals are kept; raw data continue to be discarded right after processing.",
+        "The doctor report has no graphs of the seizure; the table and summary are still there.",
+        "Seizure detection and alarms work exactly the same.",
+        "You can turn it on later; alarms from then on are kept."
+      ],
+      "needs_health": "This consent only matters together with the health-data consent. Without it, no signals are kept."
     },
     "research": {
       "title": "Using anonymised data for research",

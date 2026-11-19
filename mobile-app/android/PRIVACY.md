@@ -43,6 +43,7 @@ US attorney. Turkish-language US texts are not written (the English ones are sho
 | Processing health data to detect seizures | for monitoring | monitoring can run, records kept, sensor warnings | monitoring cannot start; only demo and information screens; home screen shows "Monitoring needs your consent" |
 | SMS to caregivers in an alarm | optional (recommended) | caregivers who agreed get the alarm messages | alarm only on phone and watch; permanent "caregivers will not be alerted" card; SMS permission is not requested |
 | Location in the alarm SMS | optional, only with the SMS consent | location read once at an alarm and added as a map link | SMS say "location not shared"; the location is never read; no location permission requested; the foreground service does not use the location type |
+| Signals around each alarm (2 min before – 5 min after), for the doctor report | optional, only with the health-data consent | EEG, movement and heart rate around alarms kept encrypted (max. 12 months) and shown as graphs in the doctor report | nothing is kept; the report has no graphs; withdrawing deletes every stored signal |
 | Anonymised data for research | optional, off by default | nothing today (no data leave the phone); you may be asked in detail if a study starts | nothing changes |
 
 Acknowledgements (not consents): the privacy notice was shown; the limits were read and understood (not a medical device,
@@ -82,7 +83,15 @@ can miss seizures, call 112 in an emergency).
 12. **App uninstalled / new phone:** all data are on the phone only; nothing is transferred; the setup runs again.
 13. **Permission refused in Android:** the related feature does not work; Settings → Phone permissions shows each state
     and opens the system page when a permission was refused for good.
-14. **Doctor report:** sent only when the user chooses to, asked every time (report feature not built yet).
+14. **Doctor report (History → "Send a report to my doctor"):** the patient chooses the period (since the last
+    report, 30 days, 3 months, everything; demo events only if switched on), sees what is and is not shared
+    (shared: name, period, each alarm with type / duration / PIN / caregiver alerted / > 5 min / answer, summary,
+    charts, sensor problems; not shared: location, caregiver numbers, messages, consents, raw signals), can look at
+    the PDF first, confirms, and sends it with any app (Android share sheet: WhatsApp, e-mail ...). Each sharing is
+    its own decision and is recorded in the consent history; the PDF is a temporary file in the app's cache
+    (FileProvider, read access only for the chosen app), replaced by the next report and removed by "Delete all".
+    With the signals consent the report adds one page per alarm (newest 12) with the EEG, movement and heart-rate
+    graphs from 2 min before to 5 min after the alarm, marking the estimated start, the alarm and the estimated end.
 15. **Parent sets up for a child:** the patient's year of birth is asked; a plain-language page for the child follows
     ("please read this together"; also in Privacy & consents). When the child turns 18 the home screen asks for the
     setup to be done again by the patient.

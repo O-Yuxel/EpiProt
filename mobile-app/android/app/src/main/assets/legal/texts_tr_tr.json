@@ -26,7 +26,7 @@
     "Neden: sadece nöbet algılamak, seni ve bakıcılarını uyarmak, olayların kaydını tutmak için.",
     "Nerede: verilerin tamamı bu telefonda kalır. EpiProt'un sunucusu yoktur, verilerin hiçbir sunucuya gönderilmez.",
     "Kime gider: sadece onay verirsen alarmda bakıcılarına SMS, sadece sen istediğinde doktoruna rapor.",
-    "Ne kadar: ham sensör sinyalleri işlendikten hemen sonra silinir. Olay kayıtları sen silene kadar telefonda kalır.",
+    "Ne kadar: ham sensör sinyalleri işlendikten hemen sonra silinir; onay verirsen sadece her alarmın 2 dk öncesi – 5 dk sonrası şifreli saklanır (en fazla 12 ay). Olay kayıtları sen silene kadar telefonda kalır.",
     "Hakların: verilerini görebilir, indirebilir, sildirebilir ve onaylarını istediğin zaman geri alabilirsin."
   ],
   "notice_full": [
@@ -36,6 +36,7 @@
     "- Sağlık verileri (özel nitelikli kişisel veri): kafa bandından beyin sinyali (EEG) ve hareket, saatten nabız ve hareket, bunlardan hesaplanan nöbet olasılığı, nöbet ve alarm kayıtları (zaman, süre, alınan adımlar), sensör uyarıları.",
     "- Kimlik ve iletişim: hastanın adı, onay veren kişinin adı ve hastaya yakınlığı, bakıcı telefon numaraları, doktor e-posta adresi.",
     "- Konum: yalnızca alarm anında ve yalnızca konum onayı verildiyse, bakıcıya giden SMS'e eklenmek üzere.",
+    "- Alarm anındaki sinyaller (sadece ayrı onayla): her alarmın 2 dakika öncesi ile 5 dakika sonrası arasındaki beyin sinyali, hareket ve nabız; doktor raporuna grafik olarak eklenmek için.",
     "- Saat PIN'i: PIN'in kendisi saklanmaz, yalnızca geri çevrilemeyen bir özeti (tuzlanmış SHA-256) saklanır.",
     "- Onay kayıtları: hangi onayın ne zaman, kim tarafından verildiği veya geri alındığı.",
     "# 3. İşleme amaçları",
@@ -57,6 +58,7 @@
     "- Yurt dışına aktarım: EpiProt tarafından yapılmaz.",
     "# 7. Saklama süresi",
     "- Ham sensör sinyalleri: yalnızca hesaplama sırasında bellekte tutulur, kaydedilmez.",
+    "- Alarm anındaki sinyaller (onay verdiysen): şifreli olarak en fazla 12 ay; onayı geri alırsan hemen silinir.",
     "- Olay kayıtları, mesaj kayıtları, sensör uyarıları: sen silene kadar bu telefonda.",
     "- Onay kayıtları: sen tüm verilerini silene kadar (onay verdiğinin ve geri aldığının kanıtı olarak).",
     "- Uygulamayı kaldırırsan telefondaki tüm EpiProt verileri de silinir.",
@@ -131,6 +133,24 @@
         "Konum hiç okunmaz."
       ],
       "needs_sms": "Bu onay, bakıcılara SMS onayı verildiyse anlamlıdır. SMS onayı vermediğin için konum kullanılmayacak."
+    },
+    "signals": {
+      "title": "Alarm anındaki sinyallerin doktor raporu için saklanması",
+      "badge": "İsteğe bağlı",
+      "what": "Her alarmda, alarmdan 2 dakika öncesi ile 5 dakika sonrası arasındaki beyin sinyali, hareket ve nabız bu telefonda saklanır. Kayıtlar şifrelidir, 12 ay sonra otomatik silinir. Sadece sen doktor raporu gönderdiğinde, raporun içinde grafik olarak paylaşılır. Tüm gün kaydedilmez.",
+      "yes": [
+        "Doktorun nöbet anının beyin sinyalini, hareketi ve nabzı grafik olarak görebilir; nöbetin türünü ve süresini daha iyi değerlendirebilir.",
+        "Sadece alarmlar etrafındaki 7 dakika saklanır (alarm başına yaklaşık 0,5 MB).",
+        "Kayıtlar şifreli saklanır ve 12 ay sonra kendiliğinden silinir.",
+        "Onayı geri alırsan kayıtlı tüm sinyaller hemen silinir."
+      ],
+      "no": [
+        "Hiçbir sinyal saklanmaz; ham veri işlendikten hemen sonra silinmeye devam eder.",
+        "Doktor raporunda nöbet anının grafikleri olmaz; tablo ve özet yine olur.",
+        "Nöbet algılama ve alarmlar aynen çalışır.",
+        "Daha sonra istediğin zaman açabilirsin; o andan sonraki alarmlar kaydedilir."
+      ],
+      "needs_health": "Bu onay, sağlık verisi onayıyla birlikte anlamlıdır. Sağlık verisi onayı olmadığı için sinyal saklanmayacak."
     },
     "research": {
       "title": "Anonim verilerin araştırma için kullanılması",

@@ -156,6 +156,7 @@ class AlarmFlow(
             FlowEffect.Update(id, buildMap {
                 if (wasSeizure != null) { put("confirmed", if (wasSeizure) "yes" else "no"); put("confirmed_by", "caregiver") }
                 if (wasSeizure == false) put("kind", "false_alarm")
+                if (wasSeizure == true) put("kind", "seizure")
             }),
             FlowEffect.Watch(PhoneMessage.AlarmEnd(id, "caregiver")),
         )
