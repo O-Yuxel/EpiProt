@@ -169,7 +169,7 @@ class AlarmFlow(
         ) + tick(nowMs)
     }
 
-    private fun currentId(): Long? = when (val s = state) {
+    fun currentId(): Long? = when (val s = state) {
         is State.Alarm -> s.id
         is State.Active -> s.id
         is State.Recovery -> s.id

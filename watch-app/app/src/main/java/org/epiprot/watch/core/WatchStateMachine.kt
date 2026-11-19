@@ -50,6 +50,10 @@ class WatchStateMachine(
     var screen: Screen = Screen.Home
         private set
 
+    /** Alarm whose PIN window is over and that the phone has not ended yet (also while the home screen is shown). */
+    var activeAlarm: Long? = null
+        private set
+
     /** Open sensor problems (shown on the home screen even after the warning was dismissed). */
     val activeWarnings: Map<WarningCode, Impact> get() = warnings
     private val warnings = LinkedHashMap<WarningCode, Impact>()
@@ -60,6 +64,7 @@ class WatchStateMachine(
     }
 
     fun alarmStart(alarmId: Long, now: Long): List<Effect> {
+        activeAlarm = null
         screen = Screen.Alarm(alarmId, now + pinWindowMs)
         return listOf(Effect.WakeScreen, Effect.VibrateAlarm)
     }
@@ -69,7 +74,13 @@ class WatchStateMachine(
         val busyWithThisAlarm = (s is Screen.Alarm && s.alarmId == alarmId) ||
             (s is Screen.AlarmActive && s.alarmId == alarmId) ||
             (s is Screen.CheckIn && s.alarmId == alarmId)
-        if (!busyWithThisAlarm) return emptyList()
+        val inBackground = activeAlarm == alarmId
+        if (activeAlarm == alarmId) activeAlarm = null
+        if (!busyWithThisAlarm) {
+            return if (inBackground && s is Screen.Home) {
+                screen = Screen.Info(InfoKind.ALARM_ENDED, now + infoMs); emptyList()
+            } else emptyList()
+        }
         screen = Screen.Info(InfoKind.ALARM_ENDED, now + infoMs)
         return listOf(Effect.StopVibration)
     }
@@ -94,6 +105,7 @@ class WatchStateMachine(
         is Screen.CheckIn -> {
             val attempt = s.wrongAttempts + 1
             if (ok) {
+                activeAlarm = null
                 screen = Screen.Info(InfoKind.RECOVERY_OK, now + infoMs)
                 listOf(Effect.SendPin(PinContext.CHECKIN, s.alarmId, true, attempt), Effect.StopVibration)
             } else {
@@ -131,6 +143,34 @@ class WatchStateMachine(
         else -> emptyList()
     }
 
+    /** "Home" on the help-is-coming screen: only hides it, the alarm itself goes on (it ends from the phone). */
+    fun goHome(): List<Effect> {
+        val s = screen
+        if (s !is Screen.AlarmActive) return emptyList()
+        activeAlarm = s.alarmId
+        screen = Screen.Home
+        return listOf(Effect.StopVibration)
+    }
+
+    /** Back to the help-is-coming screen from the home screen. */
+    fun reopenAlarm(): List<Effect> {
+        val id = activeAlarm ?: return emptyList()
+        if (screen != Screen.Home) return emptyList()
+        screen = Screen.AlarmActive(id)
+        return emptyList()
+    }
+
+    /** The phone says this alarm no longer exists (phone restarted, alarm closed while disconnected). */
+    fun alarmUnknownToPhone(alarmId: Long, now: Long): List<Effect> = alarmEnd(alarmId, now)
+
+    /** Alarm the watch currently considers running (sent in the status so the phone can correct it). */
+    fun runningAlarm(): Long? = when (val s = screen) {
+        is Screen.Alarm -> s.alarmId
+        is Screen.AlarmActive -> s.alarmId
+        is Screen.CheckIn -> s.alarmId
+        else -> activeAlarm
+    }
+
     /** User opened an open problem from the home screen. */
     fun openWarning(code: WarningCode): List<Effect> {
         val impact = warnings[code] ?: return emptyList()
@@ -141,6 +181,7 @@ class WatchStateMachine(
 
     fun tick(now: Long): List<Effect> = when (val s = screen) {
         is Screen.Alarm -> if (now >= s.deadlineMs) {
+            activeAlarm = s.alarmId
             screen = Screen.AlarmActive(s.alarmId)
             listOf(Effect.StopVibration)
         } else emptyList()

@@ -47,6 +47,9 @@ class WatchController(private val app: Context) {
 
     private val _screen = MutableStateFlow<Screen>(Screen.Home)
     val screen: StateFlow<Screen> = _screen
+    private val _activeAlarm = MutableStateFlow<Long?>(null)
+    /** Alarm running in the background while the home screen is shown. */
+    val activeAlarm: StateFlow<Long?> = _activeAlarm
     private val _warnings = MutableStateFlow<Map<WarningCode, Impact>>(emptyMap())
     val warnings: StateFlow<Map<WarningCode, Impact>> = _warnings
     private val _heartRate = MutableStateFlow(Float.NaN)
@@ -143,6 +146,8 @@ class WatchController(private val app: Context) {
     fun enterPin(digits: String) = apply(machine.pinEntered(pin.verify(digits), now()))
 
     fun dismiss() = apply(machine.dismiss(now()))
+    fun goHome() = apply(machine.goHome())
+    fun reopenAlarm() = apply(machine.reopenAlarm())
 
     fun openWarning(code: WarningCode) = apply(machine.openWarning(code))
 
@@ -163,6 +168,7 @@ class WatchController(private val app: Context) {
 
     private fun apply(effects: List<Effect>) {
         _screen.value = machine.screen
+        _activeAlarm.value = machine.activeAlarm
         _warnings.value = machine.activeWarnings.toMap()
         for (e in effects) when (e) {
             is Effect.SendPin -> scope.launch {
@@ -201,6 +207,7 @@ class WatchController(private val app: Context) {
             onBody = sensors?.onBody,
             heartSensor = if (_simulated.value) "simulated" else "device",
             timeMs = now(),
+            alarmId = machine.runningAlarm(),
         )
         link.send(Paths.STATUS, status.encode(), keepIfOffline = false)
     }

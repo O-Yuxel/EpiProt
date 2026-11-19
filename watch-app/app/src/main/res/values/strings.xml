@@ -23,7 +23,9 @@
 
     <!-- alarm -->
     <string name="alarm_title">Seizure detected</string>
-    <string name="alarm_text">Caregiver alerted. If you are fine, enter your PIN (%1$d s).</string>
+    <string name="alarm_text">Caregiver alerted.\nIf you are OK, enter PIN (%1$d s)</string>
+    <string name="home_button">Home</string>
+    <string name="home_alarm_running">Alarm still running – tap to open</string>
     <string name="alarm_active_title">Help is on the way</string>
     <string name="alarm_active_text">Your caregiver has been alerted with your location.</string>
     <string name="checkin_title">Are you OK?</string>

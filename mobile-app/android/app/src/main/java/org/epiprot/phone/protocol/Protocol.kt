@@ -134,10 +134,12 @@ data class WatchStatus(
     val onBody: Boolean?,
     val heartSensor: String,       // "device" | "simulated"
     val timeMs: Long,
+    val alarmId: Long? = null,     // alarm the watch is showing / keeping, so the phone can end a stale one
 ) {
     fun encode(): ByteArray = JSONObject()
         .put("battery_pct", batteryPct).put("charging", charging)
         .put("on_body", onBody ?: JSONObject.NULL).put("heart_sensor", heartSensor).put("time_ms", timeMs)
+        .put("alarm_id", alarmId ?: JSONObject.NULL)
         .toString().toByteArray()
 }
 

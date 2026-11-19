@@ -59,6 +59,35 @@ class StateMachineTest {
     }
 
     @Test
+    fun homeButtonHidesTheAlarmButKeepsIt() {
+        val m = WatchStateMachine()
+        m.alarmStart(7, t0)
+        m.tick(t0 + 30_000)
+        assertTrue(m.goHome().contains(Effect.StopVibration))
+        assertEquals(Screen.Home, m.screen)
+        assertEquals(7L, m.activeAlarm)
+        assertEquals(7L, m.runningAlarm())
+        m.reopenAlarm()
+        assertEquals(Screen.AlarmActive(7), m.screen)
+        m.goHome()
+        m.checkIn(7, 1, t0 + 300_000)                 // check-ins still arrive
+        assertEquals(Screen.CheckIn(7, 1), m.screen)
+        m.pinEntered(ok = true, now = t0 + 301_000)
+        assertEquals(null, m.activeAlarm)
+    }
+
+    @Test
+    fun phoneEndsAnAlarmRunningInTheBackground() {
+        val m = WatchStateMachine()
+        m.alarmStart(7, t0)
+        m.tick(t0 + 30_000)
+        m.goHome()
+        m.alarmUnknownToPhone(7, t0 + 60_000)
+        assertEquals(null, m.activeAlarm)
+        assertTrue(m.screen is Screen.Info)
+    }
+
+    @Test
     fun checkInAnsweredWithPin() {
         val m = WatchStateMachine()
         m.alarmStart(7, t0)

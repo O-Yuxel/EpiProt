@@ -65,7 +65,8 @@ fun EpiProtWatchApp(controller: WatchController, sensorPermission: Boolean, onRe
             is Screen.Home -> HomeScreen(controller, sensorPermission, onRequestPermission)
             is Screen.Alarm -> AlarmScreen(s, controller::enterPin)
             is Screen.AlarmActive -> MessageScreen(Red, stringResource(R.string.alarm_active_title),
-                stringResource(R.string.alarm_active_text), button = null)
+                stringResource(R.string.alarm_active_text), button = stringResource(R.string.home_button),
+                onButton = controller::goHome)
             is Screen.CheckIn -> PinScreen(
                 background = Amber,
                 title = stringResource(R.string.checkin_title),
@@ -92,12 +93,22 @@ private fun HomeScreen(controller: WatchController, sensorPermission: Boolean, o
     val simulated by controller.simulated.collectAsStateWithLifecycle()
     val demoPin by controller.demoPin.collectAsStateWithLifecycle()
     val warnings by controller.warnings.collectAsStateWithLifecycle()
+    val activeAlarm by controller.activeAlarm.collectAsStateWithLifecycle()
     var shaking by remember { mutableStateOf(false) }
     val listState = rememberScalingLazyListState()
 
     Scaffold(timeText = { TimeText() }) {
         ScalingLazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
             item { ListHeader { Text("EpiProt", fontWeight = FontWeight.Bold) } }
+            if (activeAlarm != null) item {
+                Chip(
+                    onClick = controller::reopenAlarm,
+                    label = { Text(stringResource(R.string.alarm_active_title), fontWeight = FontWeight.Bold) },
+                    secondaryLabel = { Text(stringResource(R.string.home_alarm_running), maxLines = 2) },
+                    colors = ChipDefaults.chipColors(backgroundColor = Red),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
             item {
                 Text(
                     stringResource(if (phone) R.string.home_phone_ok else R.string.home_phone_missing),
@@ -203,8 +214,8 @@ private fun PinScreen(background: Color, title: String, subtitle: String, wrongA
         Text(title, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
         Text(
             if (wrongAttempts > 0 && digits.isEmpty()) stringResource(R.string.pin_wrong) else subtitle,
-            fontSize = 10.sp, color = Color.White, textAlign = TextAlign.Center, maxLines = 2,
-            modifier = Modifier.padding(horizontal = 26.dp),
+            fontSize = 10.sp, color = Color.White, textAlign = TextAlign.Center, maxLines = 2, lineHeight = 12.sp,
+            modifier = Modifier.padding(horizontal = 40.dp),
         )
         Text(
             (1..PinVerifier.PIN_LENGTH).joinToString(" ") { if (it <= digits.length) "●" else "○" },

@@ -153,6 +153,13 @@ class PhoneMonitor(private val app: Context) {
                     Paths.STATUS -> {
                         val j = org.json.JSONObject(String(data))
                         _watch.value = _watch.value.copy(batteryPct = j.optInt("battery_pct"))
+                        // messages are not queued: a watch that was off / not listening missed the PIN
+                        if (now - lastSettingsSentMs > 60_000) sendSettingsToWatch()
+                        // the watch still shows an alarm the phone no longer has (phone restarted, demo stopped)
+                        if (!j.isNull("alarm_id")) {
+                            val wa = j.optLong("alarm_id")
+                            if (wa != 0L && engine.flow.currentId() != wa) actions.watch(PhoneMessage.AlarmEnd(wa, "sync"))
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -167,15 +174,19 @@ class PhoneMonitor(private val app: Context) {
 
     fun setPin(pin: String) { settings.setPin(pin); sendSettingsToWatch() }
 
+    @Volatile private var lastSettingsSentMs = 0L
+
     private fun sendSettingsToWatch() {
         val salt = settings.pinSalt ?: return
         val hash = settings.pinHash ?: return
+        lastSettingsSentMs = System.currentTimeMillis()
         actions.watch(PhoneMessage.Settings(salt, hash, 30))
     }
 
     /** Replays a recorded seizure: fast until the alarm, then real time; waits until the alarm flow is over. */
     fun startDemo() {
         if (demoJob?.isActive == true) return
+        sendSettingsToWatch()
         demoJob = scope.launch(engineThread) {
             val rec = DemoRecording.parse(app.assets.open("demo/demo_seizure.bin").readBytes())
             engine.reset(demo = true)

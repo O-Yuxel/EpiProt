@@ -21,7 +21,9 @@
     <string name="permission_button">İzin ver</string>
 
     <string name="alarm_title">Nöbet algılandı</string>
-    <string name="alarm_text">Bakıcına haber verildi. İyiysen PIN gir (%1$d sn).</string>
+    <string name="alarm_text">Bakıcın uyarıldı.\nİyiysen PIN gir (%1$d sn)</string>
+    <string name="home_button">Ana sayfa</string>
+    <string name="home_alarm_running">Alarm sürüyor – açmak için dokun</string>
     <string name="alarm_active_title">Yardım geliyor</string>
     <string name="alarm_active_text">Bakıcına konumunla birlikte haber verildi.</string>
     <string name="checkin_title">İyi misin?</string>

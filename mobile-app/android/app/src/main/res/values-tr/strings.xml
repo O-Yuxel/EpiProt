@@ -7,7 +7,7 @@
     <string name="monitoring_on">İzleme açık</string>
     <string name="monitoring_off">İzleme kapalı</string>
     <string name="start_monitoring">İzlemeyi başlat</string>
-    <string name="stop_monitoring">Durdur</string>
+    <string name="stop_monitoring">İzlemeyi durdur</string>
     <string name="headband">Kafa bandı</string>
     <string name="watch">Saat</string>
     <string name="receiving">veri geliyor</string>
@@ -78,4 +78,43 @@
     <string name="channel_monitoring">İzleme</string>
     <string name="notif_monitoring">EpiProt izliyor</string>
     <string name="notif_monitoring_text">Kafa bandı ve saat verisi 5 saniyede bir kontrol ediliyor.</string>
+
+    <!-- redesigned UI -->
+    <string name="greeting">Merhaba</string>
+    <string name="greeting_named">Merhaba, %1$s</string>
+    <string name="status_protected">Koruma açık</string>
+    <string name="status_protected_text">EpiProt kafa bandını ve saati 5 saniyede bir kontrol ediyor.</string>
+    <string name="status_off_text">Kafa bandını ve saati tak, sonra izlemeyi başlat.</string>
+    <string name="connected">bağlı</string>
+    <string name="coming_soon">yakında</string>
+    <string name="headband_proto">Prototip geliştiriliyor</string>
+    <string name="battery">Pil %%%1$d</string>
+    <string name="bpm">atım/dk</string>
+    <string name="setup_title">Kurulumu tamamla</string>
+    <string name="setup_caregiver">Bakıcı telefon numarası ekle</string>
+    <string name="setup_pin">Saat için PIN belirle</string>
+    <string name="setup_sms">Gerçek SMS kapalı (test modu)</string>
+    <string name="open_settings">Ayarları aç</string>
+    <string name="recent_messages">Son mesajlar</string>
+    <string name="demo_progress2">%1$s / %2$s · nöbet %3$s\'de başlıyor</string>
+    <string name="events_title">Geçmiş</string>
+    <string name="events_sub">Her alarm adım adım, sensör uyarıları ve bakıcı mesajları.</string>
+    <string name="show_steps">%1$d adımı görmek için dokun</string>
+    <string name="section_patient">Hasta</string>
+    <string name="section_caregivers">Bakıcılar</string>
+    <string name="caregivers_note">Nöbet algılanır algılanmaz konumla birlikte SMS alırlar.</string>
+    <string name="section_watch_pin">Saat PIN\'i</string>
+    <string name="pin_note">Yanlış alarmı iptal etmek ve \"İyi misin?\" sorusunu cevaplamak için saatte girilir.</string>
+    <string name="pin_is_set_short">belirlendi</string>
+    <string name="pin_not_set_short">belirlenmedi</string>
+    <string name="section_doctor">Doktor</string>
+    <string name="section_privacy">Gizlilik</string>
+    <string name="perm_location">Konum (alarmda bakıcılara gönderilir)</string>
+    <string name="perm_sms">SMS (bakıcılara mesaj)</string>
+    <string name="perm_notifications">Bildirimler</string>
+    <string name="perm_bluetooth">Yakındaki cihazlar (kafa bandı)</string>
+    <string name="perm_on">izin var</string>
+    <string name="perm_off">izin yok</string>
+    <string name="perms_all_granted">Tüm izinler verilmiş.</string>
+    <string name="perms_open_settings">Bazı izinler daha önce reddedilmiş. Buradan İzinler bölümünde açabilirsin.</string>
 </resources>
