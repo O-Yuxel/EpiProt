@@ -44,6 +44,7 @@ from epiprot.gbm import detect as D
 from epiprot.gbm import tc_detect as T
 from epiprot.gbm import tc_features as TF
 from epiprot.gbm.tc_ensemble import load_labels, map30to5, qscale, run_lengths
+from epiprot.gbm.hr_robustness import STUCK_WINDOWS, stuck_mask
 
 B_SUFFIXES = ["", "@d5m", "@d60m", "@d1"]
 BUDGET = 0.25
@@ -74,6 +75,8 @@ def main(argv=None):
     ap.add_argument("--oof30", type=Path, default=Path("epiprot_results/gbm/detect_hw/oof_both_lgbm.npz"))
     ap.add_argument("--nohr5", type=Path, default=None, help="OOF of the 5 s model without heart rate (eeg+head)")
     ap.add_argument("--nohr30", type=Path, default=None, help="OOF of the 30 s model without heart rate")
+    ap.add_argument("--stuck-hr", type=float, default=0.0,
+                    help="also use the no-heart-rate models while the heart rate varied < this many bpm over 1 min")
     ap.add_argument("--assets", type=Path, required=True)
     ap.add_argument("--fixtures", type=Path, default=None)
     ap.add_argument("--threads", type=int, default=10)
@@ -111,7 +114,8 @@ def main(argv=None):
             h30[s] = np.pad(q, (0, max(0, n - len(q))), mode="edge")[:n] if len(q) else np.zeros(n, np.float32)
             with np.load(a.data_dir / f"{s}.npz") as zz:
                 nm = [str(x) for x in zz["names"]]
-                hrmiss[s] = np.isnan(zz["F"][:, nm.index("ecg_hr")])
+                hr = zz["F"][:, nm.index("ecg_hr")]
+                hrmiss[s] = np.isnan(hr) | stuck_mask(hr, a.stuck_hr)
         rh = np.sort(np.concatenate([zh[s][labels[s]["y"] == 0] for s in subs]).astype(np.float64))
         rh30 = np.sort(np.concatenate([h30[s][labels[s]["y"] == 0] for s in subs]).astype(np.float64))
         tab |= {"a_nohr": quantile_table(rh), "b_nohr": quantile_table(rh30)}
@@ -200,6 +204,7 @@ def main(argv=None):
         "fallback_when_missing": list(a.mov_cols),
         **({"heart_rate_backup": {
             "when_missing": "ecg_hr",
+            "stuck_bpm": a.stuck_hr, "stuck_windows": STUCK_WINDOWS,
             "a": {"file": "model_a_nohr.txt", "features": feats["a_nohr"], "scale": tab["a_nohr"]},
             "b": {"file": "model_b_nohr.txt", "features": feats_bh, "scale": tab["b_nohr"]}}} if nohr else {}),
         "threshold": float(thr), "smooth_k": int(k), "refractory_windows": T.REFRACTORY,

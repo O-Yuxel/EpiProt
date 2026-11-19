@@ -69,6 +69,21 @@ test patients' heart rate removed, before the context features are computed, as 
 | none at all (watch not worn) | 46/55, 0.05 | **53/55, 0.28** |
 | headband alone (backup models only) | – | **53/55, 0.26, median 53 s** |
 
+A heart rate that is present but WRONG (optical sensor fooled by movement) is the harder case, because the phone
+cannot see it (`hr_robustness.py --scenarios hr_erratic_sz hr_frozen_sz hr_spurious`):
+
+| Wrong heart rate | Before | **With the stuck check** | Backup always on (rejected) |
+|---|---|---|---|
+| none (correct) | 54/55, 0.24 | **54/55, 0.23** | 53/55, 0.24 |
+| random 60-180 during the seizure | 53/55, 0.23 | **53/55, 0.22** | 53/55, 0.24 |
+| stuck at the pre-seizure value | 40/55, 0.24 | **53/55, 0.24** | 52/55, 0.24 |
+| false high rate 10 % of the day (activity) | 54/55, 0.41 | 54/55, 0.39 | 53/55, 0.32 |
+
+Stuck check: a heart rate that varied less than 1 bpm over the last minute counts as missing, so the no-heart-rate
+models take over (`Detector.hrStuck`, same rule as `stuck_mask`). The threshold must be tuned with real watch data
+(the simulation used an exactly constant value). False high rates from activity still raise false alarms; checking
+the heart rate against the wrist-movement cadence needs real watch recordings (SeizeIT2 has no wrist sensor).
+
 Training model A with simulated heart-rate dropouts instead was tried and rejected: it learned "heart rate stops
 -> seizure" (55/55 with dropouts at seizure onset, but 0.91 false alarms/day without a watch, 52/55 with a normal
 heart rate). So the headband is the core sensor; the watch heart rate adds about one seizure and ~7 s earlier alarms.

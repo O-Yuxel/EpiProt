@@ -89,3 +89,9 @@ doctor only with the patient's consent (KVKK / GDPR special category data).
 
 EpiProt is a student research prototype (NYAS Junior Academy). It is not a certified medical device and does
 not replace medical care.
+
+## Data
+
+Data: SeizeIT2 wearable dataset (CC0) – Bhagubai M. et al., "SeizeIT2: Wearable dataset of patients with focal
+epilepsy", *Scientific Data* (2025); OpenNeuro ds005873, doi:10.18112/openneuro.ds005873.v1.1.0. The demo recording
+and the test fixtures in `mobile-app/android` are derived from it.

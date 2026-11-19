@@ -189,7 +189,7 @@ class DetectorConfig(
                 },
                 j.optJSONObject("heart_rate_backup")?.let { h ->
                     val ha = h.getJSONObject("a"); val hb = h.getJSONObject("b")
-                    HrBackupConfig(h.getString("when_missing"),
+                    HrBackupConfig(h.getString("when_missing"), h.optDouble("stuck_bpm", 0.0), h.optInt("stuck_windows", 12),
                         ha.getString("file"), strs(ha.getJSONArray("features")), table(ha),
                         hb.getString("file"), strs(hb.getJSONArray("features")), table(hb))
                 },
@@ -207,6 +207,8 @@ class ModelBConfig(val file: String, val baseFeatures: List<String>, val feature
  */
 class HrBackupConfig(
     val whenMissing: String,
+    /** Heart rate that varied less than [stuckBpm] over the last [stuckWindows] windows counts as missing (stuck optical sensor). 0 = off. */
+    val stuckBpm: Double = 0.0, val stuckWindows: Int = 12,
     val fileA: String, val featuresA: List<String>, val scaleA: ScaleTable,
     val fileB: String, val featuresB: List<String>, val scaleB: ScaleTable,
 )
@@ -342,6 +344,7 @@ class Detector(private val cfg: DetectorConfig, private val modelA: Gbdt, privat
     private val idxFb = cfg.featuresFb.map { xNames.indexOf(it).also { i -> require(i >= 0) { "unknown feature $it" } } }.toIntArray()
     private val fbIdx = cfg.fallbackWhenMissing.map { cfg.baseFeatures.indexOf(it) }
     private val idxNohr = hb?.featuresA?.map { xNames.indexOf(it).also { i -> require(i >= 0) { "unknown feature $it" } } }?.toIntArray()
+    private val recentHr = ArrayDeque<Double>()        // last heart-rate values, for the stuck-sensor check
     private val hrIdx = hb?.let { cfg.baseFeatures.indexOf(it.whenMissing).also { i -> require(i >= 0) { "unknown feature ${it.whenMissing}" } } }
     private val recent = ArrayDeque<Double>()          // scaled scores, for the onset estimate
     private val rule = AlarmRule(cfg.threshold, cfg.smoothK, cfg.refractory)
@@ -365,7 +368,8 @@ class Detector(private val cfg: DetectorConfig, private val modelA: Gbdt, privat
         val x = expander.next(base)
         if (roundToHalf) for (i in x.indices) x[i] = toHalf(x[i])
         val fallback = fbIdx.all { base[it].isNaN() }
-        val noHr = hrIdx != null && base[hrIdx].isNaN()
+        val stuck = hrIdx != null && hrStuck(base[hrIdx])          // records every value, also missing ones
+        val noHr = hrIdx != null && (base[hrIdx].isNaN() || stuck)
         val p: Double
         val s5: Double
         when {
@@ -396,6 +400,17 @@ class Detector(private val cfg: DetectorConfig, private val modelA: Gbdt, privat
             if (below >= cfg.endAfterLow) { active = false; ended = index - below }
         }
         return WindowResult(index, p, s, sm, fallback, alarm, onset, ended, noHr)
+    }
+
+    /**
+     * A real heart rate always moves; one that hardly changed over the last minute comes from a stuck sensor and must
+     * not hide a seizure the headband sees (same rule as stuck_mask in mobile-app/src/epiprot/gbm/hr_robustness.py).
+     */
+    private fun hrStuck(hr: Double): Boolean {
+        val b = hb ?: return false
+        recentHr.addLast(hr); if (recentHr.size > b.stuckWindows) recentHr.removeFirst()
+        if (b.stuckBpm <= 0 || recentHr.size < b.stuckWindows || recentHr.any { it.isNaN() }) return false
+        return recentHr.max() - recentHr.min() < b.stuckBpm
     }
 
     companion object {

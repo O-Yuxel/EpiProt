@@ -105,6 +105,12 @@ def main(argv=None):
     ap.add_argument("--nohr5", type=Path, default=None,
                     help="5 s OOF of a model WITHOUT heart rate, used where the heart rate is missing")
     ap.add_argument("--nohr30", type=Path, default=None, help="same for the 30 s model")
+    ap.add_argument("--stuck-hr", type=float, default=0.0,
+                    help="treat the heart rate as unreliable (-> no-heart-rate models) while it varied less than this "
+                         "many bpm over the last 12 windows (1 min): a stuck optical sensor; 0 = off")
+    ap.add_argument("--nohr-always", action="store_true",
+                    help="use the no-heart-rate models in EVERY window too (max with the main models), so a wrong "
+                         "heart rate that is present cannot hide a seizure the headband sees")
     a = ap.parse_args(argv)
     data = load_labels(a.data_dir)
     subs = sorted(data)
@@ -142,7 +148,7 @@ def main(argv=None):
     # heart-rate backup: windows without heart rate use models that never saw it
     nohr = a.nohr5 is not None
     if nohr:
-        from .hr_robustness import mask5
+        from .hr_robustness import WRONG, _rng, mask5, stuck_mask, wrong5
         z = np.load(a.nohr5)
         h5 = {s: z[s].astype(np.float32) for s in subs}
         h30 = to5(np.load(a.nohr30))
@@ -153,8 +159,18 @@ def main(argv=None):
                 nm = [str(x) for x in zz["names"]]
                 miss = np.isnan(zz["F"][:, nm.index("ecg_hr")])
                 sz = [tuple(map(int, q)) for q in zz["seizures"]]
-            hrmiss[s] = miss
-            thrmiss[s] = miss | mask5(len(miss), sz, scen)
+            def stuck(hr):
+                return stuck_mask(hr, a.stuck_hr)
+            with np.load(a.data_dir / f"{s}.npz") as zz:
+                F0 = zz["F"].astype(np.float32)
+            hrmiss[s] = miss | stuck(F0[:, nm.index("ecg_hr")])
+            if scen in WRONG:     # wrong but present heart rate: the phone sees a value -> main models
+                F2 = F0.copy()
+                wrong5(F2, nm, sz, scen, _rng(a.data_dir / f"{s}.npz", scen))
+                hr2 = F2[:, nm.index("ecg_hr")]
+                thrmiss[s] = np.isnan(hr2) | stuck(hr2)
+            else:
+                thrmiss[s] = miss | mask5(len(miss), sz, scen) | stuck(F0[:, nm.index("ecg_hr")])
     order = list(subs)
     np.random.default_rng(42).shuffle(order)
     folds = [order[i::5] for i in range(5)]
@@ -178,8 +194,12 @@ def main(argv=None):
                     a5 = np.where(nomov[s], qscale(qf[s], rf), a5)
                 if nohr:
                     hm = thrmiss[s] if s in set(test) else hrmiss[s]
-                    a5 = np.where(hm, qscale(h5[s], rh5), a5)
-                    a30 = np.where(hm, qscale(h30[s], rh30), a30)
+                    if a.nohr_always:
+                        a5 = np.maximum(a5, qscale(h5[s], rh5))
+                        a30 = np.maximum(a30, qscale(h30[s], rh30))
+                    else:
+                        a5 = np.where(hm, qscale(h5[s], rh5), a5)
+                        a30 = np.where(hm, qscale(h30[s], rh30), a30)
                 sc[s] = {"5s only": a5, "30s only": a30, "mean": (a5 + a30) / 2,
                          "max": np.maximum(a5, a30)}[rule].astype(np.float32)
             for b in BUD:

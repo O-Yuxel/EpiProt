@@ -38,7 +38,7 @@ uzmanla (avukat, düzenleyici danışman, etik kurul) kontrol edilmelidir.
 | 3.2 | **Etik kurul onayı** al; gönüllüler ve veliler için **araştırma onam formlarını** hazırla. | İnsan katılımcılı sağlık araştırması etik kurul onayı olmadan yapılamaz. Bu formlar uygulamadaki rızalardan ayrı belgelerdir. | 🔴 |
 | 3.3 | Klinik araştırma izni gerekip gerekmediğini **TİTCK ile netleştir**. | Tıbbi cihazla yapılan klinik araştırmalar ayrıca izne tabi olabilir. | 🟠 |
 | 3.4 | **Gerçek kullanımda performansı ölç**: kaçırılan nöbet, günlük yanlış alarm, gecikme. | Laboratuvar sonucu (54/55, günde 0,24 yanlış alarm) gerçek hayatta farklı çıkabilir. Hem güvenlik hem tıbbi cihaz dosyası için gerekli. | 🟠 |
-| 3.5 | **Saatin nöbet sırasında YANLIŞ nabız göndermesi** durumunu test et. | Nabzın hiç gelmemesi test edildi ve yedek modelle çözüldü; ama hatalı değer gelmesi henüz test edilmedi. | 🟠 |
+| 3.5 | **Gerçek saat verisiyle yanlış nabız kontrollerini ayarla**: “takılı nabız” eşiği (şu an 1 dakikada 1 atımdan az değişim) ve bilek hareketi ritmiyle nabız karşılaştırması. | Simülasyonda takılı nabız 55 nöbetten 15’ini kaçırtıyordu, eklenen kontrolle 53/55’e çıktı; ama gerçek saatlerin nasıl takıldığı bilinmiyor. Sahte yüksek nabız (spor, yürüme) yanlış alarmı 0,24’ten 0,39’a çıkarıyor; çözümü gerçek bilek verisi gerektiriyor. | 🟠 |
 
 ## 4. Google Play ve teknik yayın
 
