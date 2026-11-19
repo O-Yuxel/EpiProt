@@ -36,6 +36,7 @@ object Notifications {
     const val CHANNEL_ALARM = "alarm"
     const val ID_MONITORING = 1
     private const val ID_WAKE = 2
+    private const val ID_RESUME = 3
 
     fun createChannels(context: Context) {
         val nm = context.getSystemService(NotificationManager::class.java)
@@ -61,6 +62,22 @@ object Notifications {
         .setOngoing(true)
         .setContentIntent(openApp(context, 0))
         .build()
+
+    /** "EpiProt is not running – tap to open" (the app starts the service from the foreground). */
+    fun resume(context: Context) {
+        createChannels(context)
+        val n = NotificationCompat.Builder(context, CHANNEL_ALARM)
+            .setSmallIcon(R.drawable.ic_epiprot)
+            .setContentTitle(context.getString(R.string.notif_resume_title))
+            .setContentText(context.getString(R.string.notif_resume_text))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setOngoing(true)
+            .setContentIntent(openApp(context, 2))
+            .build()
+        try { context.getSystemService(NotificationManager::class.java).notify(ID_RESUME, n) } catch (e: SecurityException) { }
+    }
+
+    fun clearResume(context: Context) = context.getSystemService(NotificationManager::class.java).cancel(ID_RESUME)
 
     /**
      * Brings the app to the front for an alarm, check-in or warning. Apps may not open screens from the

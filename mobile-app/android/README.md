@@ -3,7 +3,7 @@
 The hub of the system: receives the watch (and later the headband) data, runs the seizure detector every 5 s,
 handles alarms and sends the caregiver messages. Kotlin, Jetpack Compose (Material 3).
 
-**Status:** first version. Builds, 36 unit tests pass (including parity with the Python code), runs on the
+**Status:** first version. Builds, 37 unit tests pass (including parity with the Python code), runs on the
 Android emulator: the demo replays a real recorded seizure → alarm → caregiver message with location → audit
 trail. Not yet tested together with the watch on real devices; the headband does not exist yet.
 
@@ -92,6 +92,20 @@ worn and sending. `assets/model/` is made by `export_model.py --group5 eeg+ecg+h
   probably retraining.
 * The demo seizure (sub-115) was part of the training data of the exported model: the demo shows the chain
   working, it is not a performance test.
+
+## Staying on
+
+* The service is sticky and the user's choice is remembered: after the process is killed it comes back (tested:
+  ~10 s), after a reboot or an app update `RestartReceiver` starts it again (tested on the emulator: ~2.5 min after
+  boot, Android delivers BOOT_COMPLETED app by app). Location is not used by a service restarted in the background
+  (while-in-use rule) until the app is opened. If Android refuses the start, a "tap to resume" notification appears.
+  The watch app does the same.
+* Settings → Keep EpiProt running: battery-optimisation exemption (asked with an explanation) and phone-brand hints
+  (Xiaomi autostart, Samsung sleeping apps, Huawei app launch, Oppo/Realme/OnePlus/Vivo); a home-screen card appears
+  while monitoring runs under battery optimisation.
+* `EnduranceTest`: the whole chain over hours of replayed data (default 2 h; `gradlew testDebugUnitTest
+  --tests "*EnduranceTest" -PenduranceHours=24`). 24 h on this PC: 17 280 windows, 3.7 ms per window (99 %: 14 ms),
+  96 alarms for 96 replayed seizures, memory flat (18.9 MB). Battery use must still be measured on a real phone.
 
 ## Safety and privacy
 

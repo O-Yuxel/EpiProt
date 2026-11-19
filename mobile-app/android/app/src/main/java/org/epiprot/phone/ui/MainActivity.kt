@@ -60,6 +60,7 @@ import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Send
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Button
@@ -213,6 +214,35 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val monitor = EpiProtPhoneApp.monitor(this)
         setContent { EpiProtTheme { App(monitor, this) } }
+        handleResume(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleResume(intent)
+    }
+
+    /** "Tap to resume" notification: start monitoring again from the foreground. */
+    private fun handleResume(i: Intent?) {
+        if (i?.getBooleanExtra(MonitoringService.EXTRA_RESUME, false) == true &&
+            EpiProtPhoneApp.monitor(this).consents.value.canMonitor) MonitoringService.start(this)
+    }
+
+    /** True when Android's battery optimisation may stop EpiProt in the background. */
+    val batteryOptimized: Boolean
+        get() = !getSystemService(android.os.PowerManager::class.java).isIgnoringBatteryOptimizations(packageName)
+
+    @android.annotation.SuppressLint("BatteryLife")
+    fun askBatteryExemption() {
+        try {
+            startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:$packageName")))
+        } catch (e: Exception) {
+            startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+        }
+    }
+
+    fun openAppSettings() {
+        startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null)))
     }
 }
 
@@ -271,6 +301,7 @@ private fun App(m: PhoneMonitor, activity: MainActivity) {
                             route == "messages" -> MessagesPage(m) { sub = it }
                             route == "doctor" -> DoctorPage(m)
                             route == "permissions" -> PermissionsPage(activity)
+                            route == "keep" -> KeepRunningPage(activity)
                             route == "privacy" -> PrivacyCenter(m) { sub = it }
                             route.startsWith("consent:") -> org.epiprot.phone.privacy.Consent.entries
                                 .firstOrNull { it.key == route.substringAfter(':') }?.let { ConsentDetail(m, it) }
@@ -398,6 +429,12 @@ private fun Home(m: PhoneMonitor, activity: MainActivity, openSettings: (String?
         CardHeader(Icons.Rounded.Person, stringResource(R.string.home_adult_title, m.settings.patientName.ifBlank { "–" }), tint = C.Amber, bubble = Color.White)
         Text(stringResource(R.string.home_adult_text), color = C.Ink)
         TextButton(onClick = { openSettings("privacy") }) { Text(stringResource(R.string.privacy_title), color = C.TealDark) }
+    }
+    val pv by activity.permVersion
+    if (pv >= 0 && running && activity.batteryOptimized) EpiCard(container = C.AmberSoft) {
+        CardHeader(Icons.Rounded.Warning, stringResource(R.string.keep_card_title), tint = C.Amber, bubble = Color.White)
+        Text(stringResource(R.string.keep_card_text), color = C.Ink)
+        TextButton(onClick = { openSettings("keep") }) { Text(stringResource(R.string.keep_open), color = C.TealDark) }
     }
     if (consents.canMonitor && !consents.smsAllowed) EpiCard(container = C.AmberSoft) {
         CardHeader(Icons.Rounded.Warning, stringResource(R.string.home_no_sms_title), tint = C.Amber, bubble = Color.White)
@@ -766,6 +803,7 @@ private fun subTitle(route: String): String = when {
     route == "messages" -> stringResource(R.string.set_messages)
     route == "doctor" -> stringResource(R.string.section_doctor)
     route == "permissions" -> stringResource(R.string.set_permissions)
+    route == "keep" -> stringResource(R.string.keep_title)
     route == "privacy" -> stringResource(R.string.privacy_title)
     route == "notice" -> stringResource(R.string.privacy_notice)
     route == "limits" -> stringResource(R.string.privacy_limits)
@@ -814,6 +852,11 @@ private fun SettingsMenu(m: PhoneMonitor, activity: MainActivity, open: (String)
             tint = C.Mint, bubble = C.MintSoft) { open("privacy") }
         HorizontalDivider(color = C.Line)
         MenuRow(Icons.Rounded.CheckCircle, stringResource(R.string.set_permissions), stringResource(R.string.set_permissions_sub)) { open("permissions") }
+        HorizontalDivider(color = C.Line)
+        val pvk by activity.permVersion
+        MenuRow(Icons.Rounded.Refresh, stringResource(R.string.keep_title),
+            stringResource(if (pvk >= 0 && activity.batteryOptimized) R.string.keep_sub_bad else R.string.keep_sub_ok),
+            tint = if (activity.batteryOptimized) C.Amber else C.Mint, bubble = if (activity.batteryOptimized) C.AmberSoft else C.MintSoft) { open("keep") }
         HorizontalDivider(color = C.Line)
         var lock by remember { mutableStateOf(s.appLock) }
         Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -953,6 +996,36 @@ private fun PermissionsPage(activity: MainActivity) {
             }
         }
         SoftButton(stringResource(R.string.permissions)) { activity.requestPermissions(fromButton = true) }
+    }
+}
+
+@Composable
+private fun KeepRunningPage(activity: MainActivity) {
+    val pv by activity.permVersion
+    val optimized = pv >= 0 && activity.batteryOptimized
+    Text(stringResource(R.string.keep_intro), color = C.InkSoft, modifier = Modifier.padding(start = 4.dp))
+    EpiCard {
+        CardHeader(if (optimized) Icons.Rounded.Warning else Icons.Rounded.CheckCircle, stringResource(R.string.keep_battery),
+            tint = if (optimized) C.Amber else C.Mint, bubble = if (optimized) C.AmberSoft else C.MintSoft)
+        Text(stringResource(if (optimized) R.string.keep_battery_bad else R.string.keep_battery_ok), color = C.Ink)
+        if (optimized) PrimaryButton(stringResource(R.string.keep_battery_button)) { activity.askBatteryExemption() }
+    }
+    EpiCard {
+        CardHeader(Icons.Rounded.Refresh, stringResource(R.string.keep_restart), tint = C.Mint, bubble = C.MintSoft)
+        Text(stringResource(R.string.keep_restart_text), color = C.Ink)
+    }
+    val brand = Build.MANUFACTURER.lowercase()
+    val hint = when {
+        brand in setOf("xiaomi", "redmi", "poco") -> R.string.keep_hint_xiaomi
+        brand == "samsung" -> R.string.keep_hint_samsung
+        brand in setOf("huawei", "honor") -> R.string.keep_hint_huawei
+        brand in setOf("oppo", "realme", "oneplus", "vivo") -> R.string.keep_hint_oppo
+        else -> null
+    }
+    if (hint != null) EpiCard(container = C.AmberSoft) {
+        CardHeader(Icons.Rounded.Info, stringResource(R.string.keep_brand_title, Build.MANUFACTURER), tint = C.Amber, bubble = Color.White)
+        Text(stringResource(hint), color = C.Ink)
+        SoftButton(stringResource(R.string.keep_open_app_settings)) { activity.openAppSettings() }
     }
 }
 

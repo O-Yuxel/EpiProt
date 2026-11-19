@@ -373,4 +373,28 @@
     <string name="rep_sig_end">estimated end</string>
     <string name="rep_sig_note">Recorded by consumer-grade wearables (two behind-the-ear EEG channels, not a clinical EEG). Graphs are scaled to the 1st–99th percentile of each trace; empty parts mean no data from that sensor.</string>
     <string name="rep_sig_none">No signal graphs: signals around alarms are kept only with the patient\'s separate consent, or none were recorded in this period.</string>
+
+    <!-- keep running -->
+    <string name="channel_monitoring_alerts">Monitoring problems</string>
+    <string name="notif_resume_title">EpiProt monitoring is not running</string>
+    <string name="notif_resume_text">The phone restarted or Android stopped EpiProt. Tap to resume monitoring.</string>
+    <string name="keep_title">Keep EpiProt running</string>
+    <string name="keep_sub_ok">Battery optimisation off · restarts after a reboot</string>
+    <string name="keep_sub_bad">Battery saving may stop monitoring</string>
+    <string name="keep_intro">A seizure alarm only helps if EpiProt is running. Phones stop apps in the background to save battery; these settings prevent that.</string>
+    <string name="keep_battery">Battery optimisation</string>
+    <string name="keep_battery_bad">On: Android may pause or stop EpiProt when the screen is off.</string>
+    <string name="keep_battery_ok">Off for EpiProt: monitoring keeps running with the screen off.</string>
+    <string name="keep_battery_button">Allow EpiProt to run in the background</string>
+    <string name="keep_restart">After a restart</string>
+    <string name="keep_restart_text">If monitoring was on, it starts again by itself after the phone restarts or the app is updated. If Android does not allow that, a notification asks you to tap to resume.</string>
+    <string name="keep_brand_title">Extra setting on %1$s phones</string>
+    <string name="keep_hint_xiaomi">Settings → Apps → EpiProt: turn on "Autostart", and under "Battery saver" choose "No restrictions". In the recent-apps screen you can also lock EpiProt (long press → lock).</string>
+    <string name="keep_hint_samsung">Settings → Battery → Background usage limits: make sure EpiProt is not in "Sleeping apps" or "Deep sleeping apps"; you can add it to "Never sleeping apps".</string>
+    <string name="keep_hint_huawei">Settings → Battery → App launch: turn off "Manage automatically" for EpiProt and allow auto-launch, secondary launch and run in background.</string>
+    <string name="keep_hint_oppo">Settings → Apps → EpiProt → Battery: allow background activity and auto-launch.</string>
+    <string name="keep_open_app_settings">Open EpiProt\'s app settings</string>
+    <string name="keep_card_title">Battery saving may stop EpiProt</string>
+    <string name="keep_card_text">Allow EpiProt to run in the background so alarms are not missed.</string>
+    <string name="keep_open">Fix it</string>
 </resources>

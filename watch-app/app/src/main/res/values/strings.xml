@@ -59,4 +59,6 @@
     <string name="notif_monitoring">EpiProt is monitoring</string>
     <string name="home_no_consent">Sensors off</string>
     <string name="home_no_consent_text">No consent for monitoring yet. Give it in the EpiProt phone app (Settings → Privacy &amp; consents).</string>
+    <string name="notif_resume_title">EpiProt is not running</string>
+    <string name="notif_resume_text">Tap to open EpiProt and resume.</string>
 </resources>

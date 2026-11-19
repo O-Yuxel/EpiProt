@@ -363,4 +363,28 @@
     <string name="rep_sig_end">tahmini bitiş</string>
     <string name="rep_sig_note">Giyilebilir cihazlarla kaydedildi (kulak arkası iki EEG kanalı, klinik EEG değildir). Grafikler her iz kendi değerlerinin yüzde 1–99 aralığına göre ölçeklenmiştir; boş kısımlar o sensörden veri gelmediği anlamına gelir.</string>
     <string name="rep_sig_none">Sinyal grafiği yok: alarm anındaki sinyaller sadece hastanın ayrı onayıyla saklanır ya da bu dönemde kayıt yok.</string>
+
+    <!-- keep running -->
+    <string name="channel_monitoring_alerts">İzleme sorunları</string>
+    <string name="notif_resume_title">EpiProt izleme çalışmıyor</string>
+    <string name="notif_resume_text">Telefon yeniden başladı veya Android EpiProt\'u durdurdu. İzlemeye devam etmek için dokun.</string>
+    <string name="keep_title">EpiProt\'u açık tut</string>
+    <string name="keep_sub_ok">Pil optimizasyonu kapalı · yeniden başlatmada açılır</string>
+    <string name="keep_sub_bad">Pil tasarrufu izlemeyi durdurabilir</string>
+    <string name="keep_intro">Nöbet alarmı ancak EpiProt çalışıyorsa işe yarar. Telefonlar pil için arka plandaki uygulamaları durdurur; bu ayarlar bunu önler.</string>
+    <string name="keep_battery">Pil optimizasyonu</string>
+    <string name="keep_battery_bad">Açık: ekran kapalıyken Android EpiProt\'u duraklatabilir veya durdurabilir.</string>
+    <string name="keep_battery_ok">EpiProt için kapalı: ekran kapalıyken de izleme sürer.</string>
+    <string name="keep_battery_button">EpiProt\'un arka planda çalışmasına izin ver</string>
+    <string name="keep_restart">Yeniden başlatmadan sonra</string>
+    <string name="keep_restart_text">İzleme açıksa telefon yeniden başlayınca veya uygulama güncellenince kendiliğinden yeniden açılır. Android buna izin vermezse "devam etmek için dokun" bildirimi gelir.</string>
+    <string name="keep_brand_title">%1$s telefonlarda ek ayar</string>
+    <string name="keep_hint_xiaomi">Ayarlar → Uygulamalar → EpiProt: "Otomatik başlatma"yı aç, "Pil tasarrufu" altında "Kısıtlama yok"u seç. Son uygulamalar ekranında EpiProt\'u kilitleyebilirsin (uzun bas → kilitle).</string>
+    <string name="keep_hint_samsung">Ayarlar → Pil → Arka plan kullanım sınırları: EpiProt\'un "Uyuyan uygulamalar"da olmadığından emin ol; "Hiç uyumayan uygulamalar"a ekleyebilirsin.</string>
+    <string name="keep_hint_huawei">Ayarlar → Pil → Uygulama başlatma: EpiProt için "Otomatik yönet"i kapat; otomatik başlatma, ikincil başlatma ve arka planda çalışmaya izin ver.</string>
+    <string name="keep_hint_oppo">Ayarlar → Uygulamalar → EpiProt → Pil: arka plan etkinliğine ve otomatik başlatmaya izin ver.</string>
+    <string name="keep_open_app_settings">EpiProt uygulama ayarlarını aç</string>
+    <string name="keep_card_title">Pil tasarrufu EpiProt\'u durdurabilir</string>
+    <string name="keep_card_text">Alarmlar kaçmasın diye EpiProt\'un arka planda çalışmasına izin ver.</string>
+    <string name="keep_open">Düzelt</string>
 </resources>

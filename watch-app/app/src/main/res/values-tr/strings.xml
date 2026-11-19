@@ -54,4 +54,6 @@
     <string name="notif_monitoring">EpiProt takipte</string>
     <string name="home_no_consent">Sensörler kapalı</string>
     <string name="home_no_consent_text">İzleme için henüz onay yok. EpiProt telefon uygulamasından ver (Ayarlar → Gizlilik ve onaylar).</string>
+    <string name="notif_resume_title">EpiProt çalışmıyor</string>
+    <string name="notif_resume_text">Açıp devam etmek için dokun.</string>
 </resources>

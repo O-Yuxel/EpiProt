@@ -4,6 +4,9 @@ plugins {
 }
 
 android {
+    testOptions {
+        unitTests.all { it.systemProperty("endurance.hours", project.findProperty("enduranceHours") ?: "2") }
+    }
     namespace = "org.epiprot.phone"
     compileSdk = 36
 

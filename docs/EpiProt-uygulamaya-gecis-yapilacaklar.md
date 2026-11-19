@@ -49,6 +49,8 @@ uzmanla (avukat, düzenleyici danışman, etik kurul) kontrol edilmelidir.
 | 4.3 | **Yayın imza anahtarını** oluştur ve güvenle sakla (telefon ve saat aynı anahtar). | Telefon ve saat aynı anahtarla imzalanmazsa birbirini bulamaz. Anahtar kaybolursa güncelleme yapılamaz. | 🔴 |
 | 4.4 | **Bağımsız güvenlik incelemesi** (kod ve sızma testi). | Sağlık verisi işleyen uygulamada güvenlik açığı hem hasta için risk hem de hukuki sorumluluktur. | 🟠 |
 | 4.5 | **Kafa bandının Bluetooth bağlantısını ve veri formatını** donanım ekibiyle tamamla. | Kafa bandı henüz yok; uygulama şu an kayıtlı veriyle çalışıyor. | 🔴 |
+| 4.6 | **Pil optimizasyonu muafiyeti** için Play politikasına uygunluğu beyan et. | Uygulama nöbet alarmı için pil optimizasyonundan muafiyet istiyor; Google Play bu izni yalnızca gerekçeli kullanımlarda kabul ediyor. | 🟠 |
+| 4.7 | **Gerçek telefonda ve saatte 24 saatlik pil ve kesintisizlik testi** yap (farklı markalar, özellikle Xiaomi ve Samsung). | Bilgisayardaki 24 saatlik test hız ve belleği doğruladı; pil tüketimi ve markaların uygulamayı kapatma davranışı ancak gerçek cihazda ölçülür. | 🔴 |
 
 ## 5. Ülkeye özel işler
 
