@@ -167,6 +167,7 @@ class DetectorConfig(
     val threshold: Double, val smoothK: Int, val refractory: Int,
     val lowLevel: Double, val endAfterLow: Int,
     val modelB: ModelBConfig? = null,
+    val hrBackup: HrBackupConfig? = null,
 ) {
     companion object {
         fun parse(json: String): DetectorConfig {
@@ -186,12 +187,41 @@ class DetectorConfig(
                 j.optJSONObject("model_b")?.let { b ->
                     ModelBConfig(b.getString("file"), strs(b.getJSONArray("base_features")), strs(b.getJSONArray("features")), table(b))
                 },
+                j.optJSONObject("heart_rate_backup")?.let { h ->
+                    val ha = h.getJSONObject("a"); val hb = h.getJSONObject("b")
+                    HrBackupConfig(h.getString("when_missing"),
+                        ha.getString("file"), strs(ha.getJSONArray("features")), table(ha),
+                        hb.getString("file"), strs(hb.getJSONArray("features")), table(hb))
+                },
             )
         }
     }
 }
 
 class ModelBConfig(val file: String, val baseFeatures: List<String>, val features: List<String>, val scale: ScaleTable)
+
+/**
+ * Heart-rate backup: while the watch sends no heart rate ([whenMissing] is missing), the 5 s model A_nohr
+ * (EEG + headband movement) and the 30 s model B_nohr (EEG spectrum) are used instead. They never saw a heart
+ * rate, so a heart rate that drops out (watch off, optical sensor lost during a convulsion) cannot fool them.
+ */
+class HrBackupConfig(
+    val whenMissing: String,
+    val fileA: String, val featuresA: List<String>, val scaleA: ScaleTable,
+    val fileB: String, val featuresB: List<String>, val scaleB: ScaleTable,
+)
+
+/** All model files of the detector. */
+class DetectorModels(val a: Gbdt, val fb: Gbdt, val b: Gbdt? = null, val aNohr: Gbdt? = null, val bNohr: Gbdt? = null) {
+    companion object {
+        /** [read] returns the text of a file in assets/model/. */
+        fun load(cfg: DetectorConfig, read: (String) -> String): DetectorModels {
+            fun m(f: String) = Gbdt.parse(read(f))
+            return DetectorModels(m(cfg.fileA), m(cfg.fileFb), cfg.modelB?.let { m(it.file) },
+                cfg.hrBackup?.let { m(it.fileA) }, cfg.hrBackup?.let { m(it.fileB) })
+        }
+    }
+}
 
 /**
  * Change features of the 30 s model (detect.make_features "both"): the window's values (missing ->
@@ -235,15 +265,23 @@ class ChangeExpander30(private val n: Int) {
  * Model B: every 30 s (6 windows) it computes the 30 s features from the raw headband EEG and the
  * watch heart rate; its scaled score is held until the next 30 s window (as tc_ensemble.map30to5).
  */
-class ModelB(private val cfg: ModelBConfig, private val model: Gbdt) {
+class ModelB(private val cfg: ModelBConfig, private val model: Gbdt,
+             private val backup: HrBackupConfig? = null, private val modelNohr: Gbdt? = null) {
     private val expander = ChangeExpander30(cfg.baseFeatures.size)
     private val buf = ArrayList<WindowInput>(6)
     var heldScore = 0.0
         private set
+    /** Held scaled score of the backup model without heart rate. */
+    var heldScoreNohr = 0.0
+        private set
+    private val idxNohr: IntArray? = backup?.featuresB?.map {
+        cfg.features.indexOf(it).also { i -> require(i >= 0) { "unknown 30 s feature $it" } }
+    }?.toIntArray()
 
     init {
         require(cfg.baseFeatures == Features30s.NAMES) { "30 s feature names differ from Features30s" }
         require(model.numFeatures == cfg.features.size) { "model B / config mismatch" }
+        if (backup != null) require(modelNohr != null && modelNohr.numFeatures == idxNohr!!.size) { "model B_nohr / config mismatch" }
     }
 
     /** Feed one 5 s window; returns the (possibly new) held scaled score. */
@@ -258,7 +296,9 @@ class ModelB(private val cfg: ModelBConfig, private val model: Gbdt) {
         val watchSent = buf.any { it.heartRate.isNotEmpty() || it.mov.containsKey("body_acc") }
         val base = Features30s.compute(eeg(0), eeg(1), hr, watchSent)
         buf.clear()
-        heldScore = cfg.scale.scale(model.predict(expander.next(base)))
+        val x = expander.next(base)
+        heldScore = cfg.scale.scale(model.predict(x))
+        if (idxNohr != null) heldScoreNohr = backup!!.scaleB.scale(modelNohr!!.predict(DoubleArray(idxNohr.size) { x[idxNohr[it]] }))
         return heldScore
     }
 }
@@ -273,16 +313,24 @@ data class WindowResult(
     val alarm: Boolean,
     val onsetIndex: Long?,       // estimated seizure start (on an alarm)
     val seizureEndedIndex: Long?,// last seizure-like window, when the seizure is over
+    val noHeartRate: Boolean = false, // no heart rate from the watch -> models without heart rate
 )
 
 /**
- * The EpiProt 5 s detector: model A (EEG + heart + movement) or, when neither movement
- * sensor sends data, the backup model A' (EEG + heart); scaled score, smoothing over k
+ * The EpiProt detector: model A (EEG + heart + movement) or, when the movement sensor sends nothing,
+ * the backup model A' (EEG + heart), or, when the watch sends no heart rate, A_nohr (EEG + movement);
+ * max with the held 30 s score (B, or B_nohr without heart rate); scaled score, smoothing over k
  * windows, threshold, 5 min refractory period after each alarm.
  */
 class Detector(private val cfg: DetectorConfig, private val modelA: Gbdt, private val modelFb: Gbdt,
-               modelB: Gbdt? = null, private val roundToHalf: Boolean = true) {
-    private val b: ModelB? = cfg.modelB?.let { c -> ModelB(c, requireNotNull(modelB) { "model B file missing" }) }
+               modelB: Gbdt? = null, private val modelANohr: Gbdt? = null, modelBNohr: Gbdt? = null,
+               private val roundToHalf: Boolean = true) {
+    constructor(cfg: DetectorConfig, m: DetectorModels) : this(cfg, m.a, m.fb, m.b, m.aNohr, m.bNohr)
+
+    private val hb = cfg.hrBackup
+    private val b: ModelB? = cfg.modelB?.let { c ->
+        ModelB(c, requireNotNull(modelB) { "model B file missing" }, hb, modelBNohr)
+    }
     private val expander = ContextExpander(cfg.baseFeatures.size)
     private val xNames: List<String> = buildList {
         val b = cfg.baseFeatures
@@ -293,6 +341,8 @@ class Detector(private val cfg: DetectorConfig, private val modelA: Gbdt, privat
     private val idxA = cfg.featuresA.map { xNames.indexOf(it).also { i -> require(i >= 0) { "unknown feature $it" } } }.toIntArray()
     private val idxFb = cfg.featuresFb.map { xNames.indexOf(it).also { i -> require(i >= 0) { "unknown feature $it" } } }.toIntArray()
     private val fbIdx = cfg.fallbackWhenMissing.map { cfg.baseFeatures.indexOf(it) }
+    private val idxNohr = hb?.featuresA?.map { xNames.indexOf(it).also { i -> require(i >= 0) { "unknown feature $it" } } }?.toIntArray()
+    private val hrIdx = hb?.let { cfg.baseFeatures.indexOf(it.whenMissing).also { i -> require(i >= 0) { "unknown feature ${it.whenMissing}" } } }
     private val recent = ArrayDeque<Double>()          // scaled scores, for the onset estimate
     private val rule = AlarmRule(cfg.threshold, cfg.smoothK, cfg.refractory)
     private var index = -1L
@@ -301,6 +351,7 @@ class Detector(private val cfg: DetectorConfig, private val modelA: Gbdt, privat
 
     init {
         require(modelA.numFeatures == idxA.size && modelFb.numFeatures == idxFb.size) { "model / config mismatch" }
+        if (hb != null) require(modelANohr != null && modelANohr.numFeatures == idxNohr!!.size) { "model A_nohr / config mismatch" }
     }
 
     val seizureActive: Boolean get() = active
@@ -314,10 +365,18 @@ class Detector(private val cfg: DetectorConfig, private val modelA: Gbdt, privat
         val x = expander.next(base)
         if (roundToHalf) for (i in x.indices) x[i] = toHalf(x[i])
         val fallback = fbIdx.all { base[it].isNaN() }
-        val p = if (fallback) modelFb.predict(DoubleArray(idxFb.size) { x[idxFb[it]] })
-                else modelA.predict(DoubleArray(idxA.size) { x[idxA[it]] })
-        val s5 = (if (fallback) cfg.scaleFb else cfg.scaleA).scale(p)
-        val s = if (b != null) maxOf(s5, b.next(raw)) else s5        // rule "max"
+        val noHr = hrIdx != null && base[hrIdx].isNaN()
+        val p: Double
+        val s5: Double
+        when {
+            noHr -> { p = modelANohr!!.predict(DoubleArray(idxNohr!!.size) { x[idxNohr[it]] }); s5 = hb!!.scaleA.scale(p) }
+            fallback -> { p = modelFb.predict(DoubleArray(idxFb.size) { x[idxFb[it]] }); s5 = cfg.scaleFb.scale(p) }
+            else -> { p = modelA.predict(DoubleArray(idxA.size) { x[idxA[it]] }); s5 = cfg.scaleA.scale(p) }
+        }
+        val s = if (b != null) {                                      // rule "max"
+            b.next(raw)
+            maxOf(s5, if (noHr) b.heldScoreNohr else b.heldScore)
+        } else s5
 
         val alarm = rule.next(s)
         val sm = rule.lastSmoothed
@@ -336,7 +395,7 @@ class Detector(private val cfg: DetectorConfig, private val modelA: Gbdt, privat
             below = if (s < cfg.lowLevel) below + 1 else 0
             if (below >= cfg.endAfterLow) { active = false; ended = index - below }
         }
-        return WindowResult(index, p, s, sm, fallback, alarm, onset, ended)
+        return WindowResult(index, p, s, sm, fallback, alarm, onset, ended, noHr)
     }
 
     companion object {

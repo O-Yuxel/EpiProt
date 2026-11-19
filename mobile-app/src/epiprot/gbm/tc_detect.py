@@ -47,6 +47,7 @@ GROUPS = {"eeg+ecg": r"^(eeg|ecg)", "eeg+ecg+emg": r"^(eeg|ecg|emg)",
           # EpiProt hardware: no wrist movement (only the headband's), and / or movement only as change
           # relative to the person's own recent past + rhythmicity (independent of sensor units)
           "eeg+ecg+head": r"^(eeg|ecg|head)",
+          "eeg+head": r"^(eeg|head)",          # backup while the watch sends no heart rate
           "eeg+ecg+head_rel": r"^(eeg|ecg)|^head_(acc|gyr)_rhythm|^head_.*@(d1m|d10m|mean60s-d10m)$",
           "eeg+ecg+mov_rel": r"^(eeg|ecg)|^(head|body)_(acc|gyr)_rhythm|^(head|body)_.*@(d1m|d10m|mean60s-d10m)$"}
 PARAMS = {"objective": "binary", "learning_rate": 0.05, "num_leaves": 31,
@@ -131,7 +132,8 @@ def _assemble(data, subs, colidx, picks):
     return np.vstack(Xs), np.concatenate(ys), np.concatenate(ws)
 
 
-def train(data, subs, colidx, rng, neg_per=5000, rounds=400, threads=10):
+def train(data, subs, colidx, rng, neg_per=5000, rounds=400, threads=10, extra=None):
+    """extra: optional (X, y, w) rows added to the training set (already column-selected)."""
     picks = {}
     for s in subs:
         d = data[s]
@@ -160,6 +162,8 @@ def train(data, subs, colidx, rng, neg_per=5000, rounds=400, threads=10):
         Xa = X[m].copy()
         Xa[:, OPTS["ecg_local"]] = np.nan
         X, y, w = np.vstack([X, Xa]), np.r_[y, y[m]], np.r_[w, w[m]]
+    if extra is not None:
+        X, y, w = np.vstack([X, extra[0]]), np.r_[y, extra[1]], np.r_[w, extra[2]]
     return _fit(X, y, w, rounds, threads)
 
 

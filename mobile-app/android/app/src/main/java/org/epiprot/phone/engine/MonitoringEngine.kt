@@ -5,7 +5,7 @@ import org.epiprot.phone.alarm.FlowEffect
 import org.epiprot.phone.health.HealthMonitor
 import org.epiprot.phone.model.Detector
 import org.epiprot.phone.model.DetectorConfig
-import org.epiprot.phone.model.Gbdt
+import org.epiprot.phone.model.DetectorModels
 import org.epiprot.phone.model.WindowFeatures
 import org.epiprot.phone.model.WindowInput
 import org.epiprot.phone.model.WindowResult
@@ -24,6 +24,7 @@ data class EngineStatus(
     val windows: Long = 0,
     val lastScore: Double = 0.0,
     val fallback: Boolean = false,
+    val noHeartRate: Boolean = false,
     val quality: Map<String, HealthMonitor.Quality> = emptyMap(),
     val heartRate: Double = Double.NaN,
     val flowState: AlarmFlow.State = AlarmFlow.State.Idle,
@@ -37,12 +38,10 @@ data class EngineStatus(
  */
 class MonitoringEngine(
     private val cfg: DetectorConfig,
-    private val modelA: Gbdt,
-    private val modelFb: Gbdt,
-    private val modelB: Gbdt?,
+    private val models: DetectorModels,
     private val actions: EngineActions,
 ) {
-    private var detector = Detector(cfg, modelA, modelFb, modelB)
+    private var detector = Detector(cfg, models)
     private var health = HealthMonitor()
     val flow = AlarmFlow()
     var demo = false
@@ -52,7 +51,7 @@ class MonitoringEngine(
 
     /** Fresh detector / health state, e.g. for a demo replay or after a long interruption. */
     fun reset(demo: Boolean) {
-        detector = Detector(cfg, modelA, modelFb, modelB)
+        detector = Detector(cfg, models)
         health = HealthMonitor()
         this.demo = demo
         status = EngineStatus(demo = demo)
@@ -79,7 +78,7 @@ class MonitoringEngine(
             dispatch(flow.onSeizureEnded(endMs - (r.index - e) * WindowAssembler.WINDOW_MS, endMs))
         }
         dispatch(flow.tick(endMs))
-        status = status.copy(windows = r.index + 1, lastScore = r.score, fallback = r.fallback, quality = q,
+        status = status.copy(windows = r.index + 1, lastScore = r.score, fallback = r.fallback, noHeartRate = r.noHeartRate, quality = q,
             heartRate = f["ecg_hr"] ?: Double.NaN, flowState = flow.state, openWarnings = health.openEpisodes)
         return r
     }

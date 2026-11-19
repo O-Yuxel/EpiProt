@@ -148,6 +148,7 @@ private fun Home(m: PhoneMonitor, activity: MainActivity) {
             val mode = when {
                 st.windows == 0L -> stringResource(R.string.detection_waiting)
                 q["brain"] != HealthMonitor.Quality.OK -> stringResource(R.string.detection_limited)
+                st.noHeartRate -> stringResource(R.string.detection_no_hr)
                 st.fallback -> stringResource(R.string.detection_backup)
                 else -> stringResource(R.string.detection_full)
             }

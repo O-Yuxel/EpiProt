@@ -20,6 +20,7 @@
     <string name="heart_rate_value">heart rate %1$d bpm</string>
     <string name="detection">Seizure detection</string>
     <string name="detection_full">full (brain signal, heart rate, movement)</string>
+    <string name="detection_no_hr">backup model (no heart rate from the watch)</string>
     <string name="detection_backup">backup model (no movement data)</string>
     <string name="detection_limited">LIMITED: no brain signal</string>
     <string name="detection_waiting">starting…</string>

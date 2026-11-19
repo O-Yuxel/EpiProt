@@ -27,7 +27,7 @@ import org.epiprot.phone.engine.MonitoringEngine
 import org.epiprot.phone.engine.WindowAssembler
 import org.epiprot.phone.health.HealthMonitor
 import org.epiprot.phone.model.DetectorConfig
-import org.epiprot.phone.model.Gbdt
+import org.epiprot.phone.model.DetectorModels
 import org.epiprot.phone.protocol.Paths
 import org.epiprot.phone.protocol.PhoneMessage
 import org.epiprot.phone.protocol.PinResult
@@ -106,8 +106,7 @@ class PhoneMonitor(private val app: Context) {
     private val engine: MonitoringEngine by lazy {
         val a = app.assets
         val cfg = DetectorConfig.parse(a.open("model/detector.json").bufferedReader().readText())
-        fun model(f: String) = Gbdt.parse(a.open("model/$f").bufferedReader().readText())
-        MonitoringEngine(cfg, model(cfg.fileA), model(cfg.fileFb), cfg.modelB?.let { model(it.file) }, actions)
+        MonitoringEngine(cfg, DetectorModels.load(cfg) { f -> a.open("model/$f").bufferedReader().readText() }, actions)
     }
 
     private fun changed() { _logVersion.value++ }

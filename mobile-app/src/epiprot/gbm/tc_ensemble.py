@@ -99,11 +99,18 @@ def main(argv=None):
                     help="5 s OOF of a model WITHOUT movement, used where movement data is missing")
     ap.add_argument("--mov-cols", nargs="+", default=["head_acc_std", "body_acc_std"],
                     help="fallback where ALL of these are missing")
+    ap.add_argument("--test-suffix", default=None,
+                    help="score TEST patients with OOF files whose name has this suffix instead of the "
+                         "given one (e.g. _clean -> _hr_none); training patients keep the given scores")
+    ap.add_argument("--nohr5", type=Path, default=None,
+                    help="5 s OOF of a model WITHOUT heart rate, used where the heart rate is missing")
+    ap.add_argument("--nohr30", type=Path, default=None, help="same for the 30 s model")
     a = ap.parse_args(argv)
     data = load_labels(a.data_dir)
     subs = sorted(data)
     z5, z30 = np.load(a.oof5), np.load(a.oof30)
     p5 = {s: z5[s].astype(np.float32) for s in subs}
+    alt = (lambda f: Path(str(f).replace("_clean", a.test_suffix))) if a.test_suffix else None
     fb, nomov = {}, {}
     if a.fallback is not None:
         zf = np.load(a.fallback)
@@ -113,11 +120,41 @@ def main(argv=None):
                 nm = [str(x) for x in zz["names"]]
                 F = zz["F"]
                 nomov[s] = np.all([np.isnan(F[:, nm.index(c)]) for c in a.mov_cols], axis=0)
-    p30 = {}
-    for s in subs:
-        q = map30to5(z30[s].astype(np.float32), run_lengths(a.raw_dir, s))
-        n = len(p5[s])
-        p30[s] = np.pad(q, (0, max(0, n - len(q))), mode="edge")[:n] if len(q) else np.zeros(n)
+    rl = {s: run_lengths(a.raw_dir, s) for s in subs}
+
+    def to5(z):
+        out = {}
+        for s in subs:
+            q = map30to5(z[s].astype(np.float32), rl[s])
+            n = len(p5[s])
+            out[s] = np.pad(q, (0, max(0, n - len(q))), mode="edge")[:n] if len(q) else np.zeros(n)
+        return out
+    p30 = to5(z30)
+    # test-time inputs (default: the same scores)
+    t5, t30, tfb = p5, p30, fb
+    if alt is not None:
+        z = np.load(alt(a.oof5))
+        t5 = {s: z[s].astype(np.float32) for s in subs}
+        t30 = to5(np.load(alt(a.oof30)))
+        if fb:
+            z = np.load(alt(a.fallback))
+            tfb = {s: z[s].astype(np.float32) for s in subs}
+    # heart-rate backup: windows without heart rate use models that never saw it
+    nohr = a.nohr5 is not None
+    if nohr:
+        from .hr_robustness import mask5
+        z = np.load(a.nohr5)
+        h5 = {s: z[s].astype(np.float32) for s in subs}
+        h30 = to5(np.load(a.nohr30))
+        hrmiss, thrmiss = {}, {}
+        scen = a.test_suffix.strip("_") if a.test_suffix else "clean"
+        for s in subs:
+            with np.load(a.data_dir / f"{s}.npz") as zz:
+                nm = [str(x) for x in zz["names"]]
+                miss = np.isnan(zz["F"][:, nm.index("ecg_hr")])
+                sz = [tuple(map(int, q)) for q in zz["seizures"]]
+            hrmiss[s] = miss
+            thrmiss[s] = miss | mask5(len(miss), sz, scen)
     order = list(subs)
     np.random.default_rng(42).shuffle(order)
     folds = [order[i::5] for i in range(5)]
@@ -130,11 +167,19 @@ def main(argv=None):
             r5 = np.sort(np.concatenate([p5[s][data[s]["y"] == 0] for s in tr]))
             rf = (np.sort(np.concatenate([fb[s][data[s]["y"] == 0] for s in tr])) if fb else None)
             r30 = np.sort(np.concatenate([p30[s][data[s]["y"] == 0] for s in tr]))
+            if nohr:
+                rh5 = np.sort(np.concatenate([h5[s][data[s]["y"] == 0] for s in tr]))
+                rh30 = np.sort(np.concatenate([h30[s][data[s]["y"] == 0] for s in tr]))
             sc = {}
             for s in subs:
-                a5, a30 = qscale(p5[s], r5), qscale(p30[s], r30)
+                q5, q30, qf = (t5, t30, tfb) if s in set(test) else (p5, p30, fb)
+                a5, a30 = qscale(q5[s], r5), qscale(q30[s], r30)
                 if fb:  # sensor-availability fallback
-                    a5 = np.where(nomov[s], qscale(fb[s], rf), a5)
+                    a5 = np.where(nomov[s], qscale(qf[s], rf), a5)
+                if nohr:
+                    hm = thrmiss[s] if s in set(test) else hrmiss[s]
+                    a5 = np.where(hm, qscale(h5[s], rh5), a5)
+                    a30 = np.where(hm, qscale(h30[s], rh30), a30)
                 sc[s] = {"5s only": a5, "30s only": a30, "mean": (a5 + a30) / 2,
                          "max": np.maximum(a5, a30)}[rule].astype(np.float32)
             for b in BUD:

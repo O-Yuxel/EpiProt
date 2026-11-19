@@ -25,6 +25,7 @@ object Fixtures {
     val modelA by lazy { Gbdt.parse(asset("model_a.txt")) }
     val modelFb by lazy { Gbdt.parse(asset("model_a_fb.txt")) }
     val modelB by lazy { config.modelB?.let { Gbdt.parse(asset(it.file)) } }
+    val models by lazy { org.epiprot.phone.model.DetectorModels.load(config) { asset(it) } }
 
     fun JSONArray.doubles() = DoubleArray(length()) { if (isNull(it)) Double.NaN else getDouble(it) }
     fun JSONArray.floats() = FloatArray(length()) { getDouble(it).toFloat() }
@@ -87,6 +88,13 @@ class ParityTest {
             for (c in want.indices) close("30s row $r ${cb.features[c]}", want[c], got[c], 1e-4)
             close("pred_b row $r", pred[r], modelB!!.predict(want), 1e-9)
         }
+        val hb = config.hrBackup ?: return@with
+        val predH = j.getJSONArray("pred_b_nohr").doubles()
+        val idx = hb.featuresB.map { cb.features.indexOf(it) }
+        for (r in 0 until X.length()) {
+            val row = X.getJSONArray(r).doubles()
+            close("pred_b_nohr row $r", predH[r], models.bNohr!!.predict(DoubleArray(idx.size) { row[idx[it]] }), 1e-9)
+        }
     }
 
     @Test
@@ -108,7 +116,9 @@ class ParityTest {
         val j = json("expand.json")
         val cols = j.getJSONArray("X_cols").strings()
         val X = j.getJSONArray("X")
-        for ((model, feats, key) in listOf(Triple(modelA, config.featuresA, "pred_a"), Triple(modelFb, config.featuresFb, "pred_a_fb"))) {
+        val cases = mutableListOf(Triple(modelA, config.featuresA, "pred_a"), Triple(modelFb, config.featuresFb, "pred_a_fb"))
+        config.hrBackup?.let { cases += Triple(models.aNohr!!, it.featuresA, "pred_a_nohr") }
+        for ((model, feats, key) in cases) {
             val idx = feats.map { cols.indexOf(it) }
             val want = j.getJSONArray(key).doubles()
             assertEquals(400, model.numTrees)

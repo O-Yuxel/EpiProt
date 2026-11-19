@@ -10,6 +10,7 @@ import org.epiprot.phone.engine.WindowAssembler
 import org.epiprot.phone.health.HealthMonitor
 import org.epiprot.phone.model.Detector
 import org.epiprot.phone.model.WindowFeatures
+import org.epiprot.phone.model.WindowInput
 import org.epiprot.phone.protocol.PhoneMessage
 import org.epiprot.phone.protocol.PinContext
 import org.epiprot.phone.protocol.PinResult
@@ -138,6 +139,27 @@ class AssemblerTest {
     }
 
     @Test
+    fun missingHeartRateSwitchesToTheBackupModels() = with(Fixtures) {
+        val hb = config.hrBackup ?: return@with
+        val demo = DemoRecording.parse(File("src/main/assets/demo/demo_seizure.bin").readBytes())
+        val withHr = Detector(config, models)
+        val noHr = Detector(config, models)
+        var alarmNoHr = -1
+        var gaps = 0
+        demo.windows.forEachIndexed { i, w ->
+            val f = WindowFeatures.compute(w)
+            val r1 = withHr.next(f, w)
+            val r2 = noHr.next(f + (hb.whenMissing to Double.NaN), WindowInput(w.eegUv, w.mov, FloatArray(0)))
+            if (r1.noHeartRate) gaps++                 // real recording: a few windows without heart rate
+            assertTrue(r2.noHeartRate)
+            if (r2.alarm && alarmNoHr < 0) alarmNoHr = i
+        }
+        assertTrue("heart rate missing in $gaps of ${demo.windows.size} windows", gaps < demo.windows.size / 4)
+        assertTrue("backup models (no heart rate) missed the demo seizure", alarmNoHr >= 0)
+        println("demo without heart rate: alarm ${(alarmNoHr + 1) * 5.0 - demo.onsetS}s after onset")
+    }
+
+    @Test
     fun halfPrecisionRounding() {
         assertEquals(0.333251953125, Detector.toHalf(1.0 / 3), 0.0)
         assertEquals(-12.0, Detector.toHalf(-12.0), 0.0)
@@ -163,7 +185,7 @@ class EngineTest {
         val demo = DemoRecording.parse(File("src/main/assets/demo/demo_seizure.bin").readBytes())
         assertEquals(180, demo.windows.size)
         val rec = Recorder()
-        val engine = MonitoringEngine(config, modelA, modelFb, modelB, rec)
+        val engine = MonitoringEngine(config, models, rec)
         engine.reset(demo = true)
         val t0 = 1_000_000_000L
         var alarmWindow = -1

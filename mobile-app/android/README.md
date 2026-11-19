@@ -3,7 +3,7 @@
 The hub of the system: receives the watch (and later the headband) data, runs the seizure detector every 5 s,
 handles alarms and sends the caregiver messages. Kotlin, Jetpack Compose (Material 3).
 
-**Status:** first version. Builds, 17 unit tests pass (including parity with the Python code), runs on the
+**Status:** first version. Builds, 18 unit tests pass (including parity with the Python code), runs on the
 Android emulator: the demo replays a real recorded seizure → alarm → caregiver message with location → audit
 trail. Not yet tested together with the watch on real devices; the headband does not exist yet.
 
@@ -41,8 +41,12 @@ rate**. No chest ECG, no wrist movement.
 | A (5 s) | EEG, watch heart rate, headband movement | 200 |
 | A' (5 s, backup while the headband movement sensor sends nothing) | EEG, watch heart rate | 120 |
 | B (30 s) | EEG spectrum (computed from the raw signal on the phone) + watch heart rate mean / std / min / max | 204 |
+| A_nohr (5 s, backup while the watch sends no heart rate) | EEG, headband movement | 192 |
+| B_nohr (30 s, same) | EEG spectrum | 184 |
 
-Rule: max of the scaled 5 s and 30 s scores, threshold for 0.25 false alarms/day.
+Rule: max of the scaled 5 s and 30 s scores, threshold for 0.25 false alarms/day. In every window without a heart
+rate the phone uses A_nohr and B_nohr: models that never saw a heart rate, so a heart rate that drops out (watch
+taken off, optical sensor lost during a convulsion) cannot fool them.
 **Cross-validated: 54 / 55 tonic-clonic seizures (98%), 0.24 false alarms/day, median alarm 46 s after onset.**
 
 How we got there (all patient-wise 5-fold cross-validation, 0.25/day budget):
@@ -55,14 +59,30 @@ How we got there (all patient-wise 5-fold cross-validation, 0.25/day budget):
 | movement only as change vs the person's own recent past (unit-free), head only | 52/55 | 0.26 |
 | same, head + wrist | 53/55 | 0.24 |
 
+What happens when the watch heart rate is missing (`gbm/hr_robustness.py`; models trained on clean data, only the
+test patients' heart rate removed, before the context features are computed, as on the phone):
+
+| Heart rate | Without backup | **With the backup models** |
+|---|---|---|
+| as recorded | 54/55, 0.24/day | **54/55, 0.24/day** |
+| lost from each seizure's onset until 5 min after its end | 46/55, 0.25 | **54/55, 0.25** |
+| none at all (watch not worn) | 46/55, 0.05 | **53/55, 0.28** |
+| headband alone (backup models only) | – | **53/55, 0.26, median 53 s** |
+
+Training model A with simulated heart-rate dropouts instead was tried and rejected: it learned "heart rate stops
+-> seizure" (55/55 with dropouts at seizure onset, but 0.91 false alarms/day without a watch, 52/55 with a normal
+heart rate). So the headband is the core sensor; the watch heart rate adds about one seizure and ~7 s earlier alarms.
+
 The wrist movement is not needed for detection; the watch's movement is only used to tell whether the watch is
-worn and sending. `assets/model/` is made by `export_model.py --group5 eeg+ecg+head --mov-cols head_acc_std`
+worn and sending. `assets/model/` is made by `export_model.py --group5 eeg+ecg+head --mov-cols head_acc_std --nohr5 ... --nohr30 ...`
 (final models trained on all 125 patients; threshold chosen on the out-of-fold scores of all patients:
 53/55, 0.22/day there).
 
 ## Not validated yet (honest list)
 
-* **Heart rate:** the model learned it from a chest ECG; the watch measures it optically.
+* **Heart rate:** the model learned it from a chest ECG; the watch measures it optically. Missing heart rate is
+  handled by the backup models; a heart rate that is present but WRONG (optical sensor locked onto the movement)
+  is not tested yet.
 * **Movement:** in SeizeIT2 the "head" movement sensor was the EEG device on the **upper back**. Putting the
   headband's electronics at the back of the neck keeps it close to that. Units differ between recordings;
   `Calibration` in `engine/WindowAssembler.kt` holds assumed conversion factors (the unit-free variant was
@@ -104,7 +124,12 @@ Regenerating the model assets and test fixtures (repository root, Docker image `
 python -m epiprot.gbm.tc30s_features --raw-dir /raw --out-dir epiprot_results/gbm/sz30_hw
 python -m epiprot.gbm.detect --data-dir epiprot_results/gbm/sz30_hw --out-dir epiprot_results/gbm/detect_hw \
     --features both --models lgbm --raw-dir /raw
+python -m epiprot.gbm.hr_robustness --out-dir epiprot_results/gbm/hr_robust
+python -m epiprot.gbm.hr_robustness --out-dir epiprot_results/gbm/hr_nohr --parts b eeg+head --no-hr
+O=epiprot_results/gbm/hr_robust; H=epiprot_results/gbm/hr_nohr
 python -m epiprot.app.export_model --raw-dir /raw --group5 eeg+ecg+head --mov-cols head_acc_std \
+    --oof5 $O/a_eeg+ecg+head_clean.npz --fallback $O/a_eeg+ecg_clean.npz --oof30 $O/b_clean.npz \
+    --nohr5 $H/a_eeg+head_clean.npz --nohr30 $H/b_clean.npz \
     --assets mobile-app/android/app/src/main/assets/model \
     --fixtures mobile-app/android/app/src/test/resources/fixtures
 python mobile-app/android/tools/make_30s_fixture.py /raw mobile-app/android/app/src/test/resources/fixtures
