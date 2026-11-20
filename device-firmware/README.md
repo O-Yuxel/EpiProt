@@ -35,10 +35,12 @@ Data rate is about 1.8 kB/s for the whole system, well within Bluetooth Low Ener
 | Movement, 6 axes × 2–3 samples, 16 bit | 24–36 bytes |
 | Contact / battery flags | 1 byte |
 
-## Hardware assumptions
+## Hardware
 
-A Bluetooth Low Energy microcontroller (for example nRF52 / nRF53 or ESP32 family), an EEG analog front-end,
-and a 6-axis motion sensor (IMU). Code in C / C++ (Zephyr or the vendor SDK).
+Designed on paper in [HARDWARE.md](HARDWARE.md), with every design decision and its reason: semi-dry electrodes,
+TI ADS1299-4 4-channel EEG front-end at exactly 256 samples/s, Bosch BMI270 motion sensor, Nordic nRF52840 Bluetooth
+module, 700 mAh rechargeable battery (about 2 days), about $58–74 in parts.
+Code in C / C++ (Zephyr / nRF Connect SDK).
 
 ## Why the model is not on the headband (yet)
 
