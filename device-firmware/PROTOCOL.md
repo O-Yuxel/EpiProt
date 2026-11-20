@@ -75,7 +75,9 @@ Channels: 1 = L-top − L-bottom (model input "left same-side"), 2 = L-top − R
 | 10 | 1 | `n`: samples (5, at 25 Hz) |
 | 11 | 60 | Samples: for each time point acc x, y, z and gyro x, y, z as signed 16-bit raw values |
 
-The motion sensor has its own clock, so movement samples are placed by `t_dev`, not by counting.
+The motion sensor is clocked from the radio crystal (HARDWARE.md, D13), so it samples at exactly
+25 Hz; `t_dev` places the samples on the EEG timeline and the phone puts each one in its 25 Hz slot
+without resampling.
 Conversion: g = raw / `acc_lsb_per_g`, °/s = raw / `gyr_lsb_per_dps` (from Device info). Axes: x to
 the right ear, y to the front, z up, when the band is worn.
 

@@ -12,12 +12,12 @@ been measured on a real device. Sources are marked: **[DS]** datasheet, **[EST]*
 | Electrodes | 4 semi-dry hydrogel pads behind the ears + 1 bias electrode at the nape |
 | EEG front-end | TI ADS1299-4: 4 channels, 24-bit, EEG-grade (1 µV noise) |
 | Sample rate | Exactly 256 samples/s per channel, the model's rate |
-| Movement | Bosch BMI270, 3-axis accelerometer + 3-axis gyroscope, 25 Hz |
+| Movement | TDK ICM-42688-P, 3-axis accelerometer + 3-axis gyroscope, exactly 25 Hz (clock locked to the radio crystal) |
 | Radio / processor | Raytac MDBT50Q module (Nordic nRF52840), Bluetooth LE 5, pre-certified |
 | Backup memory | 8 MB flash, about 40 minutes when the phone is out of reach |
 | Battery | 700 mAh rechargeable LiPo, about 2 days, magnetic charging |
 | Data rate | About 3.7 KB/s ([PROTOCOL.md](PROTOCOL.md)) |
-| Parts cost | About $58–74 per headband [EST] |
+| Parts cost | About $59–76 per headband [EST] |
 
 ## Design decisions and why
 
@@ -34,11 +34,13 @@ rejected when they would not change the result.
 | D5 | **8 MB backup flash instead of 2 MB** | The 4-channel stream fills 2 MB in about 10 minutes; 8 MB holds about 40 minutes, so a longer gap in the connection loses no data. |
 | D6 | **Flexible shielded cables with strain relief** between the ear pads and the pod | During a convulsion the band bends hard; a broken wire is the most likely cause of a silent, bad connection. Shielding also keeps mains hum out of the small EEG signal. |
 | D7 | **Low-noise power supply** for the EEG chip | The ADS1299 needs a clean 5 V supply [DS]; supply noise goes straight into the EEG. A low-noise boost converter is followed by a low-noise regulator. |
-| D8 | **700 mAh battery** | The ADS1299-4 uses about 22 mW [DS], so the whole headband draws about 10 mA. 700 mAh gives about 2 days, comfortably above the 24-hour minimum. |
-| D9 | **Kept: BMI270 motion sensor** | Good quality, runs at exactly the 25 Hz the model uses, ranges set so convulsions never clip. A better sensor would not change the data. |
+| D8 | **700 mAh battery** | The ADS1299-4 uses about 22 mW [DS], so the whole headband draws about 11 mA. 700 mAh gives about 2 days, comfortably above the 24-hour minimum. |
+| D9 | ~~Kept: BMI270 motion sensor~~ | Replaced by D13 after the simulator showed a problem with its clock. |
 | D10 | **Kept: Bluetooth integrity as designed** | Bluetooth already checks every packet and resends damaged ones. We add a sequence number and time stamp to every packet, so the phone sees any missing data. |
 | D11 | **Pre-certified radio module** | No separate radio certification for the headband: less cost, less risk. |
 | D12 | **No processing on the headband** | The phone already runs the model and has the watch data; the headband stays simple, which means fewer things that can go wrong. |
+| D13 | **ICM-42688-P motion sensor with its clock locked to the radio crystal, instead of BMI270** (found with the simulator) | A motion sensor with its own internal clock (BMI270, and the ICM-42688-P's own clock is only ±1 % accurate) does not sample exactly 25 times per second, so the phone has to shift samples onto the model's 25 Hz grid. In the simulator with real seizure recordings this distorted exactly the movement features that carry the convulsion signature (3–12 Hz shaking): typical error 0.57 (log scale) in the 8–12 Hz band. The ICM-42688-P accepts an external clock (CLKIN); the nRF52840 feeds it 32.000 kHz made from its own crystal, so the sensor samples at exactly 25 Hz and no shifting is needed. Typical error drops to 0.03–0.04, about 15 times smaller (2 patients, 15 min each). Cost: ~+$2, ~+0.7 mA. |
+| D14 | **Movement converted to the SeizeIT2 "group B" scale on the phone** (found in the training data) | SeizeIT2 recorded movement with two device settings, a factor 3 apart (1 g = 0.5 or 0.167 units; gyroscope ~365 or ~1016 °/s per unit), measured from the data itself. 43 of the 55 tonic-clonic seizures the model learned from are in group B, so the headband's g and °/s are converted to that scale. Tool: `python -m epiprot.headband.calibration`. |
 
 ## Electrodes and channels
 
@@ -83,40 +85,44 @@ detection and the phone's signal check notice it and the phone asks the patient 
 the standard 2.048 MHz [DS]). With a 2.097152 MHz clock, inside the allowed range, the same setting
 gives exactly 256 samples/s. The model's sampling rate comes straight from the hardware.
 
-## Movement sensor: Bosch BMI270
+## Movement sensor: TDK ICM-42688-P
 
-3-axis accelerometer and 3-axis gyroscope, 16-bit, both at 25 Hz [DS]. Ranges ±8 g and ±2000 °/s,
-so a convulsion never clips [EST]. About 0.42 mA at 25 Hz [DS, to confirm].
+3-axis accelerometer and 3-axis gyroscope, 16-bit, both at 25 Hz [DS]. Ranges ±8 g and ±2000 °/s
+(4096 LSB/g, 16.4 LSB/(°/s)), so a convulsion never clips [EST]. About 0.88 mA in low-noise mode [DS].
 
-The phone converts g and °/s to the scale used in SeizeIT2 (see `Calibration` in the phone app).
+**Clock (D13):** the sensor's CLKIN input (31–50 kHz allowed [DS]) gets 32.000 kHz from the
+nRF52840: a timer toggles a pin every 250 ticks of its 16 MHz crystal clock. 32.000 kHz, not the
+32.768 kHz watch crystal, because the sensor's rates scale with the input clock and 32.768 kHz would
+give 25.6 instead of 25 samples/s.
 
-> **Known difference from the training data.** In SeizeIT2 the recorder whose motion sensor gives
-> the model's "head movement" input was worn **on the upper back**, with cables to the ear
-> electrodes. The headband's motion sensor therefore sits in the pod **at the back of the head,
-> close to the neck**, as near to that position as a headband allows. The phone has backup models
-> that work without head movement if this input turns out to be unreliable.
+**Units (D14):** the phone converts g and °/s to the SeizeIT2 group-B scale (1 g = 1/6 unit,
+1 unit = ~1016 °/s).
+
+**Position:** in SeizeIT2 the recorder whose motion sensor gives the model's "head movement" input
+was worn at the **back of the neck** (SeizeIT2 file metadata: "Back of the neck (EEG SD)"). The
+headband's pod sits at the back of the head close to the neck, so the sensor is near the same place.
 
 ## Radio and processor: Raytac MDBT50Q (Nordic nRF52840)
 
 Arm Cortex-M4F, 1 MB flash, 256 KB RAM, Bluetooth LE 5 with 2 Mbit/s and long-range (Coded) radio
 modes, up to +8 dBm [DS]. Pre-certified module (FCC, CE and others). A 32.768 kHz crystal keeps the
-time stamps accurate.
+time stamps accurate; the 32 MHz radio crystal also clocks the motion sensor (D13).
 
 ## Power
 
 | Part | Current from the battery | Source |
 |---|---|---|
 | ADS1299-4 (4.06 mA at 5 V via the boost converter, 0.54 mA at 3.3 V) | ~7.0 mA | [DS] + 85 % converter efficiency [EST] |
-| BMI270 | ~0.45 mA | [DS] |
+| ICM-42688-P | ~0.9 mA | [DS] |
 | nRF52840, streaming ~3.7 KB/s | ~1.0 mA | [EST] |
-| Processing, regulators, clocks | ~0.3 mA | [EST] |
-| **Total** | **~8.8 mA, ~10.5 mA with 20 % margin** | |
+| Processing, regulators, clocks (incl. radio crystal kept on for the sensor clock) | ~0.6 mA | [EST] |
+| **Total** | **~9.5 mA, ~11.4 mA with 20 % margin** | |
 
-That is about 250 mAh a day, so **700 mAh lasts about 2 days**. Charging takes about 2 hours.
+That is about 275 mAh a day, so **700 mAh lasts about 2 days**. Charging takes about 2 hours.
 During charging the band is off the head and the phone keeps monitoring with the watch-only backup
 models. The phone reminds the patient when the battery is low.
 
-**Why rechargeable:** a coin cell cannot deliver 10 mA continuously, AAA batteries are too heavy
+**Why rechargeable:** a coin cell cannot deliver 11 mA continuously, AAA batteries are too heavy
 for the head, and body-heat or motion harvesting gives far too little power.
 
 **Charging:** magnetic pogo-pin connector (no open USB port, sweat-proof), Microchip MCP73831
@@ -157,14 +163,14 @@ Sweat-resistant, not for showering.
 |---|---|
 | MDBT50Q radio module | 10–12 |
 | ADS1299-4 | 25–32 |
-| BMI270 | 2–3 |
+| ICM-42688-P | 3–5 |
 | 8 MB flash, crystals | 2 |
 | Power supply, charger, protection, passive parts | 3–4 |
 | LiPo 700 mAh | 3 |
 | Shielded cables, strain relief | 2 |
 | Circuit board and assembly | 5–7 |
 | Band, pod housing, snap studs, charging cable | 6–9 |
-| **Total** | **~58–74** |
+| **Total** | **~59–76** |
 | Running cost: semi-dry pads | a few pads every few days |
 
 ## Open points
@@ -173,4 +179,5 @@ Sweat-resistant, not for showering.
 |---|---|
 | Packet format, Bluetooth services, reconnect, security | BLE protocol |
 | Phone use of backup channels 3 and 4 | Phone integration |
-| Exact prices and the BMI270 25 Hz current | Check with distributors / datasheet |
+| Phone: movement conversion to the group-B scale (D14), slot placement of movement samples, choice of the two model channels | Phone integration |
+| Exact prices | Check with distributors |
