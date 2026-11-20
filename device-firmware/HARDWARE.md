@@ -16,7 +16,7 @@ been measured on a real device. Sources are marked: **[DS]** datasheet, **[EST]*
 | Radio / processor | Raytac MDBT50Q module (Nordic nRF52840), Bluetooth LE 5, pre-certified |
 | Backup memory | 8 MB flash, about 40 minutes when the phone is out of reach |
 | Battery | 700 mAh rechargeable LiPo, about 2 days, magnetic charging |
-| Data rate | About 3.5 KB/s |
+| Data rate | About 3.7 KB/s ([PROTOCOL.md](PROTOCOL.md)) |
 | Parts cost | About $58–74 per headband [EST] |
 
 ## Design decisions and why
@@ -108,7 +108,7 @@ time stamps accurate.
 |---|---|---|
 | ADS1299-4 (4.06 mA at 5 V via the boost converter, 0.54 mA at 3.3 V) | ~7.0 mA | [DS] + 85 % converter efficiency [EST] |
 | BMI270 | ~0.45 mA | [DS] |
-| nRF52840, streaming ~3.5 KB/s | ~1.0 mA | [EST] |
+| nRF52840, streaming ~3.7 KB/s | ~1.0 mA | [EST] |
 | Processing, regulators, clocks | ~0.3 mA | [EST] |
 | **Total** | **~8.8 mA, ~10.5 mA with 20 % margin** | |
 
@@ -127,12 +127,12 @@ never connected to a mains-powered charger.
 
 | Stream | Calculation | Rate |
 |---|---|---|
-| EEG | 4 channels × 256 samples/s × 3 bytes | 3072 B/s |
-| Movement | 6 axes × 25 samples/s × 2 bytes | 300 B/s |
-| Headers, time stamps, status | ~10 packets/s | ~100 B/s |
-| **Total** | | **~3.5 KB/s (~28 kbit/s)** |
+| EEG | 4 channels × 256 samples/s × 3 bytes, in 16 packets/s | 3328 B/s with headers |
+| Movement | 6 axes × 25 samples/s × 2 bytes, in 5 packets/s | 355 B/s with headers |
+| Status | 1 packet/s | 26 B/s |
+| **Total** | | **~3.7 KB/s (~30 kbit/s)** |
 
-Well within Bluetooth LE. The packet format is defined in the BLE protocol step.
+Well within Bluetooth LE. Packet format: [PROTOCOL.md](PROTOCOL.md).
 
 ## Safety
 

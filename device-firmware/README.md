@@ -3,37 +3,27 @@
 Software for the small processor inside the headband. It **measures and sends; it makes no decisions.**
 The detection model runs on the phone.
 
-**Status:** specification only, not built yet.
+**Status:** hardware and Bluetooth protocol designed on paper; no physical device is built in this project.
 
 ## What it does
 
 | Task | Details |
 |---|---|
-| EEG | 2 channels behind the ears (left behind-ear and a left-right cross channel), at least 256 Hz |
-| Head movement | 3-axis accelerometer + 3-axis gyroscope, at least 25 Hz |
-| Electrode contact | Checks continuously whether the electrodes touch the skin and reports it to the phone |
-| Streaming | Sends the data to the phone over Bluetooth Low Energy, about 10 packets per second |
-| Backup | Keeps the last 10 minutes in memory; if the connection drops it sends them when it comes back |
-| Time stamps | Every packet has a sequence number and a time stamp, so the phone can detect missing packets |
-| Status | Battery level, contact status, firmware version |
-
-Data rate is about 1.8 kB/s for the whole system, well within Bluetooth Low Energy.
+| EEG | 4 channels behind the ears (2 used by the model, 2 backups), exactly 256 Hz, 24-bit |
+| Head movement | 3-axis accelerometer + 3-axis gyroscope, 25 Hz |
+| Electrode contact | Checks continuously whether every electrode touches the skin and reports it to the phone |
+| Streaming | Sends raw data to the phone over encrypted Bluetooth LE, about 3.7 KB/s |
+| No data loss | Keeps everything the phone has not confirmed (up to about 40 minutes) and sends it after a reconnect |
+| Time stamps | Every packet has a sequence number and a crystal-clock time stamp, so the phone detects any missing samples |
+| Status | Battery, charging, electrode contact, errors, once per second |
 
 ## Connection to the phone
 
-1. First use: "Connect headband" in the phone app; phone and headband are paired once.
-2. After that the headband reconnects automatically whenever it is on and the phone is within about 10 m.
-3. The phone app subscribes to the headband's data service and receives the packets in the background.
+1. First use: "Connect headband" in the phone app and the passkey from the user manual in the box; phone and headband are paired once.
+2. After that the headband reconnects automatically whenever it is on and the phone is within range.
+3. The phone app receives the packets in the background.
 
-## Data packet (proposal)
-
-| Field | Size |
-|---|---|
-| Sequence number | 2 bytes |
-| Time stamp (ms) | 4 bytes |
-| EEG, 2 channels × 25 samples, 16 bit | 100 bytes |
-| Movement, 6 axes × 2–3 samples, 16 bit | 24–36 bytes |
-| Contact / battery flags | 1 byte |
+Full protocol, byte by byte: [PROTOCOL.md](PROTOCOL.md).
 
 ## Hardware
 
