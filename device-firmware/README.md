@@ -85,12 +85,12 @@ the packets that arrived in time, and the phone's sensor-health rules (`epiprot.
   - when night mode ends the watch vibrates once softly and shows a summary of the silent warnings.
 
 **For the phone integration step** (found here):
-1. Use the contact (lead-off) bits for the brain-signal check; without them a loose cable or a lost bias electrode
+1. ✅ (phone part 1) Use the contact (lead-off) bits for the brain-signal check; without them a loose cable or a lost bias electrode
    goes unnoticed while the data are bad.
-2. Switch the model to backup channels 3 + 4 when channel 1 or 2 loses contact.
+2. ✅ (phone part 1) Switch the model to a backup channel pair when a pad of channel 1 or 2 loses contact.
 3. Show "headband charging" instead of "headband missing" when the status says so.
-4. Ignore packets received twice (same sequence number); send catch-up packets to the diary, not to detection.
-5. Movement: convert to the SeizeIT2 group-B scale (D14) and place samples in their 25 Hz slots (D13).
+4. ✅ (phone part 1) Ignore packets received twice (same sequence number); send catch-up packets to the diary, not to detection.
+5. ✅ (phone part 1) Movement: convert to the SeizeIT2 group-B scale (D14) and place samples in their 25 Hz slots (D13).
 6. Show "replace the pad behind the left ear (lower)" when a contact check reports a pad above 150 kOhm (D15),
    and leave EEG flagged as "contact check" out of detection.
 

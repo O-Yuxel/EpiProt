@@ -15,11 +15,17 @@ import kotlin.math.sqrt
  * @param mov     "head_acc", "head_gyr" (headband), "body_acc", "body_gyr" (watch):
  *                3 axes x 125 samples at 25 Hz, already in the model's units (see [Calibration])
  * @param heartRate heart-rate readings from the watch in this window (beats per minute)
+ * @param contactBad the headband reported lost contact on an electrode the chosen EEG channels need
+ * @param channels  which two of the headband's 4 channels were used (null: not from the headband)
+ * @param leadOff   electrodes without contact during the window (headband lead-off bits)
  */
 class WindowInput(
     val eegUv: Array<FloatArray>?,
     val mov: Map<String, Array<FloatArray>>,
     val heartRate: FloatArray,
+    val contactBad: Boolean = false,
+    val channels: org.epiprot.phone.headband.Channels.Choice? = null,
+    val leadOff: Int = 0,
 )
 
 /**

@@ -93,14 +93,20 @@ class HealthMonitor {
 
         val DEVICES = linkedMapOf("headband" to listOf("brain", "head_mov"), "watch" to listOf("heart", "body_mov"))
 
-        /** Quality of one window from the model's own window features (no extra computation). */
-        fun quality(f: Map<String, Double>): Map<String, Quality> {
+        /**
+         * Quality of one window from the model's own window features (no extra computation).
+         * [contactBad]: the headband reported no contact on an electrode of the EEG channels in use
+         * and no backup pair was free; without this a loose cable or a lost bias electrode would go
+         * unnoticed (headband fault study).
+         */
+        fun quality(f: Map<String, Double>, contactBad: Boolean = false): Map<String, Quality> {
             var brain = Quality.OK                 // same order of checks as health.py (POOR > MISSING > OK)
             for (ch in listOf("eegL", "eegX")) {
                 val rms = f["${ch}_rms"] ?: Double.NaN
                 if (rms < FLAT_LOG || rms > SAT_LOG) brain = Quality.POOR
                 if (rms.isNaN()) brain = Quality.MISSING
             }
+            if (contactBad && brain == Quality.OK) brain = Quality.POOR
             fun present(k: String) = if ((f[k] ?: Double.NaN).isNaN()) Quality.MISSING else Quality.OK
             return mapOf("brain" to brain, "head_mov" to present("head_acc_std"),
                 "heart" to present("ecg_hr"), "body_mov" to present("body_acc_std"))

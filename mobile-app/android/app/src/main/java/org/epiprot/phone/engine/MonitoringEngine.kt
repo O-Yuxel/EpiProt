@@ -59,7 +59,7 @@ class MonitoringEngine(
 
     fun onWindow(w: WindowInput, endMs: Long): WindowResult {
         val f = WindowFeatures.compute(w)
-        val q = HealthMonitor.quality(f)
+        val q = HealthMonitor.quality(f, w.contactBad)
         for (e in health.next(q, endMs, flow.busy)) {
             actions.sensor(e, demo)
             actions.watch(when (e) {

@@ -1,20 +1,26 @@
 package org.epiprot.phone.engine
 
+import org.epiprot.phone.headband.Channels
 import org.epiprot.phone.model.WindowFeatures
 import org.epiprot.phone.model.WindowInput
 import org.epiprot.phone.protocol.SensorBatch
+import kotlin.math.floor
+import kotlin.math.roundToInt
 
 /**
  * Unit conversion from the devices to the units the model was trained with.
  *
- * ASSUMPTION, to be calibrated with the real hardware: SeizeIT2 movement is stored scaled to the
- * sensor's full range (1 g = ~0.5 in most recordings). A watch reports m/s^2 and rad/s.
+ * Head movement (the model uses it): SeizeIT2 stored movement in two scales a factor 3 apart; 43 of
+ * the 55 tonic-clonic seizures the model learned from are in "group B": 1 g = 1/6 unit,
+ * 1 unit = ~1016 °/s, measured from the data (python -m epiprot.headband.calibration; HARDWARE.md D14).
+ * The headband reports g and °/s.
+ * Watch movement (not a model input, only checked for presence): m/s^2 and rad/s, group-A scale.
  */
 data class Calibration(
     val watchAccPerMs2: Float = 0.5f / 9.81f,
     val watchGyrPerRadS: Float = 57.2958f / 250f,
-    val headAccScale: Float = 1f,
-    val headGyrScale: Float = 1f,
+    val headAccPerG: Float = 1f / 6f,
+    val headGyrPerDps: Float = 1f / 1016f,
 )
 
 /**
@@ -27,6 +33,8 @@ class WindowAssembler(val startMs: Long, private val cal: Calibration = Calibrat
     private class Buf {
         val eeg = Array(2) { FloatArray(WindowFeatures.EEG_N) { Float.NaN } }
         var hasEeg = false
+        var eeg4: Array<FloatArray>? = null          // headband: 4 channels
+        var leadOff = 0
         val mov = HashMap<String, Array<FloatArray>>()
         val hr = ArrayList<Float>()
     }
@@ -68,10 +76,33 @@ class WindowAssembler(val startMs: Long, private val cal: Calibration = Calibrat
         }
     }
 
-    /** Headband movement sample (25 Hz). */
-    fun addHeadMovement(tMs: Long, acc: FloatArray, gyr: FloatArray) {
-        putMov("head_acc", tMs, acc[0] * cal.headAccScale, acc[1] * cal.headAccScale, acc[2] * cal.headAccScale)
-        putMov("head_gyr", tMs, gyr[0] * cal.headGyrScale, gyr[1] * cal.headGyrScale, gyr[2] * cal.headGyrScale)
+    /**
+     * Headband EEG, all 4 channels (µV, NaN = bad), consecutive samples at 256 Hz from [firstMs].
+     * Samples go to their nearest slot: the headband clock and the EEG clock are both crystals, so
+     * consecutive packets meet without gaps or overlaps. [leadOff] = electrodes without contact.
+     */
+    fun addHeadbandEeg(firstMs: Double, uv: Array<FloatArray>, leadOff: Int) {
+        val n = uv[0].size
+        for (k in 0 until n) {
+            val rel = firstMs - startMs + k * 1000.0 / WindowFeatures.EEG_FS
+            var i = Math.floorDiv(rel.toLong(), WINDOW_MS)
+            var slot = ((rel - i * WINDOW_MS) * WindowFeatures.EEG_FS / 1000).roundToInt()
+            if (slot == WindowFeatures.EEG_N) { i += 1; slot = 0 }
+            val b = buf(i) ?: continue
+            val e = b.eeg4 ?: Array(4) { FloatArray(WindowFeatures.EEG_N) { Float.NaN } }.also { b.eeg4 = it }
+            for (c in 0 until 4) e[c][slot] = uv[c][k]
+            b.leadOff = b.leadOff or leadOff
+        }
+    }
+
+    /**
+     * Headband movement sample (25 Hz) in g and °/s. The sensor clock is locked to the headband
+     * crystal (HARDWARE.md D13), so each sample goes to its nearest slot, values untouched.
+     */
+    fun addHeadMovement(tMs: Double, accG: FloatArray, gyrDps: FloatArray) {
+        val t = floor(tMs + 500.0 / WindowFeatures.MOV_FS).toLong()        // nearest slot
+        putMov("head_acc", t, accG[0] * cal.headAccPerG, accG[1] * cal.headAccPerG, accG[2] * cal.headAccPerG)
+        putMov("head_gyr", t, gyrDps[0] * cal.headGyrPerDps, gyrDps[1] * cal.headGyrPerDps, gyrDps[2] * cal.headGyrPerDps)
     }
 
     /** All windows that are complete at [nowMs], oldest first, with their end times. */
@@ -79,10 +110,15 @@ class WindowAssembler(val startMs: Long, private val cal: Calibration = Calibrat
         val out = ArrayList<Pair<WindowInput, Long>>()
         while (windowStart(nextIndex + 1) + latencyMs <= nowMs) {
             val b = open.remove(nextIndex)
+            val e4 = b?.eeg4
+            val choice = e4?.let { Channels.choose(b.leadOff) }
             out += WindowInput(
-                eegUv = b?.takeIf { it.hasEeg }?.eeg,
+                eegUv = if (e4 != null) arrayOf(e4[choice!!.first], e4[choice.second]) else b?.takeIf { it.hasEeg }?.eeg,
                 mov = b?.mov ?: emptyMap(),
                 heartRate = b?.hr?.toFloatArray() ?: FloatArray(0),
+                contactBad = choice?.contactOk == false,
+                channels = choice,
+                leadOff = b?.leadOff ?: 0,
             ) to windowStart(nextIndex + 1)
             nextIndex++
         }
