@@ -75,9 +75,10 @@ private fun padColor(c: PadStatus.Contact) = when (c) {
 
 /** Live state of the headband: connection, battery, every pad's contact, signals, channels in use. */
 @Composable
-internal fun HeadbandPage(m: PhoneMonitor) {
+internal fun HeadbandPage(m: PhoneMonitor, activity: MainActivity) {
     val st by m.status.collectAsStateWithLifecycle()
     val demo by m.demo.collectAsStateWithLifecycle()
+    val link by m.headbandLink.collectAsStateWithLifecycle()
     var now by remember { mutableStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) { while (true) { now = System.currentTimeMillis(); delay(1_000) } }
     val hb = st.headband
@@ -97,6 +98,31 @@ internal fun HeadbandPage(m: PhoneMonitor) {
             InfoRow(stringResource(R.string.hb_battery_label), if (hb.batteryPct >= 0) "${hb.batteryPct} %" else "–")
             InfoRow(stringResource(R.string.hb_last_data), time(hb.lastPacketMs))
             if (st.demo) Text(stringResource(R.string.hb_is_virtual), color = C.TealDark, style = MaterialTheme.typography.bodySmall)
+            else {
+                InfoRow(stringResource(R.string.hb_catch_up), "${hb.catchUp}")
+                InfoRow(stringResource(R.string.hb_missing), "${hb.missing}")
+            }
+        }
+        if (!st.demo) {
+            InfoRow(stringResource(R.string.hb_link), stringResource(when (link) {
+                org.epiprot.phone.headband.HeadbandLink.State.IDLE -> R.string.hb_link_idle
+                org.epiprot.phone.headband.HeadbandLink.State.SCANNING -> R.string.hb_link_scanning
+                org.epiprot.phone.headband.HeadbandLink.State.CONNECTING -> R.string.hb_link_connecting
+                org.epiprot.phone.headband.HeadbandLink.State.CONNECTED -> R.string.hb_link_connected
+                org.epiprot.phone.headband.HeadbandLink.State.RECONNECTING -> R.string.hb_link_reconnecting
+            }))
+            var noPerm by remember { mutableStateOf(false) }
+            if (link == org.epiprot.phone.headband.HeadbandLink.State.IDLE) {
+                PrimaryButton(stringResource(R.string.hb_connect)) {
+                    noPerm = !m.connectHeadband()
+                    if (noPerm) activity.requestPermissions(fromButton = true)
+                }
+                if (noPerm) Text(stringResource(R.string.hb_need_permission), color = C.Amber, style = MaterialTheme.typography.bodySmall)
+            } else {
+                if (link == org.epiprot.phone.headband.HeadbandLink.State.CONNECTED)
+                    SoftButton(stringResource(R.string.hb_check_now)) { m.requestContactCheck() }
+                SoftButton(stringResource(R.string.hb_disconnect)) { m.disconnectHeadband() }
+            }
         }
     }
 

@@ -433,4 +433,18 @@
     <string name="night_rule_urgent">Tespitin çalışmadığı anlamına gelen uyarılar: kafa bandı veri göndermiyor, beyin sinyali kayboldu, pil bitmek üzere.</string>
     <string name="night_rule_quiet">Sessiz: pedi değiştirin, pil azaldı, şarjda. Saatte listelenir.</string>
     <string name="night_rule_summary">Gece modu bitince saat bir kez titrer ve özet gösterir.</string>
+
+    <!-- kafa bandı Bluetooth (4. parça) -->
+    <string name="hb_link">Bluetooth</string>
+    <string name="hb_link_idle">bağlı değil</string>
+    <string name="hb_link_scanning">aranıyor…</string>
+    <string name="hb_link_connecting">bağlanıyor…</string>
+    <string name="hb_link_connected">bağlı</string>
+    <string name="hb_link_reconnecting">bağlantı koptu – yeniden bağlanıyor…</string>
+    <string name="hb_connect">Kafa bandını bağla</string>
+    <string name="hb_disconnect">Bağlantıyı kes</string>
+    <string name="hb_check_now">Ped temasını şimdi ölç</string>
+    <string name="hb_need_permission">Telefonun kafa bandını bulabilmesi için "Yakındaki cihazlar" iznini verin.</string>
+    <string name="hb_catch_up">Kopukluktan sonra gelen birikmiş veri</string>
+    <string name="hb_missing">Kaybolan paket</string>
 </resources>

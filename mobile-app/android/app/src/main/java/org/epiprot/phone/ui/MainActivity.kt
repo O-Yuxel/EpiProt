@@ -149,7 +149,7 @@ class MainActivity : ComponentActivity() {
         add(R.string.perm_location to listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
         add(R.string.perm_sms to listOf(Manifest.permission.SEND_SMS))
         if (Build.VERSION.SDK_INT >= 33) add(R.string.perm_notifications to listOf(Manifest.permission.POST_NOTIFICATIONS))
-        if (Build.VERSION.SDK_INT >= 31) add(R.string.perm_bluetooth to listOf(Manifest.permission.BLUETOOTH_CONNECT))
+        if (Build.VERSION.SDK_INT >= 31) add(R.string.perm_bluetooth to listOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN))
     }
 
     fun granted(perm: String) = ContextCompat.checkSelfPermission(this, perm) == PackageManager.PERMISSION_GRANTED
@@ -169,7 +169,7 @@ class MainActivity : ComponentActivity() {
         val perms = keys.flatMap { k ->
             when (k) {
                 "notifications" -> if (Build.VERSION.SDK_INT >= 33) listOf(Manifest.permission.POST_NOTIFICATIONS) else emptyList()
-                "bluetooth" -> if (Build.VERSION.SDK_INT >= 31) listOf(Manifest.permission.BLUETOOTH_CONNECT) else emptyList()
+                "bluetooth" -> if (Build.VERSION.SDK_INT >= 31) listOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN) else emptyList()
                 "sms" -> listOf(Manifest.permission.SEND_SMS)
                 "location" -> listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
                 else -> emptyList()
@@ -310,7 +310,7 @@ private fun App(m: PhoneMonitor, activity: MainActivity) {
                             route == "limits" -> LimitsPage(m)
                             route == "history" -> HistoryPage(m)
                             route == "child" -> ChildInfoPage(m)
-                            route == "headband" -> HeadbandPage(m)
+                            route == "headband" -> HeadbandPage(m, activity)
                             route == "night" -> NightPage(m)
                         }
                     }

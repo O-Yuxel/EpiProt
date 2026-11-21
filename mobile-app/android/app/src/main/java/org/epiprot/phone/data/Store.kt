@@ -52,6 +52,11 @@ class Settings(context: Context) {
         get() = p.getInt("night_end_min", 7 * 60)
         set(v) = p.edit().putInt("night_end_min", v.coerceIn(0, 24 * 60 - 1)).apply()
 
+    /** The paired headband (Bluetooth address); null = none yet. */
+    var headbandAddress: String?
+        get() = p.getString("headband_address", null)
+        set(v) = p.edit().putString("headband_address", v).apply()
+
     /** "Delete all my data". */
     fun clearAll() { p.edit().clear().apply() }
 

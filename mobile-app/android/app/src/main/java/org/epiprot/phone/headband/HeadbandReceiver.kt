@@ -52,6 +52,15 @@ class HeadbandReceiver(val info: P.DeviceInfo, private val sink: HeadbandSink) {
     private var lastRaw = -1L
     private var lastUnwrapped = 0L
     private val clock = SlidingMin(600_000.0)
+    private var contiguous = -1L
+
+    /** Highest sequence number up to which every packet arrived: what the phone confirms (ACK). */
+    fun ackSeq(): Long {
+        if (firstSeq < 0) return -1
+        if (contiguous < firstSeq - 1) contiguous = firstSeq - 1
+        while (seen.contains(contiguous + 1)) contiguous++
+        return contiguous
+    }
 
     fun onPacket(arrivalMs: Long, bytes: ByteArray) {
         val p = P.decode(bytes)

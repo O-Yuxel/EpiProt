@@ -94,6 +94,28 @@ the packets that arrived in time, and the phone's sensor-health rules (`epiprot.
 6. ✅ (phone part 2) Show "replace the pad behind the left ear (lower)" when a contact check reports a pad above 150 kOhm (D15),
    and leave EEG flagged as "contact check" out of detection.
 
+### Real Bluetooth test (2026-11-21)
+
+No headband hardware exists, so a second Android phone played the headband: the test app
+`mobile-app/android/testheadband` advertises the headband service and streams the virtual-headband demo (a real
+SeizeIT2 seizure, sub-058) in real time over Bluetooth LE. The EpiProt phone app connected to it like to a real band.
+
+| Check | Result |
+|---|---|
+| Find the band by its service, connect, MTU | connected, MTU 247 (EEG packets need 211) |
+| Live stream | about 22 packets/s; confirmations (ACK) every 5 s reached the band |
+| Phone's Bluetooth off for ~95 s, then on | phone reconnected by itself; 2058 packets stored by the band and sent afterwards; **0 packets lost** |
+| Band restarted with a new Bluetooth address | after two failed attempts on the old address the phone searched again and found it |
+| Seizure alarm through the real radio link | **alarm raised**, 88 s after seizure onset in this run |
+
+**Why 88 s and not 15 s:** the same stream replayed in software gives 15 s without a gap and 85 s with the same
+~97 s gap in live data (phone Bluetooth off, about 5 minutes before the seizure). So the radio link itself is fine;
+the delay comes from the gap in the model's history. Data stored during a gap reach the phone 10-20 s after
+reconnecting but currently go only to the diary. **Improvement found:** use them to fill the model's history too.
+
+**Test deviations:** no bonding / encryption (passkey) yet; the test band changes its Bluetooth address on every start
+(a real band keeps one).
+
 ## Why the model is not on the headband (yet)
 
 The model needs data from both the headband and the watch, the raw data for the event log go to the phone

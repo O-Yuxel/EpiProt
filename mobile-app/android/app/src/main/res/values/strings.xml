@@ -443,4 +443,18 @@
     <string name="night_rule_urgent">Warnings that mean detection is not working: headband not sending, brain signal lost, battery almost empty.</string>
     <string name="night_rule_quiet">Quiet: replace a pad, battery low, charging. They are listed on the watch.</string>
     <string name="night_rule_summary">When night mode ends the watch vibrates once and shows a summary.</string>
+
+    <!-- headband Bluetooth (part 4) -->
+    <string name="hb_link">Bluetooth</string>
+    <string name="hb_link_idle">not connected</string>
+    <string name="hb_link_scanning">searching…</string>
+    <string name="hb_link_connecting">connecting…</string>
+    <string name="hb_link_connected">connected</string>
+    <string name="hb_link_reconnecting">connection lost – reconnecting…</string>
+    <string name="hb_connect">Connect headband</string>
+    <string name="hb_disconnect">Disconnect</string>
+    <string name="hb_check_now">Check pad contact now</string>
+    <string name="hb_need_permission">Allow "Nearby devices" so the phone can find the headband.</string>
+    <string name="hb_catch_up">Stored data received after a gap</string>
+    <string name="hb_missing">Packets lost</string>
 </resources>

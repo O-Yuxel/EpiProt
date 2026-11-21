@@ -81,12 +81,76 @@ class PhoneMonitor(private val app: Context) {
     val logVersion: StateFlow<Int> = _logVersion
 
     private var assembler: WindowAssembler? = null
+
+    // ---------------------------------------------------------------- headband (Bluetooth LE)
+    private val _headbandLink = MutableStateFlow(org.epiprot.phone.headband.HeadbandLink.State.IDLE)
+    val headbandLink: StateFlow<org.epiprot.phone.headband.HeadbandLink.State> = _headbandLink
+    private var hbReceiver: org.epiprot.phone.headband.HeadbandReceiver? = null
+    private var hbLastPublish = 0L
+    private var hbAckJob: Job? = null
+
+    /** Live headband data go into the same 5 s windows as the watch data (only while monitoring runs). */
+    private val hbSink = object : org.epiprot.phone.headband.HeadbandSink {
+        override fun eeg(firstMs: Double, uv: Array<FloatArray>, leadOff: Int) { assembler?.addHeadbandEeg(firstMs, uv, leadOff) }
+        override fun movement(tMs: Double, accG: FloatArray, gyrDps: FloatArray) { assembler?.addHeadMovement(tMs, accG, gyrDps) }
+    }
+
+    private val hbLink by lazy {
+        org.epiprot.phone.headband.HeadbandLink(app, object : org.epiprot.phone.headband.HeadbandLink.Listener {
+            override fun onInfo(info: org.epiprot.phone.headband.HeadbandProtocol.DeviceInfo, address: String) {
+                settings.headbandAddress = address
+                scope.launch(engineThread) { hbReceiver = org.epiprot.phone.headband.HeadbandReceiver(info, hbSink) }
+            }
+            override fun onPacket(arrivalMs: Long, bytes: ByteArray) {
+                scope.launch(engineThread) {
+                    val rx = hbReceiver ?: return@launch
+                    try { rx.onPacket(arrivalMs, bytes) } catch (e: Exception) { Log.w("EpiProt", "bad headband packet", e); return@launch }
+                    val type = bytes[0].toInt() and 0xFF
+                    val stateChanged = type == org.epiprot.phone.headband.HeadbandProtocol.TYPE_STATUS ||
+                        type == org.epiprot.phone.headband.HeadbandProtocol.TYPE_CONTACT
+                    if (!engine.demo && (stateChanged || arrivalMs - hbLastPublish > 1_000)) {
+                        engine.onHeadbandState(rx.state, arrivalMs)
+                        hbLastPublish = arrivalMs
+                        publish()
+                    }
+                }
+            }
+            override fun onState(state: org.epiprot.phone.headband.HeadbandLink.State) { _headbandLink.value = state }
+        })
+    }
+
+    fun hasBluetoothPermission(): Boolean = android.os.Build.VERSION.SDK_INT < 31 ||
+        listOf(android.Manifest.permission.BLUETOOTH_SCAN, android.Manifest.permission.BLUETOOTH_CONNECT).all {
+            androidx.core.content.ContextCompat.checkSelfPermission(app, it) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        }
+
+    /** Find (or reconnect to) the headband; the phone confirms received packets every 5 s. */
+    fun connectHeadband(): Boolean {
+        if (!hasBluetoothPermission()) return false
+        hbLink.connect(settings.headbandAddress)
+        if (hbAckJob?.isActive != true) hbAckJob = scope.launch(engineThread) {
+            while (isActive) {
+                delay(5_000)
+                hbReceiver?.ackSeq()?.takeIf { it >= 0 }?.let { hbLink.sendAck(it) }
+            }
+        }
+        return true
+    }
+
+    fun disconnectHeadband() { hbLink.disconnect(); hbAckJob?.cancel() }
+
+    fun forgetHeadband() { disconnectHeadband(); settings.headbandAddress = null }
+
+    fun requestContactCheck() = hbLink.requestContactCheck()
     private var loop: Job? = null
     private var demoJob: Job? = null
 
     private val actions = object : EngineActions {
         override fun newDeviceEvent(alarmMs: Long, onsetMs: Long, demo: Boolean) =
-            log.addDeviceEvent(alarmMs, onsetMs, demo).also { id -> recorder.onAlarm(id, alarmMs, onsetMs); changed() }
+            log.addDeviceEvent(alarmMs, onsetMs, demo).also { id ->
+                Log.i("EpiProt", "seizure alarm id=$id alarmMs=$alarmMs estimatedOnsetMs=$onsetMs demo=$demo")
+                recorder.onAlarm(id, alarmMs, onsetMs); changed()
+            }
 
         override fun flow(effect: FlowEffect, demo: Boolean) {
             when (effect) {

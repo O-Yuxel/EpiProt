@@ -14,3 +14,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "EpiProtPhone"
 include(":app")
+include(":testheadband")
