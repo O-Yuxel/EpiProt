@@ -115,6 +115,7 @@ class HeadbandEngineTest {
         e.reset(demo = false)
         val t0 = 1_000_000_000L
         e.onHeadbandTurnedOff("off", t0)
+        e.onHeadbandState(HeadbandState(batteryPct = 70), t0 + 300)            // last packet in flight: still "off"
         for (i in 1..40) e.onWindow(watchOnly(), t0 + i * 5_000L)              // 200 s without headband data
         val warned = rec.watch.filterIsInstance<PhoneMessage.SensorWarning>()
         assertEquals(listOf("headband_off"), warned.map { it.code })

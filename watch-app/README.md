@@ -3,9 +3,9 @@
 A companion app for a **Wear OS** watch (Samsung Galaxy Watch4 or newer, Google Pixel Watch).
 It measures and shows; all decisions are made by the phone app.
 
-**Status:** first version (Kotlin, Jetpack Compose for Wear OS). Builds, all unit tests pass, and runs on the
-Wear OS 5 emulator (alarm + PIN, warnings, Turkish/English checked). Not yet tested on a real watch or with the
-phone app; see *Next steps*.
+**Status:** Kotlin, Jetpack Compose for Wear OS. Builds, all unit tests pass, runs on the Wear OS 5 emulator
+(alarm + PIN, warnings, Turkish/English checked) and was tested paired with the real phone running the phone app.
+Not yet tested on a real watch; see *Next steps*.
 
 Toolchain: Gradle 9.9.1 (wrapper included), Android Gradle Plugin 9.4.1 (built-in Kotlin), Kotlin 2.3.21,
 compileSdk 36, minSdk 30, targetSdk 34. Builds with the Java 25 bundled with Android Studio 2026.2.
@@ -52,13 +52,14 @@ app/src/test/                    unit tests for the logic and the message format
 |---|---|---|
 | watch → phone | `/epiprot/sensor` | binary, once per second: sequence number, start time, heart rate, on-body flag, accelerometer and gyroscope samples |
 | watch → phone | `/epiprot/pin` | `{context: alarm\|checkin, alarm_id, ok, attempt, time_ms}` |
-| watch → phone | `/epiprot/status` | `{battery_pct, charging, on_body, heart_sensor, time_ms}` |
+| watch → phone | `/epiprot/status` | `{battery_pct, charging, on_body, heart_sensor, time_ms, alarm_id, monitoring_allowed}` |
 | phone → watch | `/epiprot/alarm_start` | `{alarm_id, pin_window_s}` |
 | phone → watch | `/epiprot/alarm_end` | `{alarm_id, reason}` |
 | phone → watch | `/epiprot/checkin` | `{alarm_id, number}` |
-| phone → watch | `/epiprot/sensor_warning` | `{code, impact}`; codes: `headband_missing`, `brain_weak`, `head_mov_missing`, `watch_missing`, `heart_missing`, `body_mov_missing`; impact: `limited`, `weaker`, `backup`, `none` |
+| phone → watch | `/epiprot/sensor_warning` | `{code, impact, detail, urgent}`; codes: `headband_missing`, `brain_weak`, `head_mov_missing`, `watch_missing`, `heart_missing`, `body_mov_missing`, `pad_contact_lost`, `pad_replace`, `headband_battery_low`, `headband_battery_critical`, `headband_charging`, `headband_off`; impact: `no_alarms`, `limited`, `weaker`, `backup`, `none`; detail = pads concerned, battery %, or off / disconnected / unpaired; urgent = vibrates in night mode |
 | phone → watch | `/epiprot/sensor_fixed` | `{code}` |
-| phone → watch | `/epiprot/settings` | `{pin_salt, pin_hash, pin_window_s}` |
+| phone → watch | `/epiprot/settings` | `{pin_salt, pin_hash, pin_window_s, night_enabled, night_start_min, night_end_min}` |
+| phone → watch | `/epiprot/consent` | `{monitoring_allowed}` |
 
 The phone app must use the **same application id** (`org.epiprot.app`) and the **same signing key**,
 otherwise Wear OS does not connect the two apps.
@@ -84,6 +85,5 @@ companion app.
 
 - Test on a real Galaxy Watch: battery use with continuous heart rate, waking the screen for an alarm when the
   watch is idle, heart-rate quality during strong movement.
-- Build the phone app side of the protocol (mobile-app, Kotlin).
 - The model learned heart rate from a chest ECG; a watch measures it with light (PPG). This must be validated
   and the model retrained with watch data.

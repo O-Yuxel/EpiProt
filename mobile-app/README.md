@@ -79,6 +79,10 @@ docker run --rm -v "$PWD:/app" -w /app/mobile-app -e PYTHONPATH=/app/mobile-app/
 
 ## Next steps
 
-1. Headband: Bluetooth connection once the device and its packet format exist.
-2. Data from the real EpiProt headband and watch; tune the heart-rate checks and fine-tune the models.
-3. Everything needed before real use (legal, ethics, medical-device process): [`../docs/`](../docs/).
+1. Data from the real EpiProt headband and watch: check the head-movement input (the headband's sensor sits on
+   the side of the neck, SeizeIT2's at the back of the neck; movement is worth 5 of 55 seizures), tune the
+   heart-rate checks and fine-tune the models.
+2. Everything needed before real use (legal, ethics, medical-device process): [`../docs/`](../docs/).
+
+The headband side (Bluetooth protocol, simulator `src/epiprot/headband/`, design, 3D model) is in
+[`../device-firmware/`](../device-firmware/).

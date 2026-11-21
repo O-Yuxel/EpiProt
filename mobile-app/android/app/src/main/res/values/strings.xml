@@ -410,7 +410,7 @@
     <string name="pad_l_bottom">Behind the left ear, lower</string>
     <string name="pad_r_top">Behind the right ear, upper</string>
     <string name="pad_r_bottom">Behind the right ear, lower</string>
-    <string name="pad_bias">Back of the neck (bias)</string>
+    <string name="pad_bias">Behind the right ear, lowest (small, bias)</string>
     <string name="pad_state_ok">Good contact (%1$d kΩ)</string>
     <string name="pad_state_drying">Drying – replace (%1$d kΩ)</string>
     <string name="pad_state_none">No contact</string>

@@ -58,6 +58,10 @@ can miss seizures, call 112 in an emergency).
 * **No backups / device transfer:** `allowBackup=false` and `data_extraction_rules.xml` (phone and watch).
 * **App lock:** History and Settings open only with the phone's screen lock / fingerprint (on by default when the
   phone has a screen lock); alarms always show on the home screen.
+* **Data in transit, headband:** Bluetooth LE with LE Secure Connections; the headband is bonded once with the
+  6-digit passkey from its user manual, so only this phone can connect, nobody nearby can read the brain signals and
+  nobody can inject fake data (`device-firmware/PROTOCOL.md`). The second-phone test headband used in development
+  cannot bond; the button to connect it without encryption appears only in development (debug) builds.
 * **Watch:** the phone tells the watch whether the consent allows monitoring; without it the watch does not run its
   sensors (off until the phone says yes) and shows why.
 

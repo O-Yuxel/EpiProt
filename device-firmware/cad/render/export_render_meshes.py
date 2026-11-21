@@ -36,7 +36,7 @@ def material(name):
         return "carrier"
     if name.startswith("Flex_cable"):
         return "flex"
-    if name.startswith("Nitinol"):
+    if name.startswith("Spring_wire"):
         return "titanium"
     if name.startswith("BLE"):
         return "shield"

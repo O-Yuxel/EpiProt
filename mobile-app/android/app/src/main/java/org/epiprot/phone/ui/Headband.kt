@@ -165,7 +165,10 @@ internal fun HeadbandPage(m: PhoneMonitor, activity: MainActivity) {
         if (noPerm) Text(stringResource(R.string.hb_need_permission), color = C.Amber, style = MaterialTheme.typography.bodySmall)
         if (note == "pair_failed") {
             Text(stringResource(R.string.hb_pair_failed), color = C.Coral, style = MaterialTheme.typography.bodySmall)
-            SoftButton(stringResource(R.string.hb_pair_test)) {
+            // unencrypted connection only for the second-phone test band, and only in development (debug) builds:
+            // in a real app it would let a fake "headband" connect without the passkey
+            val debuggable = (LocalContext.current.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+            if (debuggable) SoftButton(stringResource(R.string.hb_pair_test)) {
                 noPerm = !m.connectHeadbandWithoutPasskey()
                 if (noPerm) activity.requestPermissions(fromButton = true)
             }
@@ -261,7 +264,7 @@ private fun SignalRow(label: String, q: HealthMonitor.Quality?) {
     }
 }
 
-/** The head seen from behind: band, ears, the four pads behind the ears and the bias electrode at the nape. */
+/** The head seen from behind: band, ears, the four pads behind the ears and the bias electrode under the right ones. */
 @Composable
 private fun HeadDiagram(pads: List<PadStatus.Pad>, modifier: Modifier) {
     Canvas(modifier) {
@@ -276,7 +279,7 @@ private fun HeadDiagram(pads: List<PadStatus.Pad>, modifier: Modifier) {
         val pos = mapOf(
             "L-top" to Offset(cx - r * 0.83f, cy + r * 0.12f), "L-bottom" to Offset(cx - r * 0.75f, cy + r * 0.45f),
             "R-top" to Offset(cx + r * 0.83f, cy + r * 0.12f), "R-bottom" to Offset(cx + r * 0.75f, cy + r * 0.45f),
-            "bias" to Offset(cx, cy + r * 1.05f),
+            "bias" to Offset(cx + r * 0.66f, cy + r * 0.76f),      // under the right pads (HARDWARE.md D16)
         )
         for (p in pads) {
             val o = pos[p.name] ?: continue

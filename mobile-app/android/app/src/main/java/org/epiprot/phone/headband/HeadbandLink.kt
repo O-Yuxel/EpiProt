@@ -185,7 +185,8 @@ class HeadbandLink(private val ctx: Context, private val listener: Listener) {
             }
         }
         bondReceiver = r
-        ctx.registerReceiver(r, IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED))
+        androidx.core.content.ContextCompat.registerReceiver(ctx, r, IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED),
+            androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED)      // system broadcast: still delivered
         if (!d.createBond()) { endBond(); listener.onPairResult(false, null); disconnect() }
     }
 

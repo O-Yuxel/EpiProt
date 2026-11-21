@@ -75,7 +75,7 @@
     <string name="pad_l_bottom">behind the left ear, lower</string>
     <string name="pad_r_top">behind the right ear, upper</string>
     <string name="pad_r_bottom">behind the right ear, lower</string>
-    <string name="pad_bias">at the back of the neck</string>
+    <string name="pad_bias">behind the right ear, lowest (small)</string>
     <!-- night mode -->
     <string name="night_mode">Night mode</string>
     <string name="night_mode_text">Only urgent warnings vibrate. Alarms always do.</string>

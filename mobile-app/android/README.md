@@ -1,11 +1,13 @@
 # EpiProt phone app (Android)
 
-The hub of the system: receives the watch (and later the headband) data, runs the seizure detector every 5 s,
+The hub of the system: receives the watch and headband data, runs the seizure detector every 5 s,
 handles alarms and sends the caregiver messages. Kotlin, Jetpack Compose (Material 3).
 
-**Status:** first version. Builds, 38 unit tests pass (including parity with the Python code), runs on the
-Android emulator: the demo replays a real recorded seizure → alarm → caregiver message with location → audit
-trail. Not yet tested together with the watch on real devices; the headband does not exist yet.
+**Status:** builds, 58 unit tests pass (including parity with the Python code). Tested on a real phone
+(Xiaomi, Android 13) with the watch app on the Wear OS emulator, and with a second phone playing the headband over
+real Bluetooth LE (`device-firmware/README.md`, "Real Bluetooth test"). The demo replays a real recorded seizure →
+alarm → caregiver message with location → audit trail. Not yet tested on a real watch; the headband exists as a
+design and a simulator only.
 
 ## What runs on the phone
 
@@ -99,11 +101,12 @@ patients: 54/55, 0.23/day there).
 * **Heart rate:** the model learned it from a chest ECG; the watch measures it optically. Missing and stuck heart
   rates are handled by the backup models (tested in simulation); the stuck threshold must be tuned with real
   watch data, and a false high rate during activity still raises false alarms (0.24 -> 0.39/day in simulation).
-* **Movement:** in SeizeIT2 the "head" movement sensor was the EEG device on the **upper back**. Putting the
-  headband's electronics at the back of the neck keeps it close to that. Units differ between recordings;
-  `Calibration` in `engine/WindowAssembler.kt` holds assumed conversion factors (the unit-free variant was
-  tested and lost 2 seizures, so calibrating the sensor is the better way).
-* **EEG:** the headband must give two behind-the-ear channels like the SeizeIT2 device.
+* **Movement:** in SeizeIT2 the "head" movement sensor was the EEG recorder at the **back of the neck**; in the
+  headband (v3) it sits in the left pod on the side of the neck, held by the ear hooks. The features use only the
+  movement's size (orientation does not matter), but the amplitude can differ. Movement is worth 5 of 55 seizures
+  (54/55 with it, 49/55 without, same false-alarm rate), so it must be checked with real headband recordings.
+  Units: converted to the SeizeIT2 group-B scale (D14; the unit-free variant lost 2 seizures).
+* **EEG:** the headband gives the same two behind-the-ear channels as the SeizeIT2 device (plus two backups).
 * Training data come from hospital monitoring units. All of this needs data from the real EpiProt hardware and
   probably retraining.
 * The demo seizure (sub-115) was part of the training data of the exported model: the demo shows the chain
@@ -172,6 +175,7 @@ python mobile-app/android/tools/make_demo_asset.py --raw-dir /raw --sub sub-115 
 
 ## Next steps
 
-* Pair the watch emulator with the phone (emulator or the real phone) and test alarm + PIN end to end.
-* Headband: BLE connection once the device and its packet format exist (`device-firmware/README.md`).
+* Check the new headband page (pairing, connect / disconnect, switch off, unpair) and the warnings on the real
+  phone and watch.
+* Test on a real Wear OS watch (heart rate quality, battery).
 * "Install on watch" button (opens the Play Store on the watch when the watch app is missing).

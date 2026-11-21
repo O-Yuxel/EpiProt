@@ -400,7 +400,7 @@
     <string name="pad_l_bottom">Sol kulak arkası, alt</string>
     <string name="pad_r_top">Sağ kulak arkası, üst</string>
     <string name="pad_r_bottom">Sağ kulak arkası, alt</string>
-    <string name="pad_bias">Ense (referans)</string>
+    <string name="pad_bias">Sağ kulak arkası, en alttaki küçük ped (referans)</string>
     <string name="pad_state_ok">Temas iyi (%1$d kΩ)</string>
     <string name="pad_state_drying">Kuruyor – değiştirin (%1$d kΩ)</string>
     <string name="pad_state_none">Temas yok</string>

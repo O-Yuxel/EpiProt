@@ -218,7 +218,7 @@ item_rows(48, 392, 520, [
     (CORAL, 'SMS izni beyanı', 'SMS göndermek kısıtlı bir izin. “Acil durum” istisnasıyla başvurulur; reddedilirse telefonun kendi SMS uygulamasına geçilir.'),
     (CORAL, 'Data safety formu ve sağlık beyanı', 'Sağlık verisi işleyen uygulamalar için zorunlu.'),
     (CORAL, 'Yayın imza anahtarı', 'Telefon ve saat aynı anahtarla imzalanmazsa birbirini bulamaz; kaybolursa güncelleme yapılamaz.'),
-    (CORAL, 'Kafa bandı Bluetooth bağlantısı', 'Donanım hazır olunca veri formatı netleşmeli; şimdilik kayıtlı veriyle çalışıyor.'),
+    (CORAL, 'Kafa bandı prototipi', 'Protokol, telefon tarafı ve şifreli eşleştirme hazır; kart, firmware ve donanım testleri (IEC 60601, ISO 10993) yapılmalı.'),
     (AMBER, 'Bağımsız güvenlik incelemesi', 'Kod incelemesi ve sızma testi.'),
 ])
 card(610, 150, 302, 270, AMBER_S)

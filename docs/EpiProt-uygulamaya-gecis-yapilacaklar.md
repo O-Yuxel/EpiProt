@@ -29,6 +29,8 @@ uzmanla (avukat, düzenleyici danışman, etik kurul) kontrol edilmelidir.
 | 2.3 | **CE işareti** için onaylanmış kuruluş (notified body) ile çalış. | Sınıf IIa ve üzeri cihazlar kendi beyanıyla değil, onaylanmış kuruluş denetimiyle piyasaya çıkar. | 🔴 |
 | 2.4 | **ABD’de kullanılacaksa FDA yolunu belirle** (benzer ürünler 510(k) ile onaylandı, örneğin Empatica Embrace). | FDA onayı olmadan ABD’de tıbbi iddiayla satılamaz. | 🔴 (ABD için) |
 | 2.5 | Bu süreçler bitene kadar **“araştırma prototipi” olarak kalmasını** sağla (uygulamada yazıyor). | Onaysız ürünün tıbbi cihaz gibi sunulması yasaktır. | 🔴 |
+| 2.6 | **Kafa bandı donanımının testleri**: elektrik güvenliği IEC 60601-1 ve evde kullanım IEC 60601-1-11, elektromanyetik uyumluluk IEC 60601-1-2, deriye temas eden malzemeler ISO 10993 (silikon, pedler), lityum pil IEC 62133, su/ter dayanımı (IP67 hedefi) testi. | Kafa bandı hastanın başına takılan, pilli ve radyolu bir tıbbi cihaz; bu testler olmadan güvenli olduğu gösterilemez. Tasarım (HARDWARE.md) bunlara göre yapıldı ama hiçbiri test edilmedi. | 🔴 |
+| 2.7 | **Radyo onayı**: Bluetooth modülü önceden sertifikalı (FCC, CE), ama bitmiş ürün için RED (AB) / FCC beyanı ve Türkiye için BTK uygunluğu yine gerekir. | Sertifikalı modül işi kolaylaştırır, son ürünün beyanını ortadan kaldırmaz. | 🟠 |
 
 ## 3. Klinik doğrulama ve etik
 
@@ -39,6 +41,8 @@ uzmanla (avukat, düzenleyici danışman, etik kurul) kontrol edilmelidir.
 | 3.3 | Klinik araştırma izni gerekip gerekmediğini **TİTCK ile netleştir**. | Tıbbi cihazla yapılan klinik araştırmalar ayrıca izne tabi olabilir. | 🟠 |
 | 3.4 | **Gerçek kullanımda performansı ölç**: kaçırılan nöbet, günlük yanlış alarm, gecikme. | Laboratuvar sonucu (54/55, günde 0,24 yanlış alarm) gerçek hayatta farklı çıkabilir. Hem güvenlik hem tıbbi cihaz dosyası için gerekli. | 🟠 |
 | 3.5 | **Gerçek saat verisiyle yanlış nabız kontrollerini ayarla**: “takılı nabız” eşiği (şu an 1 dakikada 1 atımdan az değişim) ve bilek hareketi ritmiyle nabız karşılaştırması. | Simülasyonda takılı nabız 55 nöbetten 15’ini kaçırtıyordu, eklenen kontrolle 53/55’e çıktı; ama gerçek saatlerin nasıl takıldığı bilinmiyor. Sahte yüksek nabız (spor, yürüme) yanlış alarmı 0,24’ten 0,39’a çıkarıyor; çözümü gerçek bilek verisi gerektiriyor. | 🟠 |
+| 3.6 | **Kafa bandının hareket sensörünü doğrula**: SeizeIT2’de hareket sensörü ensedeki kayıt cihazındaydı, EpiProt kafa bandında boynun yanındaki podda ve başla birlikte hareket ediyor. | Hareket verisi 55 nöbetten 5’inin yakalanmasını sağlıyor (hareketle 54/55, hareketsiz 49/55). Baş hareketi (konuşma, başını çevirme) farklı görünebilir; gerçek kayıtlarla kontrol edilmeli, gerekirse model yeniden eğitilmeli. | 🔴 |
+| 3.7 | **Pedlerin sinyal kalitesini ve kafa bandının rahatlığını gerçek prototiple ölç**: yarı kuru pedlerin kulak arkasında temas direnci, gece boyu takma, 5 kafa ölçüsünde hesaplanan kuvvetlerin kuvvet ölçerle doğrulanması. | Basınç, kafada durma ve yastık hesapları yalnızca dijital kafa modelleri üzerinde yapıldı (device-firmware/cad). | 🔴 |
 
 ## 4. Google Play ve teknik yayın
 
@@ -48,7 +52,7 @@ uzmanla (avukat, düzenleyici danışman, etik kurul) kontrol edilmelidir.
 | 4.2 | **Data safety formu** ve **sağlık uygulaması beyanı** doldur. | Google Play sağlık verisi işleyen uygulamalarda bunları zorunlu tutar. | 🔴 |
 | 4.3 | **Yayın imza anahtarını** oluştur ve güvenle sakla (telefon ve saat aynı anahtar). | Telefon ve saat aynı anahtarla imzalanmazsa birbirini bulamaz. Anahtar kaybolursa güncelleme yapılamaz. | 🔴 |
 | 4.4 | **Bağımsız güvenlik incelemesi** (kod ve sızma testi). | Sağlık verisi işleyen uygulamada güvenlik açığı hem hasta için risk hem de hukuki sorumluluktur. | 🟠 |
-| 4.5 | **Kafa bandının Bluetooth bağlantısını ve veri formatını** donanım ekibiyle tamamla. | Kafa bandı henüz yok; uygulama şu an kayıtlı veriyle çalışıyor. | 🔴 |
+| 4.5 | **Kafa bandı prototipini üret ve yazılımını (firmware) yaz**: devre kartı, parçalar, kafa bandı yazılımı. Bluetooth protokolü (PROTOCOL.md), telefon tarafı, şifreli eşleştirme ve sanal kafa bandı hazır; ikinci telefonla gerçek Bluetooth üzerinden test edildi. | Gerçek kafa bandı henüz yok; telefon şu an kayıtlı gerçek nöbet verisini oynatan test kafa bandıyla çalışıyor. | 🔴 |
 | 4.6 | **Pil optimizasyonu muafiyeti** için Play politikasına uygunluğu beyan et. | Uygulama nöbet alarmı için pil optimizasyonundan muafiyet istiyor; Google Play bu izni yalnızca gerekçeli kullanımlarda kabul ediyor. | 🟠 |
 | 4.7 | **Gerçek telefonda ve saatte 24 saatlik pil ve kesintisizlik testi** yap (farklı markalar, özellikle Xiaomi ve Samsung). | Bilgisayardaki 24 saatlik test hız ve belleği doğruladı; pil tüketimi ve markaların uygulamayı kapatma davranışı ancak gerçek cihazda ölçülür. | 🔴 |
 

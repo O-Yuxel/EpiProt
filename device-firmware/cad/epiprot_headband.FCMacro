@@ -5,7 +5,7 @@ Design (HARDWARE.md D16):
   * Each side is ONE continuous soft-touch body: ear hook over the ear root -> electrode module on the mastoid
     (upper + lower pad, third position below: bias on the right, blank on the left; same mould both sides)
     -> pod on the side of the neck (right: 700 mAh LiPo 603040, left: electronics).
-  * A thin spring band (nitinol wire in silicone) joins the two pods around the nape. It is made narrower than
+  * A thin spring band (1.3 mm beta-titanium wire in silicone, D17) joins the two pods around the nape. It is made narrower than
     the head, so it presses the pads with a set force (mechanics: headform/mechanics.py).
   * Inside each pod a rigid carrier (PC/PA12) holds the battery or the board; everything is overmoulded with
     medical silicone (production) or cast/printed in a soft shell (prototype).
@@ -379,7 +379,7 @@ def build(doc):
     tg, nn, b = band.axes[i0]
     add("Breakaway_clasp_magnetic", box_at(14, p["band_t"] + 1.6, p["band_w"] + 2.5, band.centre[i0], tg, nn, b),
         "Body", (0.55, 0.57, 0.60))
-    add("Nitinol_wire_band", Body(skin, [(k[0], k[1], 1.4, 1.4, k[4] + k[3] / 2 - 0.7) for k in bkeys], step=3.0).solid(),
+    add("Spring_wire_beta_titanium", Body(skin, [(k[0], k[1], 1.4, 1.4, k[4] + k[3] / 2 - 0.7) for k in bkeys], step=3.0).solid(),
         "Inside", (0.75, 0.75, 0.78))
     geo["band_centreline"] = [list(c) for c in band.centre]
     geo["band_pod_fraction"] = [band.kidx[1] / len(band.centre), band.kidx[-2] / len(band.centre)]

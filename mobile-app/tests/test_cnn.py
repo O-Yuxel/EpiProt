@@ -121,8 +121,9 @@ def test_build_split_assigns_patients_correctly():
     )
     assert split.train_patients == ["chb01", "chb02"]
     assert split.test_patients == ["chb03"]
-    assert split.train_X.shape[0] == 30 + 40
-    assert split.test_X.shape[0] == 50
+    # build_split keeps one array per patient (no concatenation, to save RAM)
+    assert sum(x.shape[0] for x in split.train_X) == 30 + 40
+    assert sum(x.shape[0] for x in split.test_X) == 50
 
 
 def test_build_split_empty_raises():

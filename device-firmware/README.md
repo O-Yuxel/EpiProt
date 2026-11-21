@@ -3,7 +3,8 @@
 Software for the small processor inside the headband. It **measures and sends; it makes no decisions.**
 The detection model runs on the phone.
 
-**Status:** hardware and Bluetooth protocol designed on paper; no physical device is built in this project.
+**Status:** hardware, Bluetooth protocol and 3D model ([cad/](cad/)) designed, phone side built and tested with a
+simulated headband over real Bluetooth; no physical device is built in this project.
 
 ## What it does
 
@@ -19,8 +20,10 @@ The detection model runs on the phone.
 
 ## Connection to the phone
 
-1. First use: "Connect headband" in the phone app and the passkey from the user manual in the box; phone and headband are paired once.
-2. After that the headband reconnects automatically whenever it is on and the phone is within range.
+1. First use: hold the button 2 s, tap "Pair headband" in the phone app (Headband page) and type the passkey from
+   the user manual in the box; phone and headband are paired once.
+2. After that the headband connects by itself whenever it is on and the phone is within range. The app shows the
+   state and offers Connect / Disconnect, Switch off and Unpair (D20; the band's button never switches it off).
 3. The phone app receives the packets in the background.
 
 Full protocol, byte by byte: [PROTOCOL.md](PROTOCOL.md).

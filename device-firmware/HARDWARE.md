@@ -60,7 +60,7 @@ channel" (SeizeIT2 paper, arXiv 2502.01224). The headband keeps that layout and 
 |---|---|
 | L-top, L-bottom | Behind the left ear, upper and lower mastoid |
 | R-top, R-bottom | Behind the right ear, upper and lower mastoid |
-| Bias | Nape of the neck, under the electronics pod (drives the body to the amplifier's mid voltage, cancels mains hum) |
+| Bias | Behind the right ear, below the R-bottom pad (14 mm pad on the right electrode module; D16). Drives the body to the amplifier's mid voltage, cancels mains hum |
 
 | Channel | Electrodes | Use |
 |---|---|---|
@@ -69,8 +69,7 @@ channel" (SeizeIT2 paper, arXiv 2502.01224). The headband keeps that layout and 
 | 3 | R-top − R-bottom | Backup: right same-side (SeizeIT2 used this for right-sided seizures) |
 | 4 | L-bottom − R-bottom | Backup: second cross-head channel if L-top loses contact |
 
-Using channels 3 and 4 as replacements needs a small change in the phone app; it is planned for
-the phone integration step.
+The phone switches to channels 3 and 4 by itself when a pad of channel 1 or 2 loses contact (`Channels.kt`).
 
 **Pads:** semi-dry hydrogel pads click onto the band's snap studs and are pressed onto the skin by
 the band. The patient replaces them every few days. A contact check every 10 minutes (D15) measures
@@ -107,9 +106,16 @@ give 25.6 instead of 25 samples/s.
 **Units (D14):** the phone converts g and °/s to the SeizeIT2 group-B scale (1 g = 1/6 unit,
 1 unit = ~1016 °/s).
 
-**Position:** in SeizeIT2 the recorder whose motion sensor gives the model's "head movement" input
-was worn at the **back of the neck** (SeizeIT2 file metadata: "Back of the neck (EEG SD)"). The
-headband's pod sits at the back of the head close to the neck, so the sensor is near the same place.
+**Position (validation risk):** in SeizeIT2 the recorder whose motion sensor gives the model's "head movement"
+input was worn at the **back of the neck** (SeizeIT2 file metadata: "Back of the neck (EEG SD)"). In the v3
+design the sensor sits in the left pod on the **side of the neck** (76° from the back centre, 64 mm below the ear
+centre), held by the ear hooks, so it follows the head more than a recorder stuck on the neck would. The model
+uses only the size of the movement (acceleration / rotation magnitude, its 0–3, 3–8, 8–12 Hz power and
+rhythm), so the sensor's orientation does not matter, but its amplitude can differ. How much depends on it:
+with movement 54/55 seizures, without any movement 49/55 at the same 0.24 false alarms/day (cross-validated,
+`audit_no_movement.json`). So the movement input is worth 5 of 55 seizures and must be checked with
+recordings from the real headband; if head movement turns out to raise false alarms, the phone can fall back
+to the EEG + heart-rate model or the model is retrained on headband data.
 
 ## Radio and processor: Raytac MDBT50Q (Nordic nRF52840)
 
@@ -231,9 +237,14 @@ force gauge, comfort overnight, the fit on real people (the NIOSH heads have no 
 
 ## Open points
 
+Done: packet format, Bluetooth services, reconnect and passkey pairing (PROTOCOL.md); backup channels 3 and 4,
+movement conversion (D14) and slot placement (D13) on the phone; mechanical design and 3D model (D16–D19);
+switching on / off (D20).
+
 | Point | Step |
 |---|---|
-| Packet format, Bluetooth services, reconnect, security | BLE protocol |
-| Phone use of backup channels 3 and 4 | Phone integration |
-| Phone: movement conversion to the group-B scale (D14), slot placement of movement samples, choice of the two model channels | Phone integration |
+| Circuit board, firmware (Zephyr / nRF Connect SDK) | Prototype |
+| Movement sensor on the side of the neck vs. SeizeIT2's at the back of the neck (worth 5 of 55 seizures) | Recordings with the real headband |
+| Pad signal quality behind the ear, clamping force with a force gauge, overnight comfort, fit on real people | Prototype tests |
+| IEC 60601-1 / -1-2 / -1-11, ISO 10993, IEC 62133, IP67 | Certification tests (docs/EpiProt-uygulamaya-gecis-yapilacaklar.md 2.6) |
 | Exact prices | Check with distributors |

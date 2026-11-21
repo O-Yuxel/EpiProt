@@ -41,8 +41,8 @@ The brain of the system. Everything that decides runs here.
 - **Consent system:** first-start setup per country (Türkiye, EU, US), separate consents, privacy centre
 
 Status: the Android app ([`mobile-app/android/`](mobile-app/android/), Kotlin) runs the full chain, verified
-against the Python code (38 unit tests, 24 h endurance test); its demo replays a real recorded seizure. Not yet
-tested with real devices; the headband does not exist yet.
+against the Python code (58 unit tests, 24 h endurance test); its demo replays a real recorded seizure. Tested on a
+real phone with the watch app (Wear OS emulator) and with a second phone playing the headband over real Bluetooth.
 
 ### ⌚ [`watch-app/`](watch-app/) — EpiProt watch app
 A small companion app on a Wear OS watch. It measures and shows; it does not decide.
@@ -54,13 +54,15 @@ A small companion app on a Wear OS watch. It measures and shows; it does not dec
 Status: first version (Kotlin, Compose for Wear OS) with a demo mode. Builds, unit tests pass, runs on the Wear OS
 emulator and was tested together with a real Android phone; not yet tested on a real watch.
 
-### 🎧 [`device-firmware/`](device-firmware/) — headband software
-Runs on the small processor inside the headband.
-- Samples 2-channel behind-the-ear EEG and head movement
-- Checks electrode contact
-- Streams the data to the phone over Bluetooth Low Energy, keeps a 10-minute backup if the connection drops
+### 🎧 [`device-firmware/`](device-firmware/) — the headband
+Hardware design, Bluetooth protocol and 3D model of the headband, plus a software copy of it (simulator).
+- 4-channel behind-the-ear EEG (2 used by the model, 2 backups) and head movement, exactly 256 / 25 samples per second
+- Checks electrode contact; every 10 minutes measures each pad and asks for a new one before it dries out
+- Streams to the phone over encrypted Bluetooth LE (paired once with a passkey), keeps ~40 minutes if the link drops
+- 3D model on real head scans: two one-piece side bodies (ear hook, electrode module, pod) and a spring band at the
+  nape; pressure, pillow contact, staying on and sizes calculated ([`device-firmware/cad/`](device-firmware/cad/))
 
-Status: specification written, not built yet.
+Status: designed and simulated; no physical headband is built in this project.
 
 ---
 
@@ -69,7 +71,7 @@ Status: specification written, not built yet.
 | Software part | Headband | Watch | Phone |
 |---|:---:|:---:|:---:|
 | Signal sampling, time stamps, electrode contact check | ✔ | ✔ | |
-| 10-minute backup buffer if Bluetooth drops | ✔ | ✔ | |
+| Backup buffer if Bluetooth drops (headband ~40 min, watch ~10 min) | ✔ | ✔ | |
 | Vibration, alarm screen, PIN entry and check | | ✔ | |
 | Detection model | | | ✔ |
 | Alarm and recovery flow, SMS to the caregiver | | | ✔ |
@@ -77,7 +79,7 @@ Status: specification written, not built yet.
 | Event log, signals around alarms (with consent), doctor report | | | ✔ |
 
 The phone is the hub because all sensors meet there, the raw data for the event log arrives there anyway
-(about 1.8 kB/s), and messages to the caregiver leave from the phone.
+(about 4 kB/s from the headband and the watch), and messages to the caregiver leave from the phone.
 
 ## How the parts talk to each other
 

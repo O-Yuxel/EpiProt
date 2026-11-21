@@ -31,8 +31,11 @@ class HeadbandAlerts {
     val away: Boolean get() = CHARGING in open || OFF in open
 
     /** The patient switched the band off / disconnected / unpaired it in the app ([how] = detail). */
-    fun turnedOff(how: String, nowMs: Long): List<Event> =
-        if (open[OFF]?.detail == how) emptyList() else replace(OFF, "no_alarms", how, nowMs, nowMs)
+    fun turnedOff(how: String, nowMs: Long): List<Event> {
+        offAtMs = nowMs
+        return if (open[OFF]?.detail == how) emptyList() else replace(OFF, "no_alarms", how, nowMs, nowMs)
+    }
+    private var offAtMs = Long.MIN_VALUE / 2
 
     /** One headband 5 s window ending at [endMs]. */
     fun onWindow(leadOff: Int, contactOk: Boolean, endMs: Long): List<Event> {
@@ -60,7 +63,8 @@ class HeadbandAlerts {
     /** New headband state (status packet or contact check) at [nowMs]. */
     fun onState(s: HeadbandState, nowMs: Long): List<Event> {
         val out = mutableListOf<Event>()
-        if (OFF in open) out += fix(OFF, nowMs)        // data again: the band is on and connected
+        // data again: the band is on and connected (packets still in flight right after "off" do not count)
+        if (OFF in open && nowMs - offAtMs > OFF_GRACE_MS) out += fix(OFF, nowMs)
         // charging
         if (s.chargerAttached && CHARGING !in open) out += replace(CHARGING, "no_alarms", "", nowMs, nowMs)
         if (!s.chargerAttached && CHARGING in open) out += fix(CHARGING, nowMs)
@@ -105,6 +109,7 @@ class HeadbandAlerts {
         const val BATTERY_CRITICAL = "headband_battery_critical"
         const val CHARGING = "headband_charging"
         const val OFF = "headband_off"
+        const val OFF_GRACE_MS = 5_000L
         const val REPLACE_PAD_KOHM = 150         // [EST], HARDWARE.md D15
         const val CRITICAL_PCT = 2               // ~30 min left at ~2 days per charge
         const val LOW_CLEAR_PCT = 20
