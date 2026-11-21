@@ -202,6 +202,35 @@ class WatchController(private val app: Context) {
 
     private var demoAlarmId = 9000L
 
+    // ---------------------------------------------------------------- call for help (SOS)
+    /** null = nothing; COUNTDOWN until [sosAtMs]; SENT; QUEUED = phone not reachable, sent when it is back. */
+    enum class Sos { COUNTDOWN, SENT, QUEUED }
+    private val _sos = MutableStateFlow<Sos?>(null)
+    val sos: StateFlow<Sos?> = _sos
+    var sosAtMs = 0L
+        private set
+    private var sosJob: Job? = null
+
+    /** "Call for help": 5 s to cancel a mistaken tap, then the phone alerts the caregivers. */
+    fun sosStart() {
+        if (_sos.value == Sos.COUNTDOWN) return
+        sosAtMs = now() + SOS_COUNTDOWN_MS
+        _sos.value = Sos.COUNTDOWN
+        haptics.short()
+        sosJob?.cancel()
+        sosJob = scope.launch {
+            delay(SOS_COUNTDOWN_MS)
+            if (_sos.value != Sos.COUNTDOWN) return@launch
+            val reachable = link.connected.value
+            link.send(Paths.SOS, org.epiprot.watch.protocol.SosRequest(now()).encode())   // kept and sent later if offline
+            _sos.value = if (reachable) Sos.SENT else Sos.QUEUED
+            haptics.short()
+        }
+    }
+
+    fun sosCancel() { sosJob?.cancel(); _sos.value = null }
+    fun sosClose() { _sos.value = null }
+
     fun demoAlarm() = handle(PhoneMessage.AlarmStart(++demoAlarmId, 30))
     fun demoCheckIn() = handle(PhoneMessage.CheckIn(demoAlarmId, 1))
     fun demoAlarmEnd() = handle(PhoneMessage.AlarmEnd(demoAlarmId, "demo"))
@@ -278,5 +307,6 @@ class WatchController(private val app: Context) {
 
     companion object {
         const val PHONE_LOST_WARN_MS = 60_000L
+        const val SOS_COUNTDOWN_MS = 5_000L
     }
 }

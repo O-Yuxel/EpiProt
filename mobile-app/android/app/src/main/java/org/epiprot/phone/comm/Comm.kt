@@ -139,6 +139,7 @@ class CaregiverMessenger(private val context: Context, private val settings: Set
             CaregiverMessage.EMERGENCY -> R.string.sms_emergency
             CaregiverMessage.NO_ANSWER -> R.string.sms_no_answer
             CaregiverMessage.HANDOVER -> R.string.sms_handover
+            CaregiverMessage.SOS -> R.string.sms_sos
         }
         val emergency = consent.region?.emergency ?: context.getString(R.string.emergency_local)
         // the tag lets EpiProt in caregiver mode ring on the caregiver's phone (any language, no internet)
@@ -160,7 +161,8 @@ class CaregiverMessenger(private val context: Context, private val settings: Set
 
 /**
  * Machine-readable end of every caregiver SMS, read by EpiProt in caregiver mode on the caregiver's phone:
- * A seizure alarm, F false alarm, E emergency (> 5 min), N no answer after the seizure, H handover, I introduction.
+ * A seizure alarm, F false alarm, E emergency (> 5 min), N no answer after the seizure, H handover, I introduction,
+ * S the patient pressed "Call for help" on the watch.
  * Same table in caregiver/CaregiverSms.kt (caregiver mode of this app).
  */
 object CaregiverTag {
@@ -171,6 +173,7 @@ object CaregiverTag {
         CaregiverMessage.EMERGENCY -> "[EP:E]"
         CaregiverMessage.NO_ANSWER -> "[EP:N]"
         CaregiverMessage.HANDOVER -> "[EP:H]"
+        CaregiverMessage.SOS -> "[EP:S]"
     }
 }
 

@@ -21,6 +21,8 @@ class CaregiverSmsTest {
         assertNull(CaregiverSms.kind("Merhaba, akşam yemeğe geliyor musun?"))
         assertNull(CaregiverSms.mapsLink("Konum: paylaşılmıyor [EP:A]"))
         assertTrue(CaregiverSms.isDemo("[DEMO] EpiProt: ... [EP:A]"))
+        assertEquals(CaregiverSms.Kind.SOS, CaregiverSms.kind("EpiProt: Ayşe YARDIM İSTİYOR\n[EP:S]"))
+        assertTrue(CaregiverSms.Kind.SOS.rings)
     }
 
     @Test

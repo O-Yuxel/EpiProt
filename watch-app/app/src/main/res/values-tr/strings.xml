@@ -80,4 +80,14 @@
     <string name="warn_phone_battery_low">Telefonun pili azaldı (%%%1$s). Şarj edin: telefon kapanırsa nöbet alarmı çalışmaz.</string>
     <string name="warn_phone_battery_critical">Telefonun pili bitmek üzere (%%%1$s). Hemen şarj edin, yoksa nöbet alarmı duracak.</string>
     <string name="warn_watch_battery_low">Saatin pili azaldı (%%%1$s). Yakında şarj edin. Şarj olurken nabız ölçülemez; tespit kafa bandıyla devam eder.</string>
+    <!-- yardım çağırma -->
+    <string name="sos_button">Yardım çağır</string>
+    <string name="sos_button_sub">Bakıcınıza konumunuzla birlikte mesaj gider</string>
+    <string name="sos_countdown_title">%1$d sn içinde yardım çağrılıyor</string>
+    <string name="sos_countdown_text">Yanlışlıkla mı bastınız? Şimdi iptal edin.</string>
+    <string name="sos_cancel">İptal</string>
+    <string name="sos_sent_title">Bakıcınıza haber verildi</string>
+    <string name="sos_sent_text">Bakıcınıza konumunuzla birlikte mesaj gitti. Güvenli bir yere oturun ya da uzanın.</string>
+    <string name="sos_queued_title">Telefon bağlı değil</string>
+    <string name="sos_queued_text">Telefon bağlanır bağlanmaz mesaj gidecek. Şimdi yakınınızdaki birinden yardım isteyin.</string>
 </resources>

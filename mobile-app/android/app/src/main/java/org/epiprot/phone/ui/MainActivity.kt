@@ -802,6 +802,7 @@ private fun EventCard(e: EventRow, onDeleteManual: (Long) -> Unit) {
         org.epiprot.phone.report.ReportKind.FALSE_ALARM -> Quad(stringResource(R.string.kind_false_alarm), Icons.Rounded.CheckCircle, C.Teal, C.TealSoft)
         org.epiprot.phone.report.ReportKind.SEIZURE -> Quad(stringResource(R.string.kind_seizure), Icons.Rounded.Notifications, C.Coral, C.CoralSoft)
         org.epiprot.phone.report.ReportKind.UNCONFIRMED -> Quad(stringResource(R.string.kind_unconfirmed), Icons.Rounded.Warning, C.Amber, C.AmberSoft)
+        org.epiprot.phone.report.ReportKind.HELP -> Quad(stringResource(R.string.kind_help), Icons.Rounded.Warning, C.Coral, C.CoralSoft)
     }
     EpiCard(Modifier.clickable { open = !open }) {
         Row(verticalAlignment = Alignment.CenterVertically) {

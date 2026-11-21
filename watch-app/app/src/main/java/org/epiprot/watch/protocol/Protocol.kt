@@ -17,6 +17,8 @@ object Paths {
     const val SENSOR = "/epiprot/sensor"
     const val PIN_RESULT = "/epiprot/pin"
     const val STATUS = "/epiprot/status"
+    /** The patient asked for help on the watch ("Call for help", after a 5 s countdown). */
+    const val SOS = "/epiprot/sos"
 
     // phone -> watch
     const val ALARM_START = "/epiprot/alarm_start"
@@ -106,6 +108,15 @@ data class SensorBatch(
             }
             return SensorBatch(seq, start, hr, onBody, getSamples(b), getSamples(b))
         }
+    }
+}
+
+/** The patient asked for help on the watch; the phone alerts the caregivers with the location. */
+data class SosRequest(val timeMs: Long) {
+    fun encode(): ByteArray = JSONObject().put("time_ms", timeMs).toString().toByteArray()
+
+    companion object {
+        fun decode(bytes: ByteArray) = SosRequest(JSONObject(String(bytes)).getLong("time_ms"))
     }
 }
 

@@ -571,4 +571,9 @@
     <string name="rep_kind_manual_other">Başka nöbet (eklendi)</string>
     <string name="rep_kind_manual_unsure">Nöbet, emin değil (eklendi)</string>
     <string name="rep_manual_line">Elle eklenen: %1$d; bunlardan kafa bandı takılıyken yakalanamayan: %2$d</string>
+    <!-- saatten yardım çağırma -->
+    <string name="sms_sos">EpiProt: %1$s YARDIM İSTİYOR (saatteki düğme), %2$s. Konum: %3$s. Lütfen arayın ya da hemen gidin.</string>
+    <string name="cg_alarm_sos">%1$s yardım istiyor</string>
+    <string name="kind_help">Yardım çağrısı (saat)</string>
+    <string name="rep_kind_help">Yardım çağrısı</string>
 </resources>

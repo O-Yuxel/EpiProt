@@ -223,6 +223,11 @@ class EventLog private constructor(context: Context, passphrase: String) :
         return id
     }
 
+    /** The patient pressed "Call for help" on the watch. */
+    fun addHelpEvent(timeMs: Long): Long = writableDatabase.insert("events", null, ContentValues().apply {
+        put("kind", "help"); put("source", "watch"); put("demo", 0); put("alarm_ms", timeMs)
+    })
+
     fun deleteEvent(eventId: Long) {
         writableDatabase.delete("events", "id = ?", arrayOf(eventId.toString()))
         writableDatabase.delete("steps", "event_id = ?", arrayOf(eventId.toString()))

@@ -6,7 +6,7 @@ import java.util.Calendar
 import java.util.TimeZone
 
 /** How an alarm ended up in the report. */
-enum class ReportKind { SEIZURE, UNCONFIRMED, FALSE_ALARM }
+enum class ReportKind { SEIZURE, UNCONFIRMED, FALSE_ALARM, HELP }   // HELP = "Call for help" on the watch
 
 data class ReportEvent(
     val eventId: Long,
@@ -52,12 +52,15 @@ data class ReportData(
     val unconfirmed get() = events.count { it.kind == ReportKind.UNCONFIRMED }
     val falseAlarms get() = events.count { it.kind == ReportKind.FALSE_ALARM }
     val emergencies get() = events.count { it.emergency }
-    val longestS: Long? get() = events.filter { it.kind != ReportKind.FALSE_ALARM }.mapNotNull { it.durationS }.maxOrNull()
+    val longestS: Long? get() = events.filter { it.kind == ReportKind.SEIZURE || it.kind == ReportKind.UNCONFIRMED }
+        .mapNotNull { it.durationS }.maxOrNull()
+    val helpCalls get() = events.count { it.kind == ReportKind.HELP }
     val manualAdded get() = events.count { it.manual }
     val missedByDevice get() = events.count { it.missed }
 
     companion object {
         fun kindOf(e: EventRow): ReportKind = when {
+            e.kind == "help" -> ReportKind.HELP
             e.kind == "false_alarm" || e.confirmed == "no" -> ReportKind.FALSE_ALARM
             e.kind == "seizure" || e.confirmed == "yes" -> ReportKind.SEIZURE
             else -> ReportKind.UNCONFIRMED
@@ -86,7 +89,7 @@ data class ReportData(
                         missed = mi.type == "tonic_clonic" && mi.worn == "yes")
                 }
             }
-            val counted = rows.filter { it.kind != ReportKind.FALSE_ALARM }
+            val counted = rows.filter { it.kind == ReportKind.SEIZURE || it.kind == ReportKind.UNCONFIRMED }
             val cal = Calendar.getInstance(zone)
             fun weekStart(t: Long): Long {
                 cal.timeInMillis = t

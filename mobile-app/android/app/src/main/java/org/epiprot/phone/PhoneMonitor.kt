@@ -408,6 +408,13 @@ class PhoneMonitor(private val app: Context) {
                             heartRate = if (b.heartRate.isFinite()) b.heartRate else _watch.value.heartRate)
                     }
                     Paths.PIN_RESULT -> { engine.onPin(PinResult.decode(data), now); publish() }
+                    Paths.SOS -> {                  // "Call for help" on the watch: caregivers get an SMS with the location
+                        val t = org.epiprot.phone.protocol.SosRequest.decode(data).timeMs
+                        val id = log.addHelpEvent(t)
+                        log.step(id, now, "help", "patient pressed \"Call for help\" on the watch")
+                        changed()
+                        scope.launch(Dispatchers.IO) { messenger.send(id, org.epiprot.phone.alarm.CaregiverMessage.SOS, false); changed() }
+                    }
                     Paths.STATUS -> {
                         val j = org.json.JSONObject(String(data))
                         _watch.value = _watch.value.copy(batteryPct = j.optInt("battery_pct"))

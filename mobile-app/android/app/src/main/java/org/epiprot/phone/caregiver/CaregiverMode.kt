@@ -149,6 +149,7 @@ object CaregiverMode {
         CaregiverSms.Kind.HANDOVER -> R.string.cg_alarm_handover
         CaregiverSms.Kind.FALSE_ALARM -> R.string.cg_false_alarm
         CaregiverSms.Kind.INTRO -> R.string.cg_intro
+        CaregiverSms.Kind.SOS -> R.string.cg_alarm_sos
     }
 
     const val EXTRA_NUMBER = "cg_number"

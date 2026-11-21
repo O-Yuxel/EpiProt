@@ -581,4 +581,9 @@
     <string name="rep_kind_manual_other">Other seizure (added)</string>
     <string name="rep_kind_manual_unsure">Seizure, unsure (added)</string>
     <string name="rep_manual_line">Added by hand: %1$d, of these missed while the headband was worn: %2$d</string>
+    <!-- call for help from the watch -->
+    <string name="sms_sos">EpiProt: %1$s ASKS FOR HELP (button on the watch), %2$s. Location: %3$s. Please call or go now.</string>
+    <string name="cg_alarm_sos">%1$s asks for help</string>
+    <string name="kind_help">Call for help (watch)</string>
+    <string name="rep_kind_help">Call for help</string>
 </resources>

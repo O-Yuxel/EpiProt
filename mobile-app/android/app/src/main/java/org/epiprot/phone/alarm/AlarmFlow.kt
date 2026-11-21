@@ -5,7 +5,7 @@ import org.epiprot.phone.protocol.PinContext
 import org.epiprot.phone.protocol.PinResult
 
 /** What the caregiver is told by SMS. */
-enum class CaregiverMessage { SEIZURE_ALERT, FALSE_ALARM, EMERGENCY, NO_ANSWER, HANDOVER }
+enum class CaregiverMessage { SEIZURE_ALERT, FALSE_ALARM, EMERGENCY, NO_ANSWER, HANDOVER, SOS }
 
 /** Commands produced by the alarm flow; the monitoring service carries them out. */
 sealed interface FlowEffect {

@@ -60,7 +60,10 @@ private val Green = Color(0xFF2E7D32)
 @Composable
 fun EpiProtWatchApp(controller: WatchController, sensorPermission: Boolean, onRequestPermission: () -> Unit) {
     val screen by controller.screen.collectAsStateWithLifecycle()
+    val sos by controller.sos.collectAsStateWithLifecycle()
     MaterialTheme {
+        // the help call is shown over the home screen, never over an alarm or a check-in
+        if (sos != null && screen is Screen.Home) { SosScreen(controller, sos!!); return@MaterialTheme }
         when (val s = screen) {
             is Screen.Home -> HomeScreen(controller, sensorPermission, onRequestPermission)
             is Screen.Alarm -> AlarmScreen(s, controller::enterPin)
@@ -88,6 +91,29 @@ fun EpiProtWatchApp(controller: WatchController, sensorPermission: Boolean, onRe
     }
 }
 
+// ------------------------------------------------------------------ call for help
+
+@Composable
+private fun SosScreen(controller: WatchController, sos: WatchController.Sos) {
+    when (sos) {
+        WatchController.Sos.COUNTDOWN -> {
+            var left by remember { mutableStateOf(5) }
+            androidx.compose.runtime.LaunchedEffect(controller.sosAtMs) {
+                while (true) {
+                    left = ((controller.sosAtMs - System.currentTimeMillis() + 999) / 1000).toInt().coerceAtLeast(0)
+                    kotlinx.coroutines.delay(200)
+                }
+            }
+            MessageScreen(Red, stringResource(R.string.sos_countdown_title, left), stringResource(R.string.sos_countdown_text),
+                button = stringResource(R.string.sos_cancel), onButton = controller::sosCancel)
+        }
+        WatchController.Sos.SENT -> MessageScreen(Green, stringResource(R.string.sos_sent_title), stringResource(R.string.sos_sent_text),
+            button = stringResource(R.string.ok), onButton = controller::sosClose)
+        WatchController.Sos.QUEUED -> MessageScreen(Orange, stringResource(R.string.sos_queued_title), stringResource(R.string.sos_queued_text),
+            button = stringResource(R.string.ok), onButton = controller::sosClose)
+    }
+}
+
 // ------------------------------------------------------------------ home
 
 @Composable
@@ -112,6 +138,15 @@ private fun HomeScreen(controller: WatchController, sensorPermission: Boolean, o
                     onClick = controller::reopenAlarm,
                     label = { Text(stringResource(R.string.alarm_active_title), fontWeight = FontWeight.Bold) },
                     secondaryLabel = { Text(stringResource(R.string.home_alarm_running), maxLines = 2) },
+                    colors = ChipDefaults.chipColors(backgroundColor = Red),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            item {
+                Chip(
+                    onClick = controller::sosStart,
+                    label = { Text(stringResource(R.string.sos_button), fontWeight = FontWeight.Bold) },
+                    secondaryLabel = { Text(stringResource(R.string.sos_button_sub), maxLines = 2, fontSize = 11.sp) },
                     colors = ChipDefaults.chipColors(backgroundColor = Red),
                     modifier = Modifier.fillMaxWidth(),
                 )

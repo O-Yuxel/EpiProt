@@ -152,6 +152,7 @@ object ReportPdf {
                 ReportKind.SEIZURE -> s(R.string.rep_kind_seizure)
                 ReportKind.UNCONFIRMED -> s(R.string.rep_kind_unconfirmed)
                 ReportKind.FALSE_ALARM -> s(R.string.rep_kind_false)
+                ReportKind.HELP -> s(R.string.rep_kind_help)
             }
             val cells = listOf(dateTime.format(Date(e.alarmMs)), type, e.durationS?.let { mmss(it) } ?: "–",
                 if (e.cancelledWithPin) yes else no, if (e.caregiverNotified) yes else no, if (e.emergency) yes else no,
@@ -172,7 +173,8 @@ object ReportPdf {
             c.drawText(s(R.string.rep_sig_title), M, 56f, paint(14f, INK, true))
             c.drawText(dateTime.format(Date(e.alarmMs)) + " · " + when (e.kind) {
                 ReportKind.SEIZURE -> s(R.string.rep_kind_seizure); ReportKind.UNCONFIRMED -> s(R.string.rep_kind_unconfirmed)
-                ReportKind.FALSE_ALARM -> s(R.string.rep_kind_false) } + (e.durationS?.let { " · " + s(R.string.rep_col_duration) + " " + mmss(it) } ?: ""),
+                ReportKind.FALSE_ALARM -> s(R.string.rep_kind_false)
+                ReportKind.HELP -> s(R.string.rep_kind_help) } + (e.durationS?.let { " · " + s(R.string.rep_col_duration) + " " + mmss(it) } ?: ""),
                 M, 74f, paint(10f, INK_SOFT))
             val t0 = sn.startMs; val span = sn.durationMs.toFloat().coerceAtLeast(1f)
             val traces = listOf(

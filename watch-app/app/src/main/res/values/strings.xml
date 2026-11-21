@@ -85,4 +85,14 @@
     <string name="warn_phone_battery_low">Phone battery low (%1$s %%). Charge it: if the phone switches off, seizure alarms stop.</string>
     <string name="warn_phone_battery_critical">Phone battery almost empty (%1$s %%). Charge it now, or seizure alarms will stop.</string>
     <string name="warn_watch_battery_low">Watch battery low (%1$s %%). Charge it soon. While it charges there is no heart rate; detection goes on with the headband.</string>
+    <!-- call for help -->
+    <string name="sos_button">Call for help</string>
+    <string name="sos_button_sub">Your caregiver gets a message with your location</string>
+    <string name="sos_countdown_title">Calling for help in %1$d s</string>
+    <string name="sos_countdown_text">Tapped by mistake? Cancel now.</string>
+    <string name="sos_cancel">Cancel</string>
+    <string name="sos_sent_title">Caregiver alerted</string>
+    <string name="sos_sent_text">Your caregiver got a message with your location. Sit or lie down somewhere safe.</string>
+    <string name="sos_queued_title">Phone not connected</string>
+    <string name="sos_queued_text">The message goes out as soon as the phone is back. Ask someone nearby for help now.</string>
 </resources>
