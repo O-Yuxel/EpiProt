@@ -36,6 +36,21 @@ class SignalsTest {
     }
 
     @Test
+    fun lateHeadbandDataFillTheHoleInTheRecording() {
+        val saved = ArrayList<SignalSnippet>()
+        val rec = SignalRecorder({ true }) { saved += it }
+        for (i in 0 until 30) rec.add(window(i, eeg = i !in 20..23), (i + 1) * 5_000L)   // Bluetooth gap: windows 20-23
+        rec.replace(window(21), 22 * 5_000L)                                             // its stored data arrive
+        rec.onAlarm(1, 150_000, 140_000)
+        rec.flush()
+        val eeg = saved.single().eeg[0]
+        val n = WindowFeatures.EEG_N
+        // the recording starts at window 6 (30 - 24): window 21 is position 15, window 22 position 16
+        assertEquals(21 * 1000f, eeg[15 * n])
+        assertTrue(eeg[16 * n].isNaN())                                                  // no late data for it
+    }
+
+    @Test
     fun nothingIsKeptWithoutConsentAndGapsAreNaN() {
         val saved = ArrayList<SignalSnippet>()
         var allowed = false

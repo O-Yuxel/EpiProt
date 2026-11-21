@@ -20,7 +20,7 @@
 |---|---|---|
 | P1 | **Raw values, no processing on the headband** | The phone converts to µV, g and °/s with constants the headband reports. Nothing on the headband can change the data in a way the model did not see in training. |
 | P2 | **Every sample is numbered** | The phone can tell exactly which samples are missing and marks them as missing, never guesses. Missing data is something the phone already handles (backup models, sensor warnings). |
-| P3 | **Live data first, catch-up data second** | After a reconnect, detection needs the newest data at once. Stored data follow in the background and go to the event diary. |
+| P3 | **Live data first, catch-up data second** | After a reconnect, detection needs the newest data at once. Stored data follow in the background; they fill the model's memory of the recent past and the recorded alarm signals. |
 | P4 | **Nothing is deleted before the phone confirms it** | A sudden disconnect never loses the last seconds in flight. |
 | P5 | **Everything encrypted, one bonded phone** | Health data; nobody nearby can read or inject data. |
 | P6 | **Versioned** | The phone reads the protocol version and refuses an unknown major version instead of misreading the data. |
@@ -174,8 +174,10 @@ minutes is caught up in a few minutes.
 5. The headband sends live packets immediately, and the stored packets with the catch-up flag in
    between.
 6. On the phone, live packets go to detection. Catch-up packets arrive too late for detection
-   windows; they go to the event diary and the doctor report, so a seizure during the gap is still
-   recorded.
+   windows; the phone rebuilds the past windows from them and (a) the detector replaces the stand-in
+   values it used during the gap, so a seizure soon after the gap is detected as fast as without it,
+   and (b) a running alarm recording gets the real signals for the doctor report.
+   Not done yet: a seizure that started and ended entirely inside a gap is not detected afterwards.
 
 ### Time alignment
 

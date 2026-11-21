@@ -89,7 +89,8 @@ the packets that arrived in time, and the phone's sensor-health rules (`epiprot.
    goes unnoticed while the data are bad.
 2. ✅ (phone part 1) Switch the model to a backup channel pair when a pad of channel 1 or 2 loses contact.
 3. ✅ (phone part 2) Show "headband charging" instead of "headband missing" when the status says so.
-4. ✅ (phone part 1) Ignore packets received twice (same sequence number); send catch-up packets to the diary, not to detection.
+4. ✅ (phone part 1) Ignore packets received twice (same sequence number); catch-up packets do not go to live detection;
+   they fill the model's memory and the recorded alarm signals (see "Real Bluetooth test").
 5. ✅ (phone part 1) Movement: convert to the SeizeIT2 group-B scale (D14) and place samples in their 25 Hz slots (D13).
 6. ✅ (phone part 2) Show "replace the pad behind the left ear (lower)" when a contact check reports a pad above 150 kOhm (D15),
    and leave EEG flagged as "contact check" out of detection.
@@ -111,7 +112,7 @@ SeizeIT2 seizure, sub-058) in real time over Bluetooth LE. The EpiProt phone app
 **Why 88 s and not 15 s:** the same stream replayed in software gives 15 s without a gap and 85 s with the same
 ~97 s gap in live data (phone Bluetooth off, about 5 minutes before the seizure). So the radio link itself is fine;
 the delay comes from the gap in the model's history. Data stored during a gap reach the phone 10-20 s after
-reconnecting; they used to go only to the diary.
+reconnecting; they were not used for the model yet.
 
 **Fixed (late data fill the model's memory):** the phone now rebuilds the past windows from the stored data (headband
 part) and the live watch data, and the detector replaces the stand-in values it had used during the gap

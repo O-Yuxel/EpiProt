@@ -79,6 +79,20 @@ class SignalRecorder(private val enabled: () -> Boolean, private val save: (Sign
         }
     }
 
+    /**
+     * Late headband data (after a Bluetooth gap) for the window ending at [endMs]: the kept window and, if an
+     * alarm recording is running, its copy get the real signals, so the doctor report shows no hole there.
+     */
+    fun replace(w: WindowInput, endMs: Long) {
+        if (!enabled()) return
+        val i = recent.indexOfLast { it.endMs == endMs }
+        if (i >= 0) recent[i] = W(w, endMs)
+        capture?.windows?.let { ws ->
+            val j = ws.indexOfLast { it.endMs == endMs }
+            if (j >= 0) ws[j] = W(w, endMs)
+        }
+    }
+
     /** Called right after the window that raised the alarm was added. */
     fun onAlarm(eventId: Long, alarmMs: Long, onsetMs: Long) {
         if (!enabled()) return
