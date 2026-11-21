@@ -558,4 +558,27 @@
     <string name="cg_emergency_number">112</string>
     <string name="cg_alarm_note">During a seizure: stay with the person, turn them on their side, put nothing in their mouth, note the time. Call 112 if it lasts longer than 5 minutes or they do not wake up.</string>
     <string name="cg_close">Close</string>
+    <!-- seizure diary (added by hand) -->
+    <string name="manual_title">Add a seizure</string>
+    <string name="manual_text">A seizure without an alarm (headband charging or not worn, or the device missed it)? Add it here, so the diary and the doctor report are complete.</string>
+    <string name="manual_button">Add a seizure</string>
+    <string name="manual_when">When?</string>
+    <string name="manual_type">What kind of seizure?</string>
+    <string name="manual_type_tc">Big convulsive seizure</string>
+    <string name="manual_type_other">Another seizure</string>
+    <string name="manual_type_unsure">Not sure</string>
+    <string name="manual_type_help">Big convulsive = stiffening and jerking of the whole body (tonic-clonic). EpiProt detects only this kind.</string>
+    <string name="manual_worn_label">Was the headband on?</string>
+    <string name="manual_worn_yes">Yes</string>
+    <string name="manual_worn_no">No</string>
+    <string name="manual_worn_unknown">I do not know</string>
+    <string name="manual_note">Note (optional): what happened, how long, missed medicine, little sleep…</string>
+    <string name="manual_missed_note">This will be marked as a seizure the device missed. Please also tell your doctor.</string>
+    <string name="manual_save">Save</string>
+    <string name="manual_delete">Delete this entry</string>
+    <string name="rep_kind_missed">Missed by the device (added)</string>
+    <string name="rep_kind_manual_tc">Seizure (added by hand)</string>
+    <string name="rep_kind_manual_other">Other seizure (added)</string>
+    <string name="rep_kind_manual_unsure">Seizure, unsure (added)</string>
+    <string name="rep_manual_line">Added by hand: %1$d, of these missed while the headband was worn: %2$d</string>
 </resources>

@@ -110,6 +110,11 @@ object ReportPdf {
         val sensorsText = if (d.sensorProblems.isEmpty()) s(R.string.rep_sensors_none)
             else d.sensorProblems.entries.joinToString(" · ") { "${it.key}: ${it.value}" }
         c.drawText(sensorsText, M, top + 16, paint(10f, INK))
+        if (d.manualAdded > 0) {             // seizures the family added by hand; "missed" = headband worn, no alarm
+            top += 16f
+            c.drawText(context.getString(R.string.rep_manual_line, d.manualAdded, d.missedByDevice), M, top + 16,
+                paint(10f, if (d.missedByDevice > 0) CORAL else INK, d.missedByDevice > 0))
+        }
         top += 40f
         c.drawText(s(R.string.rep_notes), M, top, paint(12f, INK, true))
         var ny = top + 16
@@ -138,7 +143,12 @@ object ReportPdf {
         for ((i, e) in d.events.withIndex()) {
             if (y > PH - 70) { newPage(); y = 60f; header() }
             if (i % 2 == 1) c.drawRect(M, y - 11, M + tableW, y + 5, fill(BG))
-            val type = when (e.kind) {
+            val type = if (e.manual) s(when {
+                e.missed -> R.string.rep_kind_missed
+                e.manualType == "tonic_clonic" -> R.string.rep_kind_manual_tc
+                e.manualType == "other" -> R.string.rep_kind_manual_other
+                else -> R.string.rep_kind_manual_unsure
+            }) else when (e.kind) {
                 ReportKind.SEIZURE -> s(R.string.rep_kind_seizure)
                 ReportKind.UNCONFIRMED -> s(R.string.rep_kind_unconfirmed)
                 ReportKind.FALSE_ALARM -> s(R.string.rep_kind_false)

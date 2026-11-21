@@ -209,6 +209,25 @@ class EventLog private constructor(context: Context, passphrase: String) :
             put("alarm_ms", alarmMs); put("onset_ms", onsetMs)
         })
 
+    /**
+     * A seizure the patient or a caregiver adds by hand (the device did not raise an alarm: headband not worn, or
+     * missed). [type] = tonic_clonic | other | unsure; [worn] = yes | no | unknown (headband on at that time);
+     * [note] free text. Stored like an alarm (time in alarm_ms) with source "manual"; the details are its first step.
+     */
+    fun addManualEvent(timeMs: Long, type: String, worn: String, note: String, nowMs: Long = System.currentTimeMillis()): Long {
+        val id = writableDatabase.insert("events", null, ContentValues().apply {
+            put("kind", "seizure"); put("source", "manual"); put("demo", 0)
+            put("alarm_ms", timeMs); put("onset_ms", timeMs); put("confirmed", "yes"); put("confirmed_by", "manual")
+        })
+        step(id, nowMs, "manual", "type=$type;worn=$worn;note=${note.replace(';', ',').trim()}")
+        return id
+    }
+
+    fun deleteEvent(eventId: Long) {
+        writableDatabase.delete("events", "id = ?", arrayOf(eventId.toString()))
+        writableDatabase.delete("steps", "event_id = ?", arrayOf(eventId.toString()))
+    }
+
     fun step(eventId: Long, tMs: Long, step: String, detail: String) {
         writableDatabase.insert("steps", null, ContentValues().apply {
             put("event_id", eventId); put("t_ms", tMs); put("step", step); put("detail", detail)

@@ -47,6 +47,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Call
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.DateRange
 import androidx.compose.material.icons.rounded.Email
@@ -750,6 +751,15 @@ private fun Events(m: PhoneMonitor) {
         Text(stringResource(R.string.rep_card_text), color = C.InkSoft, style = MaterialTheme.typography.bodyMedium)
         PrimaryButton(stringResource(R.string.rep_card_button), Icons.Rounded.Send) { reportOpen = true }
     }
+    var addOpen by remember { mutableStateOf(false) }
+    EpiCard {
+        CardHeader(Icons.Rounded.Add, stringResource(R.string.manual_title))
+        Text(stringResource(R.string.manual_text), color = C.InkSoft, style = MaterialTheme.typography.bodyMedium)
+        SoftButton(stringResource(R.string.manual_button)) { addOpen = true }
+    }
+    if (addOpen) ManualSeizureDialog(onDismiss = { addOpen = false }) { t, type, worn, note ->
+        m.addManualSeizure(t, type, worn, note); addOpen = false
+    }
     if (events.isEmpty()) EpiCard {
         Column(Modifier.fillMaxWidth().padding(vertical = 18.dp), horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -757,7 +767,7 @@ private fun Events(m: PhoneMonitor) {
             Text(stringResource(R.string.no_events), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
         }
     }
-    events.forEach { EventCard(it) }
+    events.forEach { EventCard(it) { id -> m.deleteManualSeizure(id) } }
 
     if (alerts.isNotEmpty()) {
         SectionTitle(stringResource(R.string.sensor_alerts))
@@ -784,8 +794,9 @@ private fun Events(m: PhoneMonitor) {
 }
 
 @Composable
-private fun EventCard(e: EventRow) {
+private fun EventCard(e: EventRow, onDeleteManual: (Long) -> Unit) {
     var open by remember { mutableStateOf(false) }
+    val manual = org.epiprot.phone.report.ManualInfo.of(e)
     // same classification as the doctor report
     val (label, icon, color, bg) = when (org.epiprot.phone.report.ReportData.kindOf(e)) {
         org.epiprot.phone.report.ReportKind.FALSE_ALARM -> Quad(stringResource(R.string.kind_false_alarm), Icons.Rounded.CheckCircle, C.Teal, C.TealSoft)
@@ -797,7 +808,12 @@ private fun EventCard(e: EventRow) {
             IconBubble(icon, color, bg, 44.dp)
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
-                Text(label, style = MaterialTheme.typography.titleMedium)
+                Text(if (manual == null) label else stringResource(when {
+                    manual.type == "tonic_clonic" && manual.worn == "yes" -> R.string.rep_kind_missed
+                    manual.type == "tonic_clonic" -> R.string.rep_kind_manual_tc
+                    manual.type == "other" -> R.string.rep_kind_manual_other
+                    else -> R.string.rep_kind_manual_unsure
+                }), style = MaterialTheme.typography.titleMedium)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(dateTime(e.alarmMs), style = MaterialTheme.typography.bodySmall, color = C.InkSoft)
                     if (e.demo) { Spacer(Modifier.width(8.dp)); Pill(stringResource(R.string.demo_badge), C.TealDark, C.TealSoft) }
@@ -805,7 +821,17 @@ private fun EventCard(e: EventRow) {
             }
             Icon(if (open) Icons.Rounded.KeyboardArrowUp else Icons.Rounded.KeyboardArrowDown, null, tint = C.Grey)
         }
-        AnimatedVisibility(open) {
+        AnimatedVisibility(open && manual != null) {
+            Column(Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                val mi = manual ?: return@Column
+                Text(stringResource(R.string.manual_worn_label) + ": " + stringResource(when (mi.worn) {
+                    "yes" -> R.string.manual_worn_yes; "no" -> R.string.manual_worn_no; else -> R.string.manual_worn_unknown }),
+                    color = C.InkSoft, style = MaterialTheme.typography.bodySmall)
+                if (mi.note.isNotBlank()) Text(mi.note, color = C.Ink, style = MaterialTheme.typography.bodyMedium)
+                TextButton({ onDeleteManual(e.id) }) { Text(stringResource(R.string.manual_delete), color = C.Coral) }
+            }
+        }
+        AnimatedVisibility(open && manual == null) {
             Column(Modifier.padding(start = 20.dp, top = 4.dp)) {
                 e.steps.forEachIndexed { i, st ->
                     Row {

@@ -17,8 +17,24 @@ data class ReportEvent(
     val caregiverNotified: Boolean,
     val emergency: Boolean,
     val recoveryResponseS: Long?,     // time until the patient answered "Are you OK?" after the seizure
-    val confirmedBy: String?,         // patient / caregiver
+    val confirmedBy: String?,         // patient / caregiver / manual
+    val manual: Boolean = false,      // added by hand, not raised by the device
+    val manualType: String? = null,   // tonic_clonic / other / unsure
+    val missed: Boolean = false,      // added by hand: a big seizure while the headband was worn (the device missed it)
+    val note: String = "",
 )
+
+/** Details of an event added by hand (first step "manual"): type, headband worn, note. */
+data class ManualInfo(val type: String, val worn: String, val note: String) {
+    companion object {
+        fun of(e: EventRow): ManualInfo? {
+            if (e.source != "manual") return null
+            val d = e.steps.firstOrNull { it.step == "manual" }?.detail ?: return ManualInfo("unsure", "unknown", "")
+            val m = d.split(';').associate { it.substringBefore('=') to it.substringAfter('=', "") }
+            return ManualInfo(m["type"] ?: "unsure", m["worn"] ?: "unknown", m["note"] ?: "")
+        }
+    }
+}
 
 /**
  * Everything the doctor report shows, computed from the event log (pure logic, unit-tested).
@@ -37,6 +53,8 @@ data class ReportData(
     val falseAlarms get() = events.count { it.kind == ReportKind.FALSE_ALARM }
     val emergencies get() = events.count { it.emergency }
     val longestS: Long? get() = events.filter { it.kind != ReportKind.FALSE_ALARM }.mapNotNull { it.durationS }.maxOrNull()
+    val manualAdded get() = events.count { it.manual }
+    val missedByDevice get() = events.count { it.missed }
 
     companion object {
         fun kindOf(e: EventRow): ReportKind = when {
@@ -62,7 +80,11 @@ data class ReportData(
                     emergency = e.emergencyMs != null,
                     recoveryResponseS = e.recoveryResponseMs?.let { it / 1000 },
                     confirmedBy = e.confirmedBy,
-                )
+                ).let { r ->
+                    val mi = ManualInfo.of(e) ?: return@let r
+                    r.copy(manual = true, manualType = mi.type, note = mi.note,
+                        missed = mi.type == "tonic_clonic" && mi.worn == "yes")
+                }
             }
             val counted = rows.filter { it.kind != ReportKind.FALSE_ALARM }
             val cal = Calendar.getInstance(zone)

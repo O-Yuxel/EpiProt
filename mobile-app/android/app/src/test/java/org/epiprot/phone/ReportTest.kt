@@ -47,4 +47,21 @@ class ReportTest {
         val d = ReportData.build(emptyList(), emptyList(), t(1, 0), t(7, 0), includeDemo = false, zone = utc)
         assertEquals(0, d.events.size); assertNull(d.longestS); assertEquals(24, d.byHour.size)
     }
+
+    @Test
+    fun handAddedSeizuresAndMissedOnesAreCounted() {
+        fun manual(id: Long, at: Long, detail: String) = EventRow(id, "seizure", "manual", false, at, at, null, null, null, null,
+            false, "yes", listOf(org.epiprot.phone.data.StepRow(at, "manual", detail)), "manual", null)
+        val events = listOf(
+            manual(10, t(4, 2), "type=tonic_clonic;worn=yes;note=at night"),      // missed by the device
+            manual(11, t(5, 15), "type=tonic_clonic;worn=no;note="),              // headband was charging
+            manual(12, t(6, 9), "type=other;worn=yes;note=staring spell"),        // not a kind EpiProt detects
+        )
+        val d = ReportData.build(events, emptyList(), t(1, 0), t(28, 0), includeDemo = false, zone = utc)
+        assertEquals(3, d.manualAdded)
+        assertEquals(1, d.missedByDevice)
+        assertEquals(3, d.seizures)
+        assertEquals("at night", d.events.first { it.eventId == 10L }.note)
+        assertEquals("other", d.events.first { it.eventId == 12L }.manualType)
+    }
 }

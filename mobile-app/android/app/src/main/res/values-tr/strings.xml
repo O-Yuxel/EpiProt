@@ -548,4 +548,27 @@
     <string name="cg_emergency_number">112</string>
     <string name="cg_alarm_note">Nöbet sırasında: kişinin yanında kalın, onu yan yatırın, ağzına hiçbir şey koymayın, saati not edin. 5 dakikadan uzun sürerse ya da kişi kendine gelmezse 112\'yi arayın.</string>
     <string name="cg_close">Kapat</string>
+    <!-- nöbet günlüğü (elle eklenen) -->
+    <string name="manual_title">Nöbet ekle</string>
+    <string name="manual_text">Alarm olmadan bir nöbet mi geçti (kafa bandı şarjdaydı ya da takılı değildi, ya da cihaz yakalayamadı)? Buraya ekleyin; günlük ve doktor raporu eksiksiz olsun.</string>
+    <string name="manual_button">Nöbet ekle</string>
+    <string name="manual_when">Ne zaman?</string>
+    <string name="manual_type">Ne tür bir nöbet?</string>
+    <string name="manual_type_tc">Büyük kasılmalı nöbet</string>
+    <string name="manual_type_other">Başka bir nöbet</string>
+    <string name="manual_type_unsure">Emin değilim</string>
+    <string name="manual_type_help">Büyük kasılmalı = bütün vücudun kasılıp sarsılması (tonik-klonik). EpiProt yalnızca bu türü algılar.</string>
+    <string name="manual_worn_label">Kafa bandı takılı mıydı?</string>
+    <string name="manual_worn_yes">Evet</string>
+    <string name="manual_worn_no">Hayır</string>
+    <string name="manual_worn_unknown">Bilmiyorum</string>
+    <string name="manual_note">Not (isteğe bağlı): ne oldu, ne kadar sürdü, atlanan ilaç, az uyku…</string>
+    <string name="manual_missed_note">Bu, cihazın yakalayamadığı bir nöbet olarak işaretlenecek. Lütfen doktorunuza da söyleyin.</string>
+    <string name="manual_save">Kaydet</string>
+    <string name="manual_delete">Bu kaydı sil</string>
+    <string name="rep_kind_missed">Cihaz yakalayamadı (eklendi)</string>
+    <string name="rep_kind_manual_tc">Nöbet (elle eklendi)</string>
+    <string name="rep_kind_manual_other">Başka nöbet (eklendi)</string>
+    <string name="rep_kind_manual_unsure">Nöbet, emin değil (eklendi)</string>
+    <string name="rep_manual_line">Elle eklenen: %1$d; bunlardan kafa bandı takılıyken yakalanamayan: %2$d</string>
 </resources>

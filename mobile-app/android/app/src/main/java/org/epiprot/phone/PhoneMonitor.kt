@@ -167,6 +167,13 @@ class PhoneMonitor(private val app: Context) {
         turnedOff("disconnected")
     }
 
+    /** A seizure added by hand (seizure diary); see EventLog.addManualEvent. */
+    fun addManualSeizure(timeMs: Long, type: String, worn: String, note: String) {
+        scope.launch(Dispatchers.IO) { log.addManualEvent(timeMs, type, worn, note); changed() }
+    }
+
+    fun deleteManualSeizure(eventId: Long) { scope.launch(Dispatchers.IO) { log.deleteEvent(eventId); changed() } }
+
     /** This phone became a caregiver phone: let go of the headband without telling the watch anything. */
     fun disconnectHeadbandQuietly() { hbLink.disconnect(); hbAckJob?.cancel() }
 
