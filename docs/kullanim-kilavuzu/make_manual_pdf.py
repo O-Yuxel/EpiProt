@@ -3,7 +3,7 @@
 Handles the Markdown used in the manual: # / ## / ### headings, paragraphs, **bold**, - and 1. lists (also
 indented), | tables |, ![images](file.png), > notes and ---. Needs reportlab and the Segoe UI fonts (Windows) or
 DejaVu Sans:
-  python docs/kullanim-kilavuzu/make_manual_pdf.py
+  python docs/kullanim-kilavuzu/make_manual_pdf.py [tr|en]
 """
 import os
 import re
@@ -19,8 +19,12 @@ from reportlab.platypus import (Image, KeepTogether, ListFlowable, ListItem, Pag
                                 Spacer, Table, TableStyle)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SRC = os.path.join(HERE, "EpiProt-Kullanim-Kilavuzu.md")
-OUT = os.path.join(HERE, "EpiProt-Kullanim-Kilavuzu.pdf")
+import sys
+LANG = sys.argv[1] if len(sys.argv) > 1 else "tr"          # tr | en
+BASE = "EpiProt-Kullanim-Kilavuzu" if LANG == "tr" else "EpiProt-User-Manual"
+SRC = os.path.join(HERE, BASE + ".md")
+OUT = os.path.join(HERE, BASE + ".pdf")
+TITLE = "EpiProt Kullanım Kılavuzu" if LANG == "tr" else "EpiProt User Manual"
 
 TEAL, TEAL_D, TEAL_S = colors.HexColor("#0E7C86"), colors.HexColor("#075E66"), colors.HexColor("#DDF1F1")
 CORAL, CORAL_S = colors.HexColor("#B0302A"), colors.HexColor("#FBE3E0")
@@ -114,7 +118,7 @@ def table(rows):
 
 def note(text):
     t = Table([[Paragraph(inline(text), S["note"])]], colWidths=[170 * mm])
-    warn = "ÖNEMLİ" in text or "UYARI" in text
+    warn = "ÖNEMLİ" in text or "UYARI" in text or "IMPORTANT" in text
     t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), CORAL_S if warn else TEAL_S),
                            ("LINEBEFORE", (0, 0), (0, -1), 3, CORAL if warn else TEAL),
                            ("LEFTPADDING", (0, 0), (-1, -1), 10), ("RIGHTPADDING", (0, 0), (-1, -1), 10),
@@ -183,14 +187,14 @@ def build():
         c.saveState()
         c.setFont("R", 8)
         c.setFillColor(INK_S)
-        c.drawString(20 * mm, 12 * mm, "EpiProt Kullanım Kılavuzu")
+        c.drawString(20 * mm, 12 * mm, TITLE)
         c.drawRightString(190 * mm, 12 * mm, str(doc.page))
         c.setStrokeColor(LINE)
         c.line(20 * mm, 16 * mm, 190 * mm, 16 * mm)
         c.restoreState()
 
     doc = SimpleDocTemplate(OUT, pagesize=A4, leftMargin=20 * mm, rightMargin=20 * mm, topMargin=18 * mm,
-                            bottomMargin=22 * mm, title="EpiProt Kullanım Kılavuzu", author="EpiProt")
+                            bottomMargin=22 * mm, title=TITLE, author="EpiProt")
     doc.build(story, onFirstPage=footer, onLaterPages=footer)
     print("wrote", OUT)
 

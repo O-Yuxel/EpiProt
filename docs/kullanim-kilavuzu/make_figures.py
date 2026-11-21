@@ -37,25 +37,36 @@ def label(png, out, items, crop=None):
     plt.close(fig)
 
 
-label("epiprot_side.png", "parcalar_yan.png", [
-    ("Kulak kancası", (925, 515), (1050, 380)),
-    ("Elektrot modülü (pedler içte)", (790, 640), (930, 700)),
-    ("Pil kutusu (sağ)", (745, 860), (900, 900)),
-    ("Şarj kontakları", (737, 932), (850, 1010)),
-    ("Ense bandı", (640, 832), (300, 760)),
-], crop=(250, 300, 1450, 1100))
-label("epiprot_hero.png", "parcalar_arka.png", [
-    ("Işık", (608, 822), (250, 700)),
-    ("Tuş", (605, 858), (250, 800)),
-    ("Elektronik kutusu (sol)", (630, 900), (250, 920)),
-    ("Güvenlik klipsi", (866, 815), (900, 960)),
-    ("Pil kutusu (sağ)", (995, 760), (1080, 660)),
-    ("Kulak kancası", (455, 455), (250, 430)),
-], crop=(200, 350, 1400, 1050))
-label("epiprot_xray.png", "parcalar_ic.png", [
-    ("Üst ped", (870, 225), (1050, 180)),
-    ("Alt ped", (845, 400), (1050, 330)),
-    ("Küçük ped (referans)", (825, 550), (1050, 480)),
-    ("Pil", (740, 850), (1000, 820)),
-], crop=(300, 0, 1500, 1200))
+LABELS = {
+    "tr": {"hook": "Kulak kancası", "module": "Elektrot modülü (pedler içte)", "battery": "Pil kutusu (sağ)",
+           "contacts": "Şarj kontakları", "band": "Ense bandı", "light": "Işık", "button": "Tuş",
+           "electronics": "Elektronik kutusu (sol)", "clasp": "Güvenlik klipsi", "upper": "Üst ped", "lower": "Alt ped",
+           "small": "Küçük ped (referans)", "cell": "Pil", "suffix": ""},
+    "en": {"hook": "Ear hook", "module": "Electrode module (pads inside)", "battery": "Battery case (right)",
+           "contacts": "Charging contacts", "band": "Neck band", "light": "Light", "button": "Button",
+           "electronics": "Electronics case (left)", "clasp": "Safety clasp", "upper": "Upper pad", "lower": "Lower pad",
+           "small": "Small pad (reference)", "cell": "Battery", "suffix": "_en"},
+}
+for L in LABELS.values():
+    label("epiprot_side.png", f"parcalar_yan{L['suffix']}.png", [
+        (L["hook"], (925, 515), (1050, 380)),
+        (L["module"], (790, 640), (930, 700)),
+        (L["battery"], (745, 860), (900, 900)),
+        (L["contacts"], (737, 932), (850, 1010)),
+        (L["band"], (640, 832), (300, 760)),
+    ], crop=(250, 300, 1450, 1100))
+    label("epiprot_hero.png", f"parcalar_arka{L['suffix']}.png", [
+        (L["light"], (608, 822), (250, 700)),
+        (L["button"], (605, 858), (250, 800)),
+        (L["electronics"], (630, 900), (250, 920)),
+        (L["clasp"], (866, 815), (900, 960)),
+        (L["battery"], (995, 760), (1080, 660)),
+        (L["hook"], (455, 455), (250, 430)),
+    ], crop=(200, 350, 1400, 1050))
+    label("epiprot_xray.png", f"parcalar_ic{L['suffix']}.png", [
+        (L["upper"], (870, 225), (1050, 180)),
+        (L["lower"], (845, 400), (1050, 330)),
+        (L["small"], (825, 550), (1050, 480)),
+        (L["cell"], (740, 850), (1000, 820)),
+    ], crop=(300, 0, 1500, 1200))
 print("figures written")
