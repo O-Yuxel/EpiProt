@@ -47,3 +47,9 @@ smoothed in the scan, so its ear landmarks are less reliable.
 
 `concepts.py` / `render_concepts.py` / `concepts.png`: the four early layouts on a simple head; D (pods low at
 the back corners) was chosen and developed into v3.
+
+## Photo-real pictures (Blender 5.3, Cycles)
+
+`render/epiprot_hero.png`, `epiprot_back.png`, `epiprot_side.png`, `epiprot_closeup.png`, `epiprot_xray.png`.
+Rebuild: `freecadcmd render/export_render_meshes.py` (part meshes, not kept in git), then
+`blender.exe -b -P render/render_blender.py -- hero back side closeup xray`.
