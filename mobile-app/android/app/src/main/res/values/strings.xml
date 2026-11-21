@@ -22,7 +22,8 @@
     <string name="detection_full">full (brain signal, heart rate, movement)</string>
     <string name="detection_no_hr">backup model (no heart rate from the watch)</string>
     <string name="detection_backup">backup model (no movement data)</string>
-    <string name="detection_limited">LIMITED: no brain signal</string>
+    <string name="detection_off">OFF: no brain signal (headband not sending)</string>
+    <string name="detection_limited">LIMITED: brain signal weak</string>
     <string name="detection_waiting">starting…</string>
     <string name="open_problems">Sensor problems</string>
     <string name="setup_missing">Add a caregiver phone number and a PIN in Settings.</string>
@@ -51,6 +52,8 @@
     <string name="messages">Messages to the caregiver</string>
     <string name="sensor_alerts">Sensor warnings</string>
     <string name="sms_sent">sent</string>
+    <string name="sms_sent_retry">sent (after a retry)</string>
+    <string name="sms_sending">sending…</string>
     <string name="sms_test">not sent (test mode)</string>
     <string name="sms_failed">FAILED</string>
     <string name="sms_no_number">no caregiver number</string>
@@ -476,4 +479,32 @@
     <string name="hb_cancel">Cancel</string>
     <string name="hb_catch_up">Stored data received after a gap</string>
     <string name="hb_missing">Packets lost</string>
+    <!-- warning texts, same codes and wording as the watch app -->
+    <string name="warn_headband_missing">Headband is not sending data. Check that it is on, worn and charged.</string>
+    <string name="warn_brain_weak">Brain signal is weak. Adjust the headband so the sensors touch the skin.</string>
+    <string name="warn_head_mov_missing">Headband movement sensor is not sending data. Restart the headband.</string>
+    <string name="warn_watch_missing">Watch data are not reaching the phone. Keep the phone close.</string>
+    <string name="warn_heart_missing">Heart rate is not measured. Tighten the watch strap.</string>
+    <string name="warn_body_mov_missing">Watch movement sensor is not sending data. Restart the watch.</string>
+    <string name="warn_phone_disconnected">Phone not connected. Keep the phone close and the EpiProt app on.</string>
+    <string name="impact_limited">Seizure detection is LIMITED until this is fixed.</string>
+    <string name="impact_weaker">Seizure detection may be weaker until this is fixed.</string>
+    <string name="impact_backup">Detection continues without movement.</string>
+    <string name="impact_no_alarms">Seizure alarms do NOT work until this is fixed.</string>
+    <string name="impact_none">Detection continues.</string>
+    <string name="warn_pad_contact_lost">No skin contact: %1$s. Press the pad back on or replace it.</string>
+    <string name="warn_pad_replace">Replace the pad %1$s: it is drying out.</string>
+    <string name="warn_headband_battery_low">Headband battery low (%1$s %%). Charge it soon.</string>
+    <string name="warn_headband_battery_critical">Headband battery almost empty (%1$s %%). Charge it now.</string>
+    <string name="warn_headband_charging">Headband is charging. Seizure detection is OFF until the headband is worn again.</string>
+    <string name="warn_headband_off">Headband was switched off in the app. Seizure detection is OFF until it is switched on again.</string>
+    <string name="warn_headband_disconnected">Headband was disconnected in the app. Seizure detection is OFF until you connect it again.</string>
+    <string name="warn_headband_unpaired">Headband was unpaired from the phone. Seizure detection is OFF until a headband is paired.</string>
+    <string name="warn_phone_battery_low">Phone battery low (%1$s %%). Charge it: if the phone switches off, seizure alarms stop.</string>
+    <string name="warn_phone_battery_critical">Phone battery almost empty (%1$s %%). Charge it now, or seizure alarms will stop.</string>
+    <string name="warn_watch_battery_low">Watch battery low (%1$s %%). Charge it soon. While it charges there is no heart rate; detection goes on with the headband.</string>
+    <string name="channel_warnings">Sensor and battery warnings</string>
+    <string name="notif_warning_title">EpiProt: needs your attention</string>
+    <string name="notif_sms_failed_title">Caregiver SMS did not go out</string>
+    <string name="notif_sms_failed_text">The message to %1$s could not be sent after 3 tries (no signal?). Call the caregiver if needed.</string>
 </resources>

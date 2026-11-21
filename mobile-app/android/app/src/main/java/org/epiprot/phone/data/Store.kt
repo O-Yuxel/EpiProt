@@ -206,10 +206,14 @@ class EventLog private constructor(context: Context, passphrase: String) :
         if (cv.size() > 0) writableDatabase.update("events", cv, "id = ?", arrayOf(eventId.toString()))
     }
 
-    fun message(tMs: Long, eventId: Long, to: String, text: String, status: String) {
+    fun message(tMs: Long, eventId: Long, to: String, text: String, status: String): Long =
         writableDatabase.insert("messages", null, ContentValues().apply {
             put("t_ms", tMs); put("event_id", eventId); put("to_number", to); put("text", text); put("status", status)
         })
+
+    /** New state of a message already in the log (sending -> sent / failed). */
+    fun messageStatus(rowId: Long, status: String) {
+        writableDatabase.update("messages", ContentValues().apply { put("status", status) }, "rowid = ?", arrayOf(rowId.toString()))
     }
 
     fun sensorWarning(e: HealthMonitor.Episode, demo: Boolean): Long = writableDatabase.insert("sensor_alerts", null,

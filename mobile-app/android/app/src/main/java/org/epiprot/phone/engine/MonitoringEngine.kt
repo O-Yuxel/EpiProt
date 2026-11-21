@@ -51,6 +51,7 @@ class MonitoringEngine(
     private var detector = Detector(cfg, models)
     private var health = HealthMonitor()
     private var alerts = HeadbandAlerts()
+    private var battery = org.epiprot.phone.health.DeviceBatteryAlerts()
     /** Headband warnings of the health monitor held back while the band is charging or switched off (those say it). */
     private val heldBack = HashSet<String>()
     private val ends = ArrayDeque<Long>()           // end times of the last processed windows, newest last
@@ -65,6 +66,7 @@ class MonitoringEngine(
         detector = Detector(cfg, models)
         health = HealthMonitor()
         alerts = HeadbandAlerts()
+        battery = org.epiprot.phone.health.DeviceBatteryAlerts()
         heldBack.clear()
         ends.clear()
         this.demo = demo
@@ -124,7 +126,14 @@ class MonitoringEngine(
         }
     }
 
-    private fun openWarnings() = health.openEpisodes.filter { it.code !in heldBack } + alerts.openEpisodes
+    private fun openWarnings() = health.openEpisodes.filter { it.code !in heldBack } + alerts.openEpisodes + battery.openEpisodes
+
+    /** Battery of the phone ([device] = "phone") or the watch ("watch"); [pct] < 0 = unknown. */
+    fun onDeviceBattery(device: String, pct: Int, charging: Boolean, nowMs: Long) {
+        val ev = if (device == "phone") battery.onPhone(pct, charging, nowMs) else battery.onWatch(pct, charging, nowMs)
+        for (e in ev) send(e)
+        if (ev.isNotEmpty()) status = status.copy(openWarnings = openWarnings())
+    }
 
     private fun sendHealth(e: HealthMonitor.Event) {
         val ep = e.episode

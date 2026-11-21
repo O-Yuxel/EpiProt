@@ -121,5 +121,6 @@ object WarningPolicy {
     /** Urgent = detection is limited or about to stop. Charging or switching off stops it too, but the patient chose it: quiet at night. */
     fun urgent(code: String, impact: String): Boolean =
         code != HeadbandAlerts.CHARGING && code != HeadbandAlerts.OFF &&
-            (code == HeadbandAlerts.BATTERY_CRITICAL || impact == "limited" || impact == "no_alarms")
+            (code == HeadbandAlerts.BATTERY_CRITICAL || code == org.epiprot.phone.health.DeviceBatteryAlerts.PHONE_CRITICAL ||
+                impact == "limited" || impact == "no_alarms")
 }

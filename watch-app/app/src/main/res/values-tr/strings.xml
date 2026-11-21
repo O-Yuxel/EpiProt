@@ -76,4 +76,8 @@
     <string name="night_mode_text">Sadece acil uyarılar titrer. Alarm her zaman titrer.</string>
     <string name="night_summary_title">Gece: %1$d sessiz uyarı</string>
     <string name="demo_pad">Ped uyarısı</string>
+    <!-- telefon ve saat pili (telefon uygulaması) -->
+    <string name="warn_phone_battery_low">Telefonun pili azaldı (%%%1$s). Şarj edin: telefon kapanırsa nöbet alarmı çalışmaz.</string>
+    <string name="warn_phone_battery_critical">Telefonun pili bitmek üzere (%%%1$s). Hemen şarj edin, yoksa nöbet alarmı duracak.</string>
+    <string name="warn_watch_battery_low">Saatin pili azaldı (%%%1$s). Yakında şarj edin. Şarj olurken nabız ölçülemez; tespit kafa bandıyla devam eder.</string>
 </resources>

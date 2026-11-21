@@ -2,7 +2,12 @@ package org.epiprot.phone.comm
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.telephony.SmsManager
@@ -15,6 +20,8 @@ import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeoutOrNull
 import org.epiprot.phone.EpiProtPhoneApp
@@ -59,25 +66,59 @@ class CaregiverMessenger(private val context: Context, private val settings: Set
                          private val consents: () -> org.epiprot.phone.privacy.ConsentState) {
 
     /** One information SMS to a newly added caregiver: who added them, what they will receive, how to opt out. */
-    fun sendIntro(to: String, nowMs: Long = System.currentTimeMillis()) {
+    suspend fun sendIntro(to: String, nowMs: Long = System.currentTimeMillis()) {
         val consent = consents()
         if (!consent.smsAllowed || !consent.caregiverConfirmed(to)) return
         val name = settings.patientName.ifBlank { context.getString(R.string.patient_default) }
         val text = context.getString(R.string.sms_intro, name,
             context.getString(if (consent.locationAllowed) R.string.sms_intro_with_location else R.string.sms_intro_no_location))
-        log.message(nowMs, 0, to, text, deliver(to, text))
+        deliver(nowMs, 0, to, text)
     }
 
-    private fun deliver(to: String, text: String): String = when {
-        !settings.realSms -> "test"
-        ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED -> "failed"
-        else -> try {
-            val sms = if (Build.VERSION.SDK_INT >= 31) context.getSystemService(SmsManager::class.java)
-                      else @Suppress("DEPRECATION") SmsManager.getDefault()
-            sms.sendMultipartTextMessage(to, null, sms.divideMessage(text), null, null)
-            "sent"
+    /**
+     * Sends one SMS and logs it: "sending" at once, then "sent" when the phone network accepted every part, or
+     * "failed" after [TRIES] tries [RETRY_MS] apart (no signal, SIM problem). A final failure also shows a notification,
+     * because the caregiver does not know about the seizure.
+     */
+    private suspend fun deliver(nowMs: Long, eventId: Long, to: String, text: String) {
+        if (!settings.realSms) { log.message(nowMs, eventId, to, text, "test"); return }
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+            log.message(nowMs, eventId, to, text, "failed"); PhoneAlertsBridge.smsFailed(context, to); return
+        }
+        val row = log.message(nowMs, eventId, to, text, "sending")
+        for (attempt in 1..TRIES) {
+            if (sendOnce(to, text)) { log.messageStatus(row, if (attempt == 1) "sent" else "sent_retry"); return }
+            Log.w(TAG, "SMS to $to not sent, try $attempt of $TRIES")
+            if (attempt < TRIES) delay(RETRY_MS)
+        }
+        log.messageStatus(row, "failed")
+        PhoneAlertsBridge.smsFailed(context, to)
+    }
+
+    /** One try: true when the network accepted every part of the message within 60 s. */
+    private suspend fun sendOnce(to: String, text: String): Boolean {
+        val sms = if (Build.VERSION.SDK_INT >= 31) context.getSystemService(SmsManager::class.java)
+                  else @Suppress("DEPRECATION") SmsManager.getDefault()
+        val parts = sms.divideMessage(text)
+        val action = "org.epiprot.phone.SMS_SENT." + System.nanoTime()
+        val results = Channel<Int>(parts.size)
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(c: Context, i: Intent) { results.trySend(resultCode) }
+        }
+        ContextCompat.registerReceiver(context, receiver, IntentFilter(action), ContextCompat.RECEIVER_NOT_EXPORTED)
+        return try {
+            val sent = ArrayList(parts.indices.map {
+                PendingIntent.getBroadcast(context, it, Intent(action).setPackage(context.packageName), PendingIntent.FLAG_IMMUTABLE)
+            })
+            sms.sendMultipartTextMessage(to, null, parts, sent, null)
+            withTimeoutOrNull(SENT_TIMEOUT_MS) {
+                repeat(parts.size) { if (results.receive() != Activity.RESULT_OK) return@withTimeoutOrNull false }
+                true
+            } ?: false
         } catch (e: Exception) {
-            Log.e(TAG, "SMS failed", e); "failed"
+            Log.e(TAG, "SMS failed", e); false
+        } finally {
+            try { context.unregisterReceiver(receiver) } catch (_: Exception) { }
         }
     }
 
@@ -105,8 +146,19 @@ class CaregiverMessenger(private val context: Context, private val settings: Set
         // no SMS consent: nothing leaves the phone, the message is only kept in the log
         if (!consent.smsAllowed) { log.message(nowMs, eventId, "-", text, "no_consent"); return }
         for (n in numbers.filterNot(consent::caregiverConfirmed)) log.message(nowMs, eventId, n, text, "not_confirmed")
-        for (to in consent.recipients(numbers)) log.message(nowMs, eventId, to, text, deliver(to, text))
+        for (to in consent.recipients(numbers)) deliver(nowMs, eventId, to, text)
     }
+
+    companion object {
+        const val TRIES = 3
+        const val RETRY_MS = 20_000L
+        const val SENT_TIMEOUT_MS = 60_000L
+    }
+}
+
+/** Kept apart so the messenger has no direct dependency on the service package. */
+private object PhoneAlertsBridge {
+    fun smsFailed(c: Context, to: String) = org.epiprot.phone.service.PhoneAlerts.smsFailed(c, to)
 }
 
 /** Sends messages to the EpiProt watch app over the Wear OS Data Layer. */

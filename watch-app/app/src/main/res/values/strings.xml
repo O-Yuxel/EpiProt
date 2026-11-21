@@ -81,4 +81,8 @@
     <string name="night_mode_text">Only urgent warnings vibrate. Alarms always do.</string>
     <string name="night_summary_title">Night: %1$d quiet warnings</string>
     <string name="demo_pad">Pad warning</string>
+    <!-- battery of the phone and the watch (phone app) -->
+    <string name="warn_phone_battery_low">Phone battery low (%1$s %%). Charge it: if the phone switches off, seizure alarms stop.</string>
+    <string name="warn_phone_battery_critical">Phone battery almost empty (%1$s %%). Charge it now, or seizure alarms will stop.</string>
+    <string name="warn_watch_battery_low">Watch battery low (%1$s %%). Charge it soon. While it charges there is no heart rate; detection goes on with the headband.</string>
 </resources>

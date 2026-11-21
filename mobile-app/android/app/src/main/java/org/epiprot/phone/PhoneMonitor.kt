@@ -212,6 +212,16 @@ class PhoneMonitor(private val app: Context) {
         }
 
         override fun sensor(event: HealthMonitor.Event, demo: Boolean) {
+            val ep = event.episode
+            if (!demo) when (event) {   // on the phone too: the watch may be empty, charging or not worn
+                is HealthMonitor.Event.Warning -> {
+                    val urgent = org.epiprot.phone.headband.WarningPolicy.urgent(ep.code, ep.impact)
+                    val watchOk = System.currentTimeMillis() - _watch.value.lastDataMs < 15_000
+                    if (urgent || !watchOk) org.epiprot.phone.service.PhoneAlerts.warning(app, ep.code, ep.impact, ep.detail, urgent)
+                }
+                is HealthMonitor.Event.Fixed -> org.epiprot.phone.service.PhoneAlerts.fixed(app, ep.code)
+                else -> Unit
+            }
             when (event) {
                 is HealthMonitor.Event.Warning -> log.sensorWarning(event.episode, demo)
                 is HealthMonitor.Event.Reminder -> log.sensorReminder(event.episode)
@@ -349,9 +359,16 @@ class PhoneMonitor(private val app: Context) {
                         Log.i("EpiProt", "late headband window rebuilt, end=$end")
                     }
                 })
+            var lastBatteryMs = 0L
             while (isActive) {
                 val now = System.currentTimeMillis()
                 try {
+                    if (now - lastBatteryMs > 60_000 && !engine.demo) {      // the phone's own battery, once a minute
+                        lastBatteryMs = now
+                        val bm = app.getSystemService(android.os.BatteryManager::class.java)
+                        engine.onDeviceBattery("phone", bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY),
+                            bm.isCharging, now)
+                    }
                     pipeline!!.tick(now)
                     engine.tick(now)
                     publish()
@@ -384,6 +401,7 @@ class PhoneMonitor(private val app: Context) {
                     Paths.STATUS -> {
                         val j = org.json.JSONObject(String(data))
                         _watch.value = _watch.value.copy(batteryPct = j.optInt("battery_pct"))
+                        if (!engine.demo) engine.onDeviceBattery("watch", j.optInt("battery_pct", -1), j.optBoolean("charging"), now)
                         // messages are not queued: a watch that was off / not listening missed the PIN
                         if (now - lastSettingsSentMs > 60_000) sendSettingsToWatch()
                         // the watch's idea of the consent differs (message missed): tell it again

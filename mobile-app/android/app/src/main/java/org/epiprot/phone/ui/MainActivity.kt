@@ -99,6 +99,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -482,6 +483,7 @@ private fun Home(m: PhoneMonitor, activity: MainActivity, openSettings: (String?
         val brainOk = q["brain"] == HealthMonitor.Quality.OK
         val (text, good) = when {
             st.windows == 0L -> stringResource(R.string.detection_waiting) to true
+            q["brain"] == HealthMonitor.Quality.MISSING -> stringResource(R.string.detection_off) to false
             !brainOk -> stringResource(R.string.detection_limited) to false
             st.noHeartRate -> stringResource(R.string.detection_no_hr) to true
             st.fallback -> stringResource(R.string.detection_backup) to true
@@ -497,7 +499,10 @@ private fun Home(m: PhoneMonitor, activity: MainActivity, openSettings: (String?
     // sensor problems
     if (st.openWarnings.isNotEmpty()) EpiCard(container = C.AmberSoft) {
         CardHeader(Icons.Rounded.Warning, stringResource(R.string.open_problems), tint = C.Amber, bubble = Color.White)
-        st.openWarnings.forEach { Text("• ${it.code.replace('_', ' ').lowercase()} · ${time(it.warnedMs)}", color = C.Ink) }
+        val ctx = LocalContext.current
+        st.openWarnings.forEach {
+            Text("• ${org.epiprot.phone.service.PhoneAlerts.text(ctx, it.code, it.impact, it.detail)} · ${time(it.warnedMs)}", color = C.Ink)
+        }
     }
 
     // setup checklist
@@ -629,6 +634,8 @@ private fun DemoCard(m: PhoneMonitor, demo: org.epiprot.phone.DemoProgress?) {
 private fun MessageItem(r: MessageRow) {
     val (status, color, bg) = when (r.status) {
         "sent" -> Triple(stringResource(R.string.sms_sent), C.Mint, C.MintSoft)
+        "sent_retry" -> Triple(stringResource(R.string.sms_sent_retry), C.Mint, C.MintSoft)
+        "sending" -> Triple(stringResource(R.string.sms_sending), C.Amber, C.AmberSoft)
         "test" -> Triple(stringResource(R.string.sms_test), C.InkSoft, C.GreySoft)
         "no_number" -> Triple(stringResource(R.string.sms_no_number), C.Amber, C.AmberSoft)
         "no_consent" -> Triple(stringResource(R.string.sms_no_consent), C.InkSoft, C.GreySoft)

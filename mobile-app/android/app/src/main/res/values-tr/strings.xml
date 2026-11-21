@@ -18,7 +18,8 @@
     <string name="detection_full">tam (beyin sinyali, nabız, hareket)</string>
     <string name="detection_no_hr">yedek model (saatten nabız gelmiyor)</string>
     <string name="detection_backup">yedek model (hareket verisi yok)</string>
-    <string name="detection_limited">SINIRLI: beyin sinyali yok</string>
+    <string name="detection_off">KAPALI: beyin sinyali yok (kafa bandı veri göndermiyor)</string>
+    <string name="detection_limited">SINIRLI: beyin sinyali zayıf</string>
     <string name="detection_waiting">başlıyor…</string>
     <string name="open_problems">Sensör sorunları</string>
     <string name="setup_missing">Ayarlar\'dan bakıcı telefon numarası ve PIN gir.</string>
@@ -44,6 +45,8 @@
     <string name="messages">Bakıcıya giden mesajlar</string>
     <string name="sensor_alerts">Sensör uyarıları</string>
     <string name="sms_sent">gönderildi</string>
+    <string name="sms_sent_retry">gönderildi (tekrar denemeyle)</string>
+    <string name="sms_sending">gönderiliyor…</string>
     <string name="sms_test">gönderilmedi (test modu)</string>
     <string name="sms_failed">GÖNDERİLEMEDİ</string>
     <string name="sms_no_number">bakıcı numarası yok</string>
@@ -466,4 +469,32 @@
     <string name="hb_cancel">Vazgeç</string>
     <string name="hb_catch_up">Kopukluktan sonra gelen birikmiş veri</string>
     <string name="hb_missing">Kaybolan paket</string>
+    <!-- warning texts, same codes and wording as the watch app -->
+    <string name="warn_headband_missing">Kafa bandı veri göndermiyor. Açık, takılı ve şarjlı mı kontrol et.</string>
+    <string name="warn_brain_weak">Beyin sinyali zayıf. Bandı, sensörler cilde değecek şekilde düzelt.</string>
+    <string name="warn_head_mov_missing">Kafa bandının hareket sensörü veri göndermiyor. Bandı yeniden başlat.</string>
+    <string name="warn_watch_missing">Saatin verileri telefona ulaşmıyor. Telefonu yakında tut.</string>
+    <string name="warn_heart_missing">Nabız ölçülemiyor. Saat kayışını sıkılaştır.</string>
+    <string name="warn_body_mov_missing">Saatin hareket sensörü veri göndermiyor. Saati yeniden başlat.</string>
+    <string name="warn_phone_disconnected">Telefon bağlı değil. Telefonu yakında ve EpiProt uygulamasını açık tut.</string>
+    <string name="impact_limited">Bu düzelene kadar nöbet tespiti SINIRLI.</string>
+    <string name="impact_weaker">Bu düzelene kadar nöbet tespiti zayıflayabilir.</string>
+    <string name="impact_backup">Tespit hareket verisi olmadan devam ediyor.</string>
+    <string name="impact_no_alarms">Bu düzelene kadar nöbet alarmı ÇALIŞMAZ.</string>
+    <string name="impact_none">Tespit devam ediyor.</string>
+    <string name="warn_pad_contact_lost">Cilt teması yok: %1$s. Pedi geri bastırın ya da değiştirin.</string>
+    <string name="warn_pad_replace">Pedi değiştirin (%1$s): kuruyor.</string>
+    <string name="warn_headband_battery_low">Kafa bandının pili azaldı (%%%1$s). Yakında şarj edin.</string>
+    <string name="warn_headband_battery_critical">Kafa bandının pili bitmek üzere (%%%1$s). Hemen şarj edin.</string>
+    <string name="warn_headband_charging">Kafa bandı şarjda. Kafa bandı tekrar takılana kadar nöbet tespiti ÇALIŞMIYOR.</string>
+    <string name="warn_headband_off">Kafa bandı uygulamadan kapatıldı. Tekrar açılana kadar nöbet tespiti ÇALIŞMIYOR.</string>
+    <string name="warn_headband_disconnected">Kafa bandının bağlantısı uygulamadan kesildi. Tekrar bağlanana kadar nöbet tespiti ÇALIŞMIYOR.</string>
+    <string name="warn_headband_unpaired">Kafa bandının eşleştirmesi kaldırıldı. Bir kafa bandı eşleştirilene kadar nöbet tespiti ÇALIŞMIYOR.</string>
+    <string name="warn_phone_battery_low">Telefonun pili azaldı (%%%1$s). Şarj edin: telefon kapanırsa nöbet alarmı çalışmaz.</string>
+    <string name="warn_phone_battery_critical">Telefonun pili bitmek üzere (%%%1$s). Hemen şarj edin, yoksa nöbet alarmı duracak.</string>
+    <string name="warn_watch_battery_low">Saatin pili azaldı (%%%1$s). Yakında şarj edin. Şarj olurken nabız ölçülemez; tespit kafa bandıyla devam eder.</string>
+    <string name="channel_warnings">Sensör ve pil uyarıları</string>
+    <string name="notif_warning_title">EpiProt: ilgilenmeniz gerekiyor</string>
+    <string name="notif_sms_failed_title">Bakıcıya SMS gitmedi</string>
+    <string name="notif_sms_failed_text">%1$s numarasına mesaj 3 denemede gönderilemedi (çekim yok mu?). Gerekirse bakıcıyı arayın.</string>
 </resources>
