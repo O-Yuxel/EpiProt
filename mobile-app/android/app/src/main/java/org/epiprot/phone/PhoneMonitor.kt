@@ -98,6 +98,49 @@ class PhoneMonitor(private val app: Context) {
     private val _hbPaired = MutableStateFlow(settings.headbandAddress != null)
     /** A headband is paired with this phone (bonded with the passkey, or the test band connected once). */
     val headbandPaired: StateFlow<Boolean> = _hbPaired
+    private var hbReportedFirmware: String? = null
+    private val _hbFirmware = MutableStateFlow<String?>(null)
+    /** Firmware version of the connected headband (null = not known yet). */
+    val headbandFirmware: StateFlow<String?> = _hbFirmware
+    private val _fwProgress = MutableStateFlow<org.epiprot.phone.headband.FirmwareUpdate.Progress?>(null)
+    /** Running / finished firmware update (null = none). */
+    val firmwareProgress: StateFlow<org.epiprot.phone.headband.FirmwareUpdate.Progress?> = _fwProgress
+    /** The firmware shipped inside this app version (assets/firmware/manifest.json). */
+    val firmwareManifest: org.epiprot.phone.headband.FirmwareUpdate.Manifest? by lazy {
+        try { org.epiprot.phone.headband.FirmwareUpdate.Manifest.parse(app.assets.open("firmware/manifest.json").bufferedReader().readText()) }
+        catch (e: Exception) { null }
+    }
+
+    private fun publishFirmware() {
+        val real = hbReportedFirmware
+        val sim = settings.simulatedFirmware
+        _hbFirmware.value = if (sim != null && org.epiprot.phone.headband.FirmwareUpdate.isNewer(sim, real)) sim else real
+    }
+
+    /**
+     * "Update now" on the Headband page: only on the charger with >= 30 % battery (FirmwareUpdate.blockers).
+     * The watch says the band is updating; in the prototype the upload is simulated (D23).
+     */
+    fun startFirmwareUpdate(): Boolean {
+        val man = firmwareManifest ?: return false
+        val ok = org.epiprot.phone.headband.FirmwareUpdate.blockers(
+            _headbandLink.value == org.epiprot.phone.headband.HeadbandLink.State.CONNECTED, engine.status.headband).isEmpty()
+        if (!ok || _fwProgress.value?.step.let { it != null && it != org.epiprot.phone.headband.FirmwareUpdate.Step.DONE &&
+                it != org.epiprot.phone.headband.FirmwareUpdate.Step.FAILED }) return false
+        scope.launch(engineThread) { engine.onHeadbandUpdating(true, System.currentTimeMillis()); publish() }
+        scope.launch(Dispatchers.Default) {
+            val transport = org.epiprot.phone.headband.SimulatedTransport(man.sizeBytes)
+            val done = try { transport.install { _fwProgress.value = it } } catch (e: Exception) { false }
+            if (done && man.simulated) settings.simulatedFirmware = man.version
+            publishFirmware()
+            _fwProgress.value = org.epiprot.phone.headband.FirmwareUpdate.Progress(
+                if (done) org.epiprot.phone.headband.FirmwareUpdate.Step.DONE else org.epiprot.phone.headband.FirmwareUpdate.Step.FAILED,
+                1f, if (done) man.version else null)
+            scope.launch(engineThread) { engine.onHeadbandUpdating(false, System.currentTimeMillis()); publish() }
+        }
+        return true
+    }
+
     private val _hbNote = MutableStateFlow<String?>(null)
     /** Last thing the patient did / what went wrong: pair_failed, off, disconnected (null = nothing to say). */
     val headbandNote: StateFlow<String?> = _hbNote
@@ -116,6 +159,8 @@ class PhoneMonitor(private val app: Context) {
                 settings.headbandAddress = address
                 _hbPaired.value = true
                 _hbNote.value = null
+                hbReportedFirmware = info.firmware
+                publishFirmware()
                 scope.launch(engineThread) { hbReceiver = org.epiprot.phone.headband.HeadbandReceiver(info, hbSink) }
             }
             override fun onPacket(arrivalMs: Long, bytes: ByteArray) {

@@ -76,8 +76,10 @@ private fun padColor(c: PadStatus.Contact) = when (c) {
 }
 
 private typealias L = org.epiprot.phone.headband.HeadbandLink.State
+private typealias FwStep = org.epiprot.phone.headband.FirmwareUpdate.Step
+private typealias FwBlocker = org.epiprot.phone.headband.FirmwareUpdate.Blocker
 
-private enum class Confirm { DISCONNECT, OFF, UNPAIR }
+private enum class Confirm { DISCONNECT, OFF, UNPAIR, FIRMWARE }
 
 private fun linkText(s: L) = when (s) {
     L.IDLE -> R.string.hb_link_idle
@@ -149,6 +151,50 @@ internal fun HeadbandPage(m: PhoneMonitor, activity: MainActivity) {
         }
     }
 
+    // firmware of the headband (D23): version, update available, conditions, progress
+    if (!st.demo && paired) {
+        val fw by m.firmwareProgress.collectAsStateWithLifecycle()
+        val version by m.headbandFirmware.collectAsStateWithLifecycle()
+        val man = m.firmwareManifest
+        val F = org.epiprot.phone.headband.FirmwareUpdate
+        EpiCard {
+            CardHeader(Icons.Rounded.Refresh, stringResource(R.string.fw_title))
+            InfoRow(stringResource(R.string.fw_version), version ?: stringResource(R.string.fw_unknown))
+            val running = fw?.step.let { it == FwStep.UPLOADING || it == FwStep.VERIFYING || it == FwStep.RESTARTING }
+            when {
+                running -> {
+                    val p = fw!!
+                    Text(stringResource(when (p.step) {
+                        FwStep.UPLOADING -> R.string.fw_uploading
+                        FwStep.VERIFYING -> R.string.fw_verifying
+                        else -> R.string.fw_restarting
+                    }), color = C.Ink)
+                    LinearProgressIndicator(progress = { p.fraction }, modifier = Modifier.fillMaxWidth().height(8.dp).clip(CircleShape),
+                        color = C.Teal, trackColor = C.TealSoft)
+                    Text(stringResource(R.string.fw_keep), color = C.Amber, style = MaterialTheme.typography.bodySmall)
+                }
+                fw?.step == FwStep.DONE -> Text(stringResource(R.string.fw_done, fw?.newVersion ?: ""), color = C.Mint)
+                fw?.step == FwStep.FAILED -> Text(stringResource(R.string.fw_failed), color = C.Coral)
+            }
+            if (!running && man != null && F.isNewer(man.version, version)) {
+                Text(stringResource(R.string.fw_available, man.version), color = C.Ink, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
+                Text(if (java.util.Locale.getDefault().language == "tr") man.notesTr else man.notesEn, color = C.InkSoft,
+                    style = MaterialTheme.typography.bodySmall)
+                val blockers = F.blockers(link == L.CONNECTED, hb)
+                fun mark(ok: Boolean) = if (ok) "✓ " else "✗ "
+                Text(mark(FwBlocker.NOT_CONNECTED !in blockers) + stringResource(R.string.fw_need_connected),
+                    color = if (FwBlocker.NOT_CONNECTED in blockers) C.Amber else C.Mint, style = MaterialTheme.typography.bodySmall)
+                Text(mark(FwBlocker.NOT_CHARGING !in blockers) + stringResource(R.string.fw_need_charging),
+                    color = if (FwBlocker.NOT_CHARGING in blockers) C.Amber else C.Mint, style = MaterialTheme.typography.bodySmall)
+                Text(mark(FwBlocker.BATTERY_LOW !in blockers) + stringResource(R.string.fw_need_battery, F.MIN_BATTERY_PCT),
+                    color = if (FwBlocker.BATTERY_LOW in blockers) C.Amber else C.Mint, style = MaterialTheme.typography.bodySmall)
+                if (blockers.isEmpty()) PrimaryButton(stringResource(R.string.fw_update_now)) { confirm = Confirm.FIRMWARE }
+                else Text(stringResource(R.string.fw_why_charger), color = C.InkSoft, style = MaterialTheme.typography.bodySmall)
+            } else if (!running && version != null && fw == null) Text(stringResource(R.string.fw_up_to_date), color = C.Mint)
+            if (man?.simulated == true) Text(stringResource(R.string.fw_simulated_note), color = C.InkSoft, style = MaterialTheme.typography.bodySmall)
+        }
+    }
+
     // not paired yet: the pairing steps
     if (!st.demo && !paired) EpiCard(container = C.TealSoft) {
         CardHeader(Icons.Rounded.Face, stringResource(R.string.hb_pair_title), bubble = Color.White)
@@ -183,12 +229,14 @@ internal fun HeadbandPage(m: PhoneMonitor, activity: MainActivity) {
                 Confirm.DISCONNECT -> R.string.hb_confirm_disconnect
                 Confirm.OFF -> R.string.hb_confirm_off
                 Confirm.UNPAIR -> R.string.hb_confirm_unpair
+                Confirm.FIRMWARE -> R.string.fw_confirm
             })) },
             confirmButton = { TextButton({
                 when (c) {
                     Confirm.DISCONNECT -> m.disconnectHeadband()
                     Confirm.OFF -> m.powerOffHeadband()
                     Confirm.UNPAIR -> m.unpairHeadband()
+                    Confirm.FIRMWARE -> m.startFirmwareUpdate()
                 }
                 confirm = null
             }) { Text(stringResource(R.string.hb_yes), color = C.Coral) } },

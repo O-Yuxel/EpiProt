@@ -95,4 +95,6 @@
     <string name="sos_sent_text">Your caregiver got a message with your location. Sit or lie down somewhere safe.</string>
     <string name="sos_queued_title">Phone not connected</string>
     <string name="sos_queued_text">The message goes out as soon as the phone is back. Ask someone nearby for help now.</string>
+    <!-- headband firmware update -->
+    <string name="warn_headband_updating">The headband software is being updated. Seizure detection is OFF until the headband is worn again.</string>
 </resources>

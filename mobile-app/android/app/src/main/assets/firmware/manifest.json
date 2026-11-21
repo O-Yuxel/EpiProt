@@ -1,0 +1,11 @@
+{
+  "comment": "Headband firmware shipped with this app version (HARDWARE.md D23). In the prototype there is no real image: simulated = true makes the app run the update flow with SimulatedTransport.",
+  "version": "1.1.0",
+  "image": "headband-1.1.0.signed.bin",
+  "size_bytes": 312000,
+  "simulated": true,
+  "notes": {
+    "en": "Steadier connection with some phone brands, more exact pad contact check, longer battery life at night.",
+    "tr": "Bazı telefon markalarıyla daha kararlı bağlantı, daha doğru ped temas ölçümü, gece daha uzun pil ömrü."
+  }
+}

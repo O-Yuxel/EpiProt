@@ -113,6 +113,12 @@ class MonitoringEngine(
         status = status.copy(headband = s, openWarnings = openWarnings())
     }
 
+    /** Firmware update of the headband started / finished (it is on the charger: detection is off). */
+    fun onHeadbandUpdating(on: Boolean, nowMs: Long) {
+        for (e in alerts.updating(on, nowMs)) send(e)
+        status = status.copy(openWarnings = openWarnings())
+    }
+
     /** The patient switched the headband off, disconnected or unpaired it in the app. */
     fun onHeadbandTurnedOff(how: String, nowMs: Long) {
         for (e in alerts.turnedOff(how, nowMs)) send(e)

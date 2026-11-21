@@ -46,7 +46,7 @@ object PhoneAlerts {
             else -> c.getString(warnId)
         }
         // texts that already say what happens to detection need no second sentence
-        val saysItself = code in setOf("headband_charging", "headband_off") || code.startsWith("phone_battery") ||
+        val saysItself = code in setOf("headband_charging", "headband_off", "headband_updating") || code.startsWith("phone_battery") ||
             code == "watch_battery_low"
         return if (impactId == 0 || saysItself || impact == "none") what else "$what ${c.getString(impactId)}"
     }

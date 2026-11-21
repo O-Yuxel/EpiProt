@@ -19,6 +19,8 @@ enum class WarningCode(val wire: String) {
     HEADBAND_CHARGING("headband_charging"),
     /** Switched off, disconnected or unpaired in the phone app (detail = off | disconnected | unpaired). */
     HEADBAND_OFF("headband_off"),
+    /** Firmware update of the headband running (on the charger, detection off). */
+    HEADBAND_UPDATING("headband_updating"),
     /** Battery of the phone / the watch itself (detail = percentage). */
     PHONE_BATTERY_LOW("phone_battery_low"),
     PHONE_BATTERY_CRITICAL("phone_battery_critical"),

@@ -244,6 +244,7 @@ Warnings appear on your watch, and the important ones on your phone too. When a 
 | Headband battery low / almost empty | Charge the headband (while someone is with you). |
 | Headband is charging (seizure detection is OFF) | This is normal; put the headband on when charging is finished. |
 | Headband was switched off / disconnected in the app | Switch it on again, or tap **Connect** in the app. |
+| The headband software is being updated (seizure detection is OFF) | Leave the headband on the charger; put it on when it is finished. |
 | Phone battery low / almost empty | Put the phone on the charger. |
 | Watch battery low | Charge the watch. |
 | Heart rate is not measured | Tighten the watch strap a little so the watch sits well on your wrist. |
@@ -287,6 +288,8 @@ The headband's button does **not** switch it off. This is on purpose: a pillow d
 - **Find my headband:** the headband's light flashes white for 5 seconds.
 
 Each of these asks "Are you sure?". Your watch also tells you at once that seizure monitoring has stopped.
+
+**Updating the headband software:** the program inside the headband is improved from time to time. A new version comes with an update of the EpiProt app; **Settings → Headband → Headband software** then says "Update available". The update runs only while the headband is **on the charger** with at least **30 %** battery, and never starts before you tap **"Update now"** and confirm. It takes 1–3 minutes; keep the headband on the charger and the phone close. There is no seizure monitoring during the update; your watch tells you so. If anything goes wrong, the headband keeps working with its old version. The headband accepts only software signed by the manufacturer.
 
 **Moving to a new phone:** on the old phone, tap "Unpair headband". Install EpiProt on the new phone, do the setup and pair the headband again (section 6.5). Your caregivers must add your new number in their app.
 

@@ -15,6 +15,7 @@ import org.epiprot.phone.headband.HeadbandProtocol as P
  *  headband_battery_low       below 15 % (the headband's low-battery bit)
  *  headband_battery_critical  2 % or less and not charging: detection stops soon
  *  headband_charging          charger attached: band off the head, seizure detection is off (impact no_alarms)
+ *  headband_updating          firmware update running (band on the charger, detection off; impact no_alarms, quiet)
  *  headband_off               the patient turned the band off, disconnected or unpaired it in the app: detection is
  *                             off (impact no_alarms); detail = off | disconnected | unpaired. Cleared by the next data.
  *
@@ -36,6 +37,13 @@ class HeadbandAlerts {
         return if (open[OFF]?.detail == how) emptyList() else replace(OFF, "no_alarms", how, nowMs, nowMs)
     }
     private var offAtMs = Long.MIN_VALUE / 2
+
+    /** Firmware update started ([on]) or finished. */
+    fun updating(on: Boolean, nowMs: Long): List<Event> = when {
+        on && UPDATING !in open -> replace(UPDATING, "no_alarms", "", nowMs, nowMs)
+        !on && UPDATING in open -> fix(UPDATING, nowMs)
+        else -> emptyList()
+    }
 
     /** One headband 5 s window ending at [endMs]. */
     fun onWindow(leadOff: Int, contactOk: Boolean, endMs: Long): List<Event> {
@@ -109,6 +117,7 @@ class HeadbandAlerts {
         const val BATTERY_CRITICAL = "headband_battery_critical"
         const val CHARGING = "headband_charging"
         const val OFF = "headband_off"
+        const val UPDATING = "headband_updating"
         const val OFF_GRACE_MS = 5_000L
         const val REPLACE_PAD_KOHM = 150         // [EST], HARDWARE.md D15
         const val CRITICAL_PCT = 2               // ~30 min left at ~2 days per charge
@@ -120,7 +129,7 @@ class HeadbandAlerts {
 object WarningPolicy {
     /** Urgent = detection is limited or about to stop. Charging or switching off stops it too, but the patient chose it: quiet at night. */
     fun urgent(code: String, impact: String): Boolean =
-        code != HeadbandAlerts.CHARGING && code != HeadbandAlerts.OFF &&
+        code != HeadbandAlerts.CHARGING && code != HeadbandAlerts.OFF && code != HeadbandAlerts.UPDATING &&
             (code == HeadbandAlerts.BATTERY_CRITICAL || code == org.epiprot.phone.health.DeviceBatteryAlerts.PHONE_CRITICAL ||
                 impact == "limited" || impact == "no_alarms")
 }

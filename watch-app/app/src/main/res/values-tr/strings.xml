@@ -90,4 +90,6 @@
     <string name="sos_sent_text">Bakıcınıza konumunuzla birlikte mesaj gitti. Güvenli bir yere oturun ya da uzanın.</string>
     <string name="sos_queued_title">Telefon bağlı değil</string>
     <string name="sos_queued_text">Telefon bağlanır bağlanmaz mesaj gidecek. Şimdi yakınınızdaki birinden yardım isteyin.</string>
+    <!-- kafa bandı yazılım güncellemesi -->
+    <string name="warn_headband_updating">Kafa bandının yazılımı güncelleniyor. Kafa bandı tekrar takılana kadar nöbet tespiti ÇALIŞMIYOR.</string>
 </resources>

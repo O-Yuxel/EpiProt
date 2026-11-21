@@ -373,6 +373,7 @@ private fun warningText(code: WarningCode, detail: String = ""): String = when (
     WarningCode.HEADBAND_BATTERY_LOW -> stringResource(R.string.warn_headband_battery_low, detail)
     WarningCode.HEADBAND_BATTERY_CRITICAL -> stringResource(R.string.warn_headband_battery_critical, detail)
     WarningCode.HEADBAND_CHARGING -> stringResource(R.string.warn_headband_charging)
+    WarningCode.HEADBAND_UPDATING -> stringResource(R.string.warn_headband_updating)
     WarningCode.PHONE_BATTERY_LOW -> stringResource(R.string.warn_phone_battery_low, detail)
     WarningCode.PHONE_BATTERY_CRITICAL -> stringResource(R.string.warn_phone_battery_critical, detail)
     WarningCode.WATCH_BATTERY_LOW -> stringResource(R.string.warn_watch_battery_low, detail)

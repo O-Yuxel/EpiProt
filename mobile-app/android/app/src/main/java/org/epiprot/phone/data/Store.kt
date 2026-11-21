@@ -53,6 +53,11 @@ class Settings(context: Context) {
         get() = p.getInt("cg_volume", -1)
         set(v) = p.edit().putInt("cg_volume", v).apply()
 
+    /** Prototype only: firmware version "installed" by the simulated update (D23); null = none. */
+    var simulatedFirmware: String?
+        get() = p.getString("sim_fw", null)
+        set(v) = p.edit().putString("sim_fw", v).apply()
+
     /** Pads: when they were last changed (0 = never told) and how many spare pads are left (-1 = not told). */
     var padChangedMs: Long
         get() = p.getLong("pad_changed", 0)

@@ -37,6 +37,7 @@ Base UUID `e0b1xxxx-279b-48d0-a8ab-c8630521d53c`.
 | Device info | `e0b10004-…` | Read | Versions and conversion constants (below) |
 | Battery Service (standard) | `0x180F` | Read, Notify | Battery % for the phone's system settings |
 | Device Information (standard) | `0x180A` | Read | Manufacturer, model, serial, firmware revision |
+| Firmware update (SMP, standard of the nRF Connect SDK / MCUboot) | `8d53dc1d-1db7-4cd3-868b-8a527460aa84` | Write, Notify | Upload of a new signed firmware image (D23, "Firmware update" below); only while charging |
 
 All EpiProt characteristics require an encrypted, bonded link.
 
@@ -155,6 +156,25 @@ other settings needs no app change (rule P1).
 3. The link is encrypted and both sides store the bond. From now on the band only accepts this phone
    and the phone connects by itself whenever the band is on. "Unpair headband" in the app (UNPAIR)
    removes the bond on both sides (new phone or new band).
+
+### Firmware update (D23)
+
+The headband's program can be renewed over Bluetooth, without sending the band back.
+
+| Rule | Why |
+|---|---|
+| The new firmware comes **inside a phone app update** (`assets/firmware/manifest.json` + the image) | No server, no download from the internet: the data and the update path stay on the phone |
+| Only **on the charger**, battery **≥ 30 %**, phone close | The band is off the head anyway (detection is already off while charging), and the battery cannot run out half-way |
+| Never by itself: the patient (or caregiver) taps **"Update now"** and confirms | Not at night, not while worn |
+| **Signed images**: the bootloader (MCUboot) accepts only images signed with the manufacturer's key (ECDSA P-256), and checks the hash | Nobody can install fake firmware that breaks the band or changes the signals |
+| **Two slots**: the new image is written next to the running one; the band boots it as a test and confirms it only after its self-test (sensors, radio, EEG chip) passed | A broken or interrupted update never bricks the band: it goes back to the old firmware by itself |
+| Watch and phone say "Headband is updating, seizure detection is OFF", then "updated to x.y.z" | The patient knows why there is no monitoring for those minutes |
+
+Flow: phone compares the band's firmware version (Device info) with the manifest → "Update available" on the
+Headband page → checks charger + battery → confirmation → upload over SMP (image of ~300 KB, about 1–3 min) → band
+checks the signature, reboots into the test slot, self-test, confirms → reconnects and reports the new version. A
+failed check or self-test: the band reports the old version and the phone says "update failed, the headband works
+with the old version".
 
 ### Status light (D22)
 

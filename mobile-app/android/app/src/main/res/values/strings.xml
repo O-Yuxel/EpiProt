@@ -601,4 +601,24 @@
     <string name="warn_pads_stock_low">Only %1$s spare pads left. Order new pads soon.</string>
     <!-- find my headband -->
     <string name="hb_identify">Find my headband (light flashes white)</string>
+    <!-- headband firmware update (D23) -->
+    <string name="fw_title">Headband software</string>
+    <string name="fw_version">Version</string>
+    <string name="fw_unknown">shown when connected</string>
+    <string name="fw_up_to_date">Up to date.</string>
+    <string name="fw_available">Update available: version %1$s</string>
+    <string name="fw_need_connected">Headband connected</string>
+    <string name="fw_need_charging">Headband on the charger</string>
+    <string name="fw_need_battery">Battery at least %1$d %%</string>
+    <string name="fw_why_charger">The update runs only on the charger: the headband is off your head then anyway, and the battery cannot run out half-way.</string>
+    <string name="fw_update_now">Update now</string>
+    <string name="fw_confirm">The headband stays on the charger for about 1–3 minutes. Seizure detection is OFF until it is worn again. If anything goes wrong, the headband keeps its old version. Start the update?</string>
+    <string name="fw_uploading">Sending the new software…</string>
+    <string name="fw_verifying">The headband checks the signature…</string>
+    <string name="fw_restarting">The headband restarts and tests itself…</string>
+    <string name="fw_keep">Keep the headband on the charger and the phone close.</string>
+    <string name="fw_done">Updated to version %1$s.</string>
+    <string name="fw_failed">The update did not work. The headband works with its old version; try again later.</string>
+    <string name="fw_simulated_note">Prototype: the headband software does not exist yet, so the transfer is simulated (same steps and time).</string>
+    <string name="warn_headband_updating">The headband software is being updated. Seizure detection is OFF until the headband is worn again.</string>
 </resources>

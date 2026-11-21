@@ -244,6 +244,7 @@ Uyarılar saatinizde, önemli olanlar telefonunuzda da görünür. Uyarı düzel
 | Kafa bandının pili azaldı / bitmek üzere | Kafa bandını şarj edin (yanınızda biri varken). |
 | Kafa bandı şarjda (nöbet tespiti ÇALIŞMIYOR) | Normaldir; şarj bitince kafa bandını takın. |
 | Kafa bandı uygulamadan kapatıldı / bağlantı kesildi | Tekrar açın ya da uygulamada **Bağlan**'a dokunun. |
+| Kafa bandının yazılımı güncelleniyor (nöbet tespiti ÇALIŞMIYOR) | Kafa bandını şarjda bırakın; bitince takın. |
 | Telefonun pili azaldı / bitmek üzere | Telefonu şarja takın. |
 | Saatin pili azaldı | Saati şarj edin. |
 | Nabız ölçülemiyor | Saat kayışını biraz sıkın; saat bileğinize tam otursun. |
@@ -287,6 +288,8 @@ Kafa bandının tuşu onu **kapatmaz**. Bu bilerek böyle yapıldı: uykuda yast
 - **Kafa bandımı bul:** Kafa bandının ışığı 5 saniye beyaz yanıp söner.
 
 Bu işlemlerin her biri "Emin misiniz?" diye sorar. Saatiniz de nöbet takibinin durduğunu hemen söyler.
+
+**Kafa bandının yazılımını güncelleme:** Kafa bandının içindeki program zaman zaman iyileştirilir. Yeni sürüm EpiProt uygulamasının güncellemesiyle gelir; **Ayarlar → Kafa bandı → Kafa bandı yazılımı** bölümünde "Güncelleme var" yazar. Güncelleme yalnızca kafa bandı **şarjdayken** ve pili en az **%30** iken yapılır, siz **"Şimdi güncelle"**'ye dokunup onaylamadan asla başlamaz. 1–3 dakika sürer; bu sırada kafa bandını şarjda, telefonu yakında tutun. Güncelleme sırasında nöbet takibi yapılmaz, saatiniz bunu söyler. Bir sorun olursa kafa bandı eski sürümüyle çalışmaya devam eder. Kafa bandı yalnızca üreticinin imzaladığı yazılımı kabul eder.
 
 **Yeni telefona geçerken:** Eski telefonda "Eşleştirmeyi kaldır"'a dokunun. Yeni telefona EpiProt'u kurun, kurulumu yapın ve kafa bandını yeniden eşleştirin (Bölüm 6.5). Bakıcılarınız yeni numaranızı kendi uygulamalarına eklemelidir.
 
