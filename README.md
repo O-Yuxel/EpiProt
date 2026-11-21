@@ -66,6 +66,15 @@ Status: designed and simulated; no physical headband is built in this project.
 
 ---
 
+## User manual (Turkish)
+
+[`docs/kullanim-kilavuzu/EpiProt-Kullanim-Kilavuzu.pdf`](docs/kullanim-kilavuzu/EpiProt-Kullanim-Kilavuzu.pdf):
+for patients, families and caregivers, in plain words: what EpiProt does and does not do, who must not use it,
+sizes, first setup (phone, watch, headband pairing, the caregiver's phone), daily use, sleep, charging, pads, what
+happens during a seizure and what the caregiver should do, call for help, every warning and status light,
+seizure diary and doctor report, cleaning, troubleshooting, privacy. Source:
+[`EpiProt-Kullanim-Kilavuzu.md`](docs/kullanim-kilavuzu/EpiProt-Kullanim-Kilavuzu.md) (PDF: `make_manual_pdf.py`).
+
 ## Where each piece of software runs
 
 | Software part | Headband | Watch | Phone |
