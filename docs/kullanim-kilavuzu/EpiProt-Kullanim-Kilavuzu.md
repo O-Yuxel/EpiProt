@@ -231,6 +231,20 @@ Kendinizi kötü hissederseniz (örneğin nöbet öncesi bir his) bakıcınızı
 
 Telefonunuz yanınızda değilse saat **"Telefon bağlı değil"** der; mesaj telefon bağlanınca gider. Bu durumda yakınınızdaki birinden yardım isteyin.
 
+### Duş modu
+
+Banyo, epilepsisi olan biri için evin en riskli yerlerinden biridir; ama duşta kafa bandı takılı olmadığı için nöbet algılanamaz. **Duş modu** bu boşluğu kapatır:
+
+1. Kafa bandını çıkarın (isterseniz şarja takın). **Saati takılı bırakın**; saat suya dayanıklıdır.
+2. Saatin ana ekranında **"Duş modu"**'na dokunun ve duşun süresini seçin (10, 15, 20 ya da 30 dakika).
+3. Duştan çıkınca saatte **"Çıktım"**'a dokunun. Kimseye mesaj gitmez.
+4. Süre dolduğunda saat titreşir ve **"Duştan çıktınız mı?"** diye sorar. **2 dakika içinde cevap vermezseniz** bakıcınıza "duştan sonra cevap vermiyor, kontrol edin" mesajı gider ve bakıcınızın telefonunda alarm çalar.
+5. Bakıcınıza haber verildikten sonra iyiyseniz saatte **"İyiyim"**'e dokunun; bakıcınıza "duştan çıktı ve iyi" mesajı gider ve alarmı susar.
+
+Saatin pili biterse ya da telefonla bağlantısı koparsa telefon süreyi kendisi takip eder ve gerekirse bakıcınıza yine haber verir.
+
+**Banyoda güvenlik:** Küvete girmeyin, duş alın. Kapıyı kilitlemeyin. Evde biri varken duş almaya çalışın. Suyu çok sıcak yapmayın.
+
 ## 11. Uyarılar ve ne yapmalı
 
 Uyarılar saatinizde, önemli olanlar telefonunuzda da görünür. Uyarı düzelince kendiliğinden kalkar.
@@ -296,7 +310,7 @@ Bu işlemlerin her biri "Emin misiniz?" diye sorar. Saatiniz de nöbet takibinin
 ## 15. Temizlik, su ve saklama
 
 - Kafa bandını haftada bir, pedleri çıkardıktan sonra hafif nemli bir bezle ya da alkollü mendille silin. Kurulayın.
-- Kafa bandı tere ve yağmura dayanıklıdır, ama **duşta, banyoda ve yüzerken takmayın.** Suya batırmayın.
+- Kafa bandı tere ve yağmura dayanıklıdır, ama **duşta, banyoda ve yüzerken takmayın.** Islak pedler beyin sinyalini okuyamaz. Suya batırmayın. Duş için **Duş modu**'nu kullanın (Bölüm 10).
 - Şarj kontaklarını kuru tutun; şarj etmeden önce silin.
 - Güneşte, arabada ya da ısıtıcının yanında bırakmayın. Bükmeyin, üzerine oturmayın (ense bandı esnektir, ama zorlamayın).
 - Çocukların ulaşamayacağı yerde saklayın; pedler ve küçük parçalar yutulabilir.

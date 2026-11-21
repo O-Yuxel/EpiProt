@@ -246,6 +246,29 @@ class PhoneMonitor(private val app: Context) {
         if (shown) s.padReminderMs = nowMs
     }
 
+    // ---------------------------------------------------------------- shower mode
+    private val shower = org.epiprot.phone.alarm.ShowerWatch()
+    private var showerEventId = 0L
+
+    private fun showerEffects(effects: List<org.epiprot.phone.alarm.ShowerWatch.Effect>, nowMs: Long) {
+        for (e in effects) when (e) {
+            is org.epiprot.phone.alarm.ShowerWatch.Effect.Alert -> {
+                showerEventId = log.addShowerEvent(nowMs, e.minutes)
+                changed()
+                scope.launch(Dispatchers.IO) {
+                    messenger.send(showerEventId, org.epiprot.phone.alarm.CaregiverMessage.SHOWER_OVERDUE, false); changed()
+                }
+            }
+            is org.epiprot.phone.alarm.ShowerWatch.Effect.AllClear -> {
+                log.step(showerEventId, nowMs, "shower", "patient answered: out of the shower, fine")
+                changed()
+                scope.launch(Dispatchers.IO) {
+                    messenger.send(showerEventId, org.epiprot.phone.alarm.CaregiverMessage.SHOWER_OK, false); changed()
+                }
+            }
+        }
+    }
+
     /** A seizure added by hand (seizure diary); see EventLog.addManualEvent. */
     fun addManualSeizure(timeMs: Long, type: String, worn: String, note: String) {
         scope.launch(Dispatchers.IO) { log.addManualEvent(timeMs, type, worn, note); changed() }
@@ -460,6 +483,7 @@ class PhoneMonitor(private val app: Context) {
                         engine.onDeviceBattery("phone", bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY),
                             bm.isCharging, now)
                     }
+                    if (shower.running) showerEffects(shower.tick(now), now)
                     pipeline!!.tick(now)
                     engine.tick(now)
                     publish()
@@ -489,6 +513,15 @@ class PhoneMonitor(private val app: Context) {
                             heartRate = if (b.heartRate.isFinite()) b.heartRate else _watch.value.heartRate)
                     }
                     Paths.PIN_RESULT -> { engine.onPin(PinResult.decode(data), now); publish() }
+                    Paths.SHOWER -> {               // shower mode: the phone keeps the same timer as a backup
+                        val sm = org.epiprot.phone.protocol.ShowerMessage.decode(data)
+                        val eff = when (sm.action) {
+                            "start" -> { shower.onStart(sm.sessionMs, sm.minutes); emptyList() }
+                            "end" -> shower.onEnd(sm.sessionMs)
+                            else -> shower.onOverdue(sm.sessionMs, sm.minutes, now)
+                        }
+                        showerEffects(eff, now)
+                    }
                     Paths.SOS -> {                  // "Call for help" on the watch: caregivers get an SMS with the location
                         val t = org.epiprot.phone.protocol.SosRequest.decode(data).timeMs
                         val id = log.addHelpEvent(t)

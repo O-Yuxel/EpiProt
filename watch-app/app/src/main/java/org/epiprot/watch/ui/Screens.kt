@@ -64,6 +64,8 @@ fun EpiProtWatchApp(controller: WatchController, sensorPermission: Boolean, onRe
     MaterialTheme {
         // the help call is shown over the home screen, never over an alarm or a check-in
         if (sos != null && screen is Screen.Home) { SosScreen(controller, sos!!); return@MaterialTheme }
+        val shower by controller.shower.collectAsStateWithLifecycle()
+        if (shower != null && screen is Screen.Home) { ShowerScreen(controller, shower!!); return@MaterialTheme }
         when (val s = screen) {
             is Screen.Home -> HomeScreen(controller, sensorPermission, onRequestPermission)
             is Screen.Alarm -> AlarmScreen(s, controller::enterPin)
@@ -114,6 +116,44 @@ private fun SosScreen(controller: WatchController, sos: WatchController.Sos) {
     }
 }
 
+// ------------------------------------------------------------------ shower mode
+
+@Composable
+private fun ShowerScreen(controller: WatchController, state: WatchController.Shower) {
+    when (state) {
+        WatchController.Shower.CHOOSE -> {
+            val listState = rememberScalingLazyListState()
+            Scaffold(timeText = { TimeText() }) {
+                ScalingLazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+                    item { ListHeader { Text(stringResource(R.string.shower_choose), fontWeight = FontWeight.Bold) } }
+                    for (min in listOf(10, 15, 20, 30)) item {
+                        Chip(onClick = { controller.showerStart(min) }, label = { Text(stringResource(R.string.shower_minutes, min)) },
+                            colors = ChipDefaults.primaryChipColors(), modifier = Modifier.fillMaxWidth())
+                    }
+                    item { Small(stringResource(R.string.shower_choose_note)) }
+                    item { DemoChip(stringResource(R.string.sos_cancel), controller::showerCancelChoose) }
+                }
+            }
+        }
+        WatchController.Shower.RUNNING -> {
+            var left by remember { mutableStateOf("") }
+            androidx.compose.runtime.LaunchedEffect(controller.showerEndsMs) {
+                while (true) {
+                    val s = ((controller.showerEndsMs - System.currentTimeMillis()) / 1000).coerceAtLeast(0)
+                    left = "%d:%02d".format(s / 60, s % 60)
+                    kotlinx.coroutines.delay(500)
+                }
+            }
+            MessageScreen(Teal, stringResource(R.string.shower_running, left), stringResource(R.string.shower_running_text),
+                button = stringResource(R.string.shower_out), onButton = controller::showerEnd)
+        }
+        WatchController.Shower.ASKING -> MessageScreen(Amber, stringResource(R.string.shower_ask_title),
+            stringResource(R.string.shower_ask_text), button = stringResource(R.string.shower_out), onButton = controller::showerEnd)
+        WatchController.Shower.NO_ANSWER -> MessageScreen(Red, stringResource(R.string.shower_alerted_title),
+            stringResource(R.string.shower_alerted_text), button = stringResource(R.string.shower_ok_now), onButton = controller::showerEnd)
+    }
+}
+
 // ------------------------------------------------------------------ home
 
 @Composable
@@ -148,6 +188,15 @@ private fun HomeScreen(controller: WatchController, sensorPermission: Boolean, o
                     label = { Text(stringResource(R.string.sos_button), fontWeight = FontWeight.Bold) },
                     secondaryLabel = { Text(stringResource(R.string.sos_button_sub), maxLines = 2, fontSize = 11.sp) },
                     colors = ChipDefaults.chipColors(backgroundColor = Red),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            item {
+                Chip(
+                    onClick = controller::showerChoose,
+                    label = { Text(stringResource(R.string.shower_button)) },
+                    secondaryLabel = { Text(stringResource(R.string.shower_button_sub), maxLines = 2, fontSize = 11.sp) },
+                    colors = ChipDefaults.secondaryChipColors(),
                     modifier = Modifier.fillMaxWidth(),
                 )
             }

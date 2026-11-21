@@ -52,6 +52,8 @@ app/src/test/                    unit tests for the logic and the message format
 |---|---|---|
 | watch → phone | `/epiprot/sensor` | binary, once per second: sequence number, start time, heart rate, on-body flag, accelerometer and gyroscope samples |
 | watch → phone | `/epiprot/pin` | `{context: alarm\|checkin, alarm_id, ok, attempt, time_ms}` |
+| watch → phone | `/epiprot/sos` | `{time_ms}`: "Call for help" pressed (after the 5 s countdown) |
+| watch → phone | `/epiprot/shower` | `{action: start\|end\|overdue, session_ms, minutes}`: shower mode; the phone keeps the same timer as a backup and alerts the caregiver once |
 | watch → phone | `/epiprot/status` | `{battery_pct, charging, on_body, heart_sensor, time_ms, alarm_id, monitoring_allowed}` |
 | phone → watch | `/epiprot/alarm_start` | `{alarm_id, pin_window_s}` |
 | phone → watch | `/epiprot/alarm_end` | `{alarm_id, reason}` |

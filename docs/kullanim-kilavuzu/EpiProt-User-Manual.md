@@ -231,6 +231,20 @@ If you feel unwell (for example a feeling that comes before a seizure), you can 
 
 If your phone is not with you, the watch says **"Phone not connected"**; the message goes out when the phone is back. In that case, ask someone nearby for help.
 
+### Shower mode
+
+The bathroom is one of the riskiest places in the home for a person with epilepsy, but in the shower the headband is not worn, so seizures cannot be detected. **Shower mode** closes this gap:
+
+1. Take the headband off (put it on the charger if you like). **Keep the watch on**; the watch is water resistant.
+2. On the watch home screen, tap **"Shower mode"** and choose how long your shower takes (10, 15, 20 or 30 minutes).
+3. When you are out, tap **"I am out"** on the watch. No message is sent.
+4. When the time is up, the watch vibrates and asks **"Are you out of the shower?"**. **If you do not answer within 2 minutes**, your caregiver gets a "does not answer after the shower, please check" message and the alarm rings on your caregiver's phone.
+5. If you are fine after your caregiver was alerted, tap **"I am fine"** on the watch; your caregiver gets an "out of the shower and fine" message and the alarm stops.
+
+If the watch battery runs out or it loses the phone, the phone keeps the time itself and still alerts your caregiver if needed.
+
+**Safety in the bathroom:** do not take a bath, take a shower. Do not lock the door. Try to shower while someone else is at home. Do not make the water very hot.
+
 ## 11. Warnings and what to do
 
 Warnings appear on your watch, and the important ones on your phone too. When a warning is fixed, it disappears by itself.
@@ -296,7 +310,7 @@ Each of these asks "Are you sure?". Your watch also tells you at once that seizu
 ## 15. Cleaning, water and storage
 
 - Once a week, after taking the pads off, wipe the headband with a slightly damp cloth or an alcohol wipe. Dry it.
-- The headband resists sweat and rain, but **do not wear it in the shower, in the bath or when swimming.** Do not put it under water.
+- The headband resists sweat and rain, but **do not wear it in the shower, in the bath or when swimming.** Wet pads cannot read the brain signal. Do not put it under water. For showers, use **Shower mode** (section 10).
 - Keep the charging contacts dry; wipe them before charging.
 - Do not leave it in the sun, in a car or near a heater. Do not bend it or sit on it (the neck band is flexible, but do not force it).
 - Keep it out of reach of children; pads and small parts can be swallowed.

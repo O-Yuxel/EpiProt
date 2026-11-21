@@ -127,7 +127,8 @@ class CaregiverMessenger(private val context: Context, private val settings: Set
         val name = settings.patientName.ifBlank { context.getString(R.string.patient_default) }
         val time = DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(nowMs))
         val consent = consents()
-        val needsLocation = kind != CaregiverMessage.FALSE_ALARM && kind != CaregiverMessage.HANDOVER
+        val needsLocation = kind != CaregiverMessage.FALSE_ALARM && kind != CaregiverMessage.HANDOVER &&
+            kind != CaregiverMessage.SHOWER_OK
         val where = when {
             !needsLocation -> ""
             !consent.locationAllowed -> context.getString(R.string.location_not_shared)   // no location consent: not even read
@@ -140,6 +141,8 @@ class CaregiverMessenger(private val context: Context, private val settings: Set
             CaregiverMessage.NO_ANSWER -> R.string.sms_no_answer
             CaregiverMessage.HANDOVER -> R.string.sms_handover
             CaregiverMessage.SOS -> R.string.sms_sos
+            CaregiverMessage.SHOWER_OVERDUE -> R.string.sms_shower_overdue
+            CaregiverMessage.SHOWER_OK -> R.string.sms_shower_ok
         }
         val emergency = consent.region?.emergency ?: context.getString(R.string.emergency_local)
         // the tag lets EpiProt in caregiver mode ring on the caregiver's phone (any language, no internet)
@@ -162,7 +165,8 @@ class CaregiverMessenger(private val context: Context, private val settings: Set
 /**
  * Machine-readable end of every caregiver SMS, read by EpiProt in caregiver mode on the caregiver's phone:
  * A seizure alarm, F false alarm, E emergency (> 5 min), N no answer after the seizure, H handover, I introduction,
- * S the patient pressed "Call for help" on the watch.
+ * S the patient pressed "Call for help" on the watch, W no answer after the shower timer, O the patient answered
+ * after a W (all clear).
  * Same table in caregiver/CaregiverSms.kt (caregiver mode of this app).
  */
 object CaregiverTag {
@@ -174,6 +178,8 @@ object CaregiverTag {
         CaregiverMessage.NO_ANSWER -> "[EP:N]"
         CaregiverMessage.HANDOVER -> "[EP:H]"
         CaregiverMessage.SOS -> "[EP:S]"
+        CaregiverMessage.SHOWER_OVERDUE -> "[EP:W]"
+        CaregiverMessage.SHOWER_OK -> "[EP:O]"
     }
 }
 

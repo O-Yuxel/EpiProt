@@ -621,4 +621,9 @@
     <string name="fw_failed">The update did not work. The headband works with its old version; try again later.</string>
     <string name="fw_simulated_note">Prototype: the headband software does not exist yet, so the transfer is simulated (same steps and time).</string>
     <string name="warn_headband_updating">The headband software is being updated. Seizure detection is OFF until the headband is worn again.</string>
+    <!-- shower mode -->
+    <string name="sms_shower_overdue">EpiProt: %1$s started shower mode and has NOT answered after the time (%2$s). Please check on them now. Location: %3$s</string>
+    <string name="sms_shower_ok">EpiProt: %1$s answered: out of the shower and fine (%2$s).</string>
+    <string name="cg_alarm_shower">%1$s does not answer after the shower</string>
+    <string name="cg_shower_ok">%1$s is out of the shower and fine</string>
 </resources>

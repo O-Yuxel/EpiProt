@@ -21,6 +21,8 @@ object Paths {
     const val STATUS = "/epiprot/status"
     /** The patient asked for help on the watch ("Call for help", after a 5 s countdown). */
     const val SOS = "/epiprot/sos"
+    /** Shower mode on the watch: start (with the chosen minutes), end ("I am out"), overdue (no answer after the time). */
+    const val SHOWER = "/epiprot/shower"
 
     // phone -> watch
     const val ALARM_START = "/epiprot/alarm_start"
@@ -119,6 +121,22 @@ data class SosRequest(val timeMs: Long) {
 
     companion object {
         fun decode(bytes: ByteArray) = SosRequest(JSONObject(String(bytes)).getLong("time_ms"))
+    }
+}
+
+/**
+ * Shower mode: the patient starts a timer on the watch before a shower (the headband is off then).
+ * [sessionMs] identifies the shower (its start time); [action] start | end | overdue; [minutes] chosen time.
+ */
+data class ShowerMessage(val action: String, val sessionMs: Long, val minutes: Int) {
+    fun encode(): ByteArray = JSONObject().put("action", action).put("session_ms", sessionMs).put("minutes", minutes)
+        .toString().toByteArray()
+
+    companion object {
+        fun decode(bytes: ByteArray): ShowerMessage {
+            val j = JSONObject(String(bytes))
+            return ShowerMessage(j.getString("action"), j.getLong("session_ms"), j.optInt("minutes", 15))
+        }
     }
 }
 

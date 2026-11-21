@@ -611,4 +611,9 @@
     <string name="fw_failed">Güncelleme olmadı. Kafa bandı eski sürümüyle çalışıyor; daha sonra tekrar deneyin.</string>
     <string name="fw_simulated_note">Prototip: kafa bandının yazılımı henüz yazılmadığı için aktarım benzetimle yapılır (aynı adımlar ve süre).</string>
     <string name="warn_headband_updating">Kafa bandının yazılımı güncelleniyor. Kafa bandı tekrar takılana kadar nöbet tespiti ÇALIŞMIYOR.</string>
+    <!-- duş modu -->
+    <string name="sms_shower_overdue">EpiProt: %1$s duş modunu açtı ve süre dolduğu halde CEVAP VERMİYOR (%2$s). Lütfen hemen kontrol edin. Konum: %3$s</string>
+    <string name="sms_shower_ok">EpiProt: %1$s cevap verdi: duştan çıktı ve iyi (%2$s).</string>
+    <string name="cg_alarm_shower">%1$s duştan sonra cevap vermiyor</string>
+    <string name="cg_shower_ok">%1$s duştan çıktı ve iyi</string>
 </resources>

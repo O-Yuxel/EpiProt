@@ -7,10 +7,10 @@ package org.epiprot.phone.caregiver
 object CaregiverSms {
     enum class Kind(val tag: Char, val rings: Boolean) {
         SEIZURE('A', true), FALSE_ALARM('F', false), EMERGENCY('E', true), NO_ANSWER('N', true),
-        HANDOVER('H', true), INTRO('I', false), SOS('S', true)
+        HANDOVER('H', true), INTRO('I', false), SOS('S', true), SHOWER('W', true), SHOWER_OK('O', false)
     }
 
-    private val TAG = Regex("""\[EP:([AFENHIS])]""")
+    private val TAG = Regex("""\[EP:([AFENHISWO])]""")
     private val MAPS = Regex("""https://maps\.google\.com/\?q=[-0-9.,]+""")
 
     /** The kind of an EpiProt SMS, or null when it is not one. */

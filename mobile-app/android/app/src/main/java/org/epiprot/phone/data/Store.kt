@@ -240,6 +240,15 @@ class EventLog private constructor(context: Context, passphrase: String) :
         return id
     }
 
+    /** Shower mode: no answer after the timer (shown like a help call in the history and the report). */
+    fun addShowerEvent(timeMs: Long, minutes: Int): Long {
+        val id = writableDatabase.insert("events", null, ContentValues().apply {
+            put("kind", "help"); put("source", "shower"); put("demo", 0); put("alarm_ms", timeMs)
+        })
+        step(id, timeMs, "shower", "no answer after the $minutes min shower timer + 2 min")
+        return id
+    }
+
     /** The patient pressed "Call for help" on the watch. */
     fun addHelpEvent(timeMs: Long): Long = writableDatabase.insert("events", null, ContentValues().apply {
         put("kind", "help"); put("source", "watch"); put("demo", 0); put("alarm_ms", timeMs)

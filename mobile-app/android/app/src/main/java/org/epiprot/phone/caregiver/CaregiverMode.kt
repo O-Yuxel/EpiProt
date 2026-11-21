@@ -75,6 +75,7 @@ object CaregiverMode {
         when {
             kind.rings -> ring(c, r)
             kind == CaregiverSms.Kind.FALSE_ALARM -> { stop(c); info(c, c.getString(R.string.cg_false_alarm, p.first), CaregiverSms.readable(text)) }
+            kind == CaregiverSms.Kind.SHOWER_OK -> { stop(c); info(c, c.getString(R.string.cg_shower_ok, p.first), CaregiverSms.readable(text)) }
             else -> info(c, c.getString(R.string.cg_intro, p.first), CaregiverSms.readable(text))
         }
     }
@@ -150,6 +151,8 @@ object CaregiverMode {
         CaregiverSms.Kind.FALSE_ALARM -> R.string.cg_false_alarm
         CaregiverSms.Kind.INTRO -> R.string.cg_intro
         CaregiverSms.Kind.SOS -> R.string.cg_alarm_sos
+        CaregiverSms.Kind.SHOWER -> R.string.cg_alarm_shower
+        CaregiverSms.Kind.SHOWER_OK -> R.string.cg_shower_ok
     }
 
     const val EXTRA_NUMBER = "cg_number"

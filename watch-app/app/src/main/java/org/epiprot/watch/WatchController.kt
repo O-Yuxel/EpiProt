@@ -229,6 +229,54 @@ class WatchController(private val app: Context) {
     }
 
     fun sosCancel() { sosJob?.cancel(); _sos.value = null }
+
+    // ---------------------------------------------------------------- shower mode
+    /**
+     * CHOOSE the time; RUNNING until [showerEndsMs]; ASKING "Are you out?" for [SHOWER_ANSWER_MS]; NO_ANSWER = the
+     * phone was told and alerts the caregiver. The phone runs the same timer as a backup (watch empty, out of reach).
+     */
+    enum class Shower { CHOOSE, RUNNING, ASKING, NO_ANSWER }
+    private val _shower = MutableStateFlow<Shower?>(null)
+    val shower: StateFlow<Shower?> = _shower
+    var showerEndsMs = 0L
+        private set
+    private var showerSession = 0L
+    private var showerMinutes = 15
+    private var showerJob: Job? = null
+
+    fun showerChoose() { if (_shower.value == null) _shower.value = Shower.CHOOSE }
+
+    fun showerStart(minutes: Int) {
+        showerSession = now(); showerMinutes = minutes
+        showerEndsMs = showerSession + minutes * 60_000L
+        _shower.value = Shower.RUNNING
+        haptics.short()
+        scope.launch { link.send(Paths.SHOWER, org.epiprot.watch.protocol.ShowerMessage("start", showerSession, minutes).encode()) }
+        showerJob?.cancel()
+        showerJob = scope.launch {
+            delay((showerEndsMs - now()).coerceAtLeast(0))
+            if (_shower.value != Shower.RUNNING) return@launch
+            _shower.value = Shower.ASKING
+            Notifications.wake(app)
+            haptics.checkIn()
+            delay(SHOWER_ANSWER_MS)
+            if (_shower.value != Shower.ASKING) return@launch
+            _shower.value = Shower.NO_ANSWER
+            haptics.stop()
+            link.send(Paths.SHOWER, org.epiprot.watch.protocol.ShowerMessage("overdue", showerSession, showerMinutes).encode())
+        }
+    }
+
+    /** "I am out" (also after the caregiver was alerted: then the phone tells the caregiver all is well). */
+    fun showerEnd() {
+        showerJob?.cancel()
+        haptics.stop()
+        if (_shower.value != null && _shower.value != Shower.CHOOSE)
+            scope.launch { link.send(Paths.SHOWER, org.epiprot.watch.protocol.ShowerMessage("end", showerSession, showerMinutes).encode()) }
+        _shower.value = null
+    }
+
+    fun showerCancelChoose() { if (_shower.value == Shower.CHOOSE) _shower.value = null }
     fun sosClose() { _sos.value = null }
 
     fun demoAlarm() = handle(PhoneMessage.AlarmStart(++demoAlarmId, 30))
@@ -308,5 +356,6 @@ class WatchController(private val app: Context) {
     companion object {
         const val PHONE_LOST_WARN_MS = 60_000L
         const val SOS_COUNTDOWN_MS = 5_000L
+        const val SHOWER_ANSWER_MS = 120_000L
     }
 }

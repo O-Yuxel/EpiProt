@@ -226,7 +226,7 @@ class CaregiverAlarmActivity : ComponentActivity() {
             if (r.number.isNotBlank()) PrimaryButton(stringResource(R.string.cg_call_patient), Icons.Rounded.Call) {
                 startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:${r.number}")))
             }
-            if (emergency || r.kind == CaregiverSms.Kind.NO_ANSWER) PrimaryButton(stringResource(R.string.cg_call_emergency),
+            if (emergency || r.kind == CaregiverSms.Kind.NO_ANSWER || r.kind == CaregiverSms.Kind.SHOWER) PrimaryButton(stringResource(R.string.cg_call_emergency),
                 Icons.Rounded.Warning, color = C.CoralDark) {
                 startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:${getString(R.string.cg_emergency_number)}")))
             }

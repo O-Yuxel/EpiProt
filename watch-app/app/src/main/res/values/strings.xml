@@ -97,4 +97,18 @@
     <string name="sos_queued_text">The message goes out as soon as the phone is back. Ask someone nearby for help now.</string>
     <!-- headband firmware update -->
     <string name="warn_headband_updating">The headband software is being updated. Seizure detection is OFF until the headband is worn again.</string>
+    <!-- shower mode -->
+    <string name="shower_button">Shower mode</string>
+    <string name="shower_button_sub">Before a shower: your caregiver is alerted if you do not come out</string>
+    <string name="shower_choose">How long is your shower?</string>
+    <string name="shower_minutes">%1$d minutes</string>
+    <string name="shower_choose_note">Take the headband off; keep the watch on. Shower, do not take a bath, and do not lock the door.</string>
+    <string name="shower_running">Shower: %1$s left</string>
+    <string name="shower_running_text">Tap \"I am out\" when you are done.</string>
+    <string name="shower_out">I am out</string>
+    <string name="shower_ask_title">Are you out of the shower?</string>
+    <string name="shower_ask_text">Tap \"I am out\". Without an answer in 2 minutes your caregiver is alerted.</string>
+    <string name="shower_alerted_title">Caregiver alerted</string>
+    <string name="shower_alerted_text">You did not answer, so your caregiver was told to check on you.</string>
+    <string name="shower_ok_now">I am fine</string>
 </resources>

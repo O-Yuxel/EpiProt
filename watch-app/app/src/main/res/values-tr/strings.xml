@@ -92,4 +92,18 @@
     <string name="sos_queued_text">Telefon bağlanır bağlanmaz mesaj gidecek. Şimdi yakınınızdaki birinden yardım isteyin.</string>
     <!-- kafa bandı yazılım güncellemesi -->
     <string name="warn_headband_updating">Kafa bandının yazılımı güncelleniyor. Kafa bandı tekrar takılana kadar nöbet tespiti ÇALIŞMIYOR.</string>
+    <!-- duş modu -->
+    <string name="shower_button">Duş modu</string>
+    <string name="shower_button_sub">Duştan önce: çıkmazsanız bakıcınıza haber verilir</string>
+    <string name="shower_choose">Duşunuz ne kadar sürecek?</string>
+    <string name="shower_minutes">%1$d dakika</string>
+    <string name="shower_choose_note">Kafa bandını çıkarın, saati takılı bırakın. Küvete girmeyin, duş alın ve kapıyı kilitlemeyin.</string>
+    <string name="shower_running">Duş: %1$s kaldı</string>
+    <string name="shower_running_text">Bitince \"Çıktım\"a dokunun.</string>
+    <string name="shower_out">Çıktım</string>
+    <string name="shower_ask_title">Duştan çıktınız mı?</string>
+    <string name="shower_ask_text">\"Çıktım\"a dokunun. 2 dakika içinde cevap gelmezse bakıcınıza haber verilir.</string>
+    <string name="shower_alerted_title">Bakıcınıza haber verildi</string>
+    <string name="shower_alerted_text">Cevap vermediğiniz için bakıcınızdan sizi kontrol etmesi istendi.</string>
+    <string name="shower_ok_now">İyiyim</string>
 </resources>
