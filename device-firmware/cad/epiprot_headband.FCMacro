@@ -1,0 +1,288 @@
+# -*- coding: utf-8 -*-
+"""EpiProt headband, concept D (two pods at the lower back corners of the head) - parametric FreeCAD model.
+
+How to use
+  * In FreeCAD: Macro > Macros... > epiprot_headband.FCMacro > Execute.
+    The first run creates the document with a spreadsheet "Params". Change values there (band width, pod
+    sizes, battery size, pod position, ...), run the macro again: the model is rebuilt from the new values.
+  * From a terminal (also writes pictures):  freecad.exe device-firmware/cad/epiprot_headband.FCMacro
+
+Coordinates (mm): x = to the patient's right, y = forward, z = up, ear canal at z = 0. The head is a simple
+average adult head made of smooth shapes (not a scan). Component sizes come from HARDWARE.md.
+"""
+import math
+import os
+
+import FreeCAD as App
+import Part
+from FreeCAD import Vector as V
+
+HERE = os.path.dirname(os.path.abspath(__file__)) if "__file__" in dir() else os.getcwd()
+DOC_FILE = os.path.join(HERE, "epiprot_headband.FCStd")
+
+DEFAULTS = [  # alias, value, unit / meaning
+    ("head_scale", 1.00, "1.00 = average adult head (circumference ~57 cm)"),
+    ("band_width", 20.0, "mm, elastic fabric band"),
+    ("band_thick", 2.0, "mm"),
+    ("band_low", -30.0, "mm, height of the band at the back (below the occipital bump)"),
+    ("pod_angle", 50.0, "deg from the back centre to each pod"),
+    ("pod_z", -44.0, "mm, height of the pod centres"),
+    ("podL_w", 32.0, "mm, left pod (electronics) width"),
+    ("podL_h", 36.0, "mm, height"),
+    ("podL_t", 9.0, "mm, thickness"),
+    ("podR_w", 40.0, "mm, right pod (battery) width"),
+    ("podR_h", 56.0, "mm, height"),
+    ("podR_t", 10.0, "mm, thickness"),
+    ("wall", 1.5, "mm, enclosure wall"),
+    ("bat_w", 34.0, "mm, 700 mAh LiPo (603450)"),
+    ("bat_h", 50.0, "mm"),
+    ("bat_t", 6.0, "mm"),
+    ("pcb_w", 26.0, "mm, main board"),
+    ("pcb_h", 30.0, "mm"),
+    ("pad_d", 20.0, "mm, semi-dry pad diameter"),
+    ("top_strap", 0.0, "1 = add a strap over the crown (better hold during a convulsion)"),
+]
+
+HEAD = dict(c=V(0, -5, 20), r=(76.0, 98.0, 105.0))
+
+
+# ------------------------------------------------------------------ parameters
+def params(doc):
+    sh = doc.getObject("Params")
+    if sh is None:
+        sh = doc.addObject("Spreadsheet::Sheet", "Params")
+        sh.set("A1", "parameter"); sh.set("B1", "value"); sh.set("C1", "meaning")
+        for i, (a, v, m) in enumerate(DEFAULTS, start=2):
+            sh.set(f"A{i}", a); sh.set(f"B{i}", str(v)); sh.set(f"C{i}", m)
+            sh.setAlias(f"B{i}", a)
+        doc.recompute()
+    p = {}
+    for i, (a, v, _) in enumerate(DEFAULTS, start=2):
+        try:
+            p[a] = float(sh.get(a))
+        except Exception:
+            p[a] = v
+    return p
+
+
+# ------------------------------------------------------------------ head
+def ellipsoid(c, r):
+    m = App.Matrix(); m.scale(*r)
+    return Part.makeSphere(1.0).transformGeometry(m).translated(c)
+
+
+def head(s):
+    c, r = HEAD["c"], HEAD["r"]
+    cran = ellipsoid(c * s, tuple(x * s for x in r))
+    face = ellipsoid(V(0, 32, -38) * s, (62 * s, 72 * s, 80 * s))
+    jaw = ellipsoid(V(0, 40, -82) * s, (48 * s, 52 * s, 40 * s))
+    nose = ellipsoid(V(0, 100, -20) * s, (11 * s, 16 * s, 26 * s))
+    neck = Part.makeCylinder(54 * s, 150 * s, V(0, -18 * s, -215 * s), V(0, 0, 1))
+    ears = []
+    for sx in (-1, 1):
+        e = ellipsoid(V(0, 0, 0), (7 * s, 17 * s, 31 * s))
+        e.rotate(V(0, 0, 0), V(1, 0, 0), -12)
+        ears.append(e.translated(V(sx * 77 * s, -4 * s, 2 * s)))
+    return cran.fuse([face, jaw, nose, neck] + ears).removeSplitter()
+
+
+def surf(theta_deg, z, s, off=0.0):
+    """Point on the cranium at angle theta (0 = back centre, +90 = right ear) and height z, plus normal."""
+    c, (rx, ry, rz) = HEAD["c"] * s, (HEAD["r"][0] * s, HEAD["r"][1] * s, HEAD["r"][2] * s)
+    k = max(0.05, 1 - ((z - c.z) / rz) ** 2) ** 0.5
+    k = max(k, 0.72)                     # below the skull the neck carries the band: do not curl inwards
+    t = math.radians(theta_deg)
+    p = V(rx * k * math.sin(t), c.y - ry * k * math.cos(t), z)
+    nz = max(-0.25, min(0.25, (p.z - c.z) / rz ** 2 * rx ** 2 * 0.5))   # mostly horizontal normal
+    n = V(p.x / rx ** 2 * rx ** 2, (p.y - c.y) / ry ** 2 * rx ** 2, 0)
+    n.normalize()
+    n = n + V(0, 0, nz); n.normalize()
+    return p + n * off, n
+
+
+# ------------------------------------------------------------------ strip along the head (band, ear arms)
+def strip(path, width, thick, s, off):
+    """Solid strip lying on the skin through [(theta, z), ...]: thickness along the skin normal."""
+    secs = []
+    pts = [surf(t, z, s, off + thick / 2) for t, z in path]
+    for i, (p, n) in enumerate(pts):
+        a = pts[max(0, i - 1)][0]; b = pts[min(len(pts) - 1, i + 1)][0]
+        tg = b - a; tg.normalize()
+        w = tg.cross(n); w.normalize()
+        q = [p + w * (width / 2) + n * (thick / 2), p - w * (width / 2) + n * (thick / 2),
+             p - w * (width / 2) - n * (thick / 2), p + w * (width / 2) - n * (thick / 2)]
+        secs.append(Part.makePolygon(q + [q[0]]))
+    return Part.makeLoft(secs, True, False)
+
+
+def band_path(p, n=41):
+    """Around the back of the head, below the occipital bump, ending behind each ear (lower mastoid)."""
+    out = []
+    for i in range(n):
+        t = -78 + 156 * i / (n - 1)
+        z = p["band_low"] - 4 * (abs(t) / 78) ** 2
+        out.append((t, z))
+    return out
+
+
+def ear_hook(sx):
+    """From the band end up behind the ear (over both pads) and over the top of the ear, like a glasses temple."""
+    pts = [(78, -34), (80, -26), (82, -16), (84, -6), (86, 6), (88, 18), (91, 28), (95, 35), (100, 38), (105, 37), (109, 32)]
+    return [(sx * t, z) for t, z in pts]
+
+
+# ------------------------------------------------------------------ pods
+def frame(theta, z, s):
+    p, n = surf(theta, z, s)
+    up = V(0, 0, 1) - n * n.z; up.normalize()
+    side = n.cross(up); side.normalize()       # right-handed: side x n = up (else FreeCAD flips an axis)
+    return p, n, up, side
+
+
+def placed(shape, theta, z, s, lift):
+    """Local axes: x = side, y = outward normal, z = up. lift = distance of the local origin from the skin."""
+    p, n, up, side = frame(theta, z, s)
+    pl = App.Placement(p + n * lift, App.Rotation(side, n, up, "ZXY"))
+    sh = shape.copy(); sh.Placement = pl.multiply(sh.Placement)
+    return sh
+
+
+def rounded(w, t, h, r):
+    b = Part.makeBox(w, t, h, V(-w / 2, -t / 2, -h / 2))
+    try:
+        return b.makeFillet(min(r, min(w, t, h) / 2 - 0.2), b.Edges)
+    except Exception:
+        return b
+
+
+def shell(w, t, h, wall, r=4.0):
+    outer = rounded(w, t, h, r)
+    inner = rounded(w - 2 * wall, t - 2 * wall, h - 2 * wall, max(0.5, r - wall))
+    return outer.cut(inner)
+
+
+# ------------------------------------------------------------------ build
+def build(doc):
+    p = params(doc)
+    s = p["head_scale"]
+    for o in list(doc.Objects):
+        if o.Name != "Params":
+            doc.removeObject(o.Name)
+    groups = {g: doc.addObject("App::DocumentObjectGroup", g) for g in
+              ("Head", "Band", "Pads", "Pod_left_electronics", "Pod_right_battery", "Inside")}
+
+    def add(name, shape, group, color, transp=0):
+        o = doc.addObject("Part::Feature", name)
+        o.Shape = shape
+        groups[group].addObject(o)
+        if App.GuiUp:
+            o.ViewObject.ShapeColor = color
+            o.ViewObject.Transparency = transp
+        return o
+
+    add("Head", head(s), "Head", (0.91, 0.80, 0.71), 0)
+
+    # band + crown strap
+    add("Band", strip(band_path(p), p["band_width"], p["band_thick"], s, 0.6), "Band", (0.06, 0.45, 0.50))
+    if p["top_strap"] >= 0.5:
+        crown = [(90 * (i / 20 * 2 - 1), 0) for i in range(21)]
+        pts = []
+        for t, _ in crown:                                     # over the top, ear to ear
+            a = math.radians(t)
+            pts.append(V(HEAD["r"][0] * s * math.sin(a) * 1.01, HEAD["c"].y * s - 10,
+                         HEAD["c"].z * s + HEAD["r"][2] * s * math.cos(a) * 1.01))
+        secs = []
+        for i, q in enumerate(pts):
+            d = pts[min(i + 1, len(pts) - 1)] - pts[max(i - 1, 0)]; d.normalize()
+            w = V(0, 1, 0) * (p["band_width"] / 2)
+            nn = d.cross(V(0, 1, 0)); nn.normalize(); nn = nn * (p["band_thick"] / 2)
+            secs.append(Part.makePolygon([q + w + nn, q - w + nn, q - w - nn, q + w - nn, q + w + nn]))
+        add("Crown_strap", Part.makeLoft(secs, True, False), "Band", (0.06, 0.45, 0.50))
+
+    # ear arms with the pads (upper / lower mastoid) and the bias electrode at the back
+    pad = Part.makeCylinder(p["pad_d"] / 2, 3.0, V(0, 0, 0), V(0, 1, 0))
+    for sx, side_name in ((-1, "L"), (1, "R")):
+        add(f"Ear_hook_{side_name}", strip(ear_hook(sx), 12.0, 2.5, s, 3.0), "Band", (0.06, 0.45, 0.50))
+        for nm, (t, z) in (("top", (sx * 84, -6)), ("bottom", (sx * 80, -26))):
+            add(f"Pad_{side_name}_{nm}", placed(pad, t, z, s, 0.0), "Pads", (0.55, 0.62, 0.64))
+    add("Bias_electrode", placed(Part.makeCylinder(8, 2.0, V(0, 0, 0), V(0, 1, 0)), 0, p["band_low"], s, 0.0),
+        "Pads", (0.55, 0.62, 0.64))
+
+    # safety clasp: magnetic, opens under a strong pull
+    clasp = rounded(14, 5, p["band_width"] + 2, 2)
+    add("Safety_clasp", placed(clasp, 0, p["band_low"], s, 2.6 + p["band_thick"]), "Band", (0.25, 0.27, 0.29))
+
+    # pods (enclosures), slightly lifted so the band passes under them
+    tL, tR = p["podL_t"], p["podR_t"]
+    lift = 0.8 + p["band_thick"]
+    podL = placed(shell(p["podL_w"], tL, p["podL_h"], p["wall"]), -p["pod_angle"], p["pod_z"], s, lift + tL / 2)
+    podR = placed(shell(p["podR_w"], tR, p["podR_h"], p["wall"]), p["pod_angle"], p["pod_z"] - 2, s, lift + tR / 2)
+    add("Pod_left", podL, "Pod_left_electronics", (0.85, 0.30, 0.25), 55)
+    add("Pod_right", podR, "Pod_right_battery", (0.85, 0.30, 0.25), 55)
+
+    # left pod contents: board + main chips, button, LED
+    yb = lift + p["wall"] + 1.0
+    L = lambda shape, dy: placed(shape, -p["pod_angle"], p["pod_z"], s, yb + dy)  # noqa: E731
+    add("PCB", L(Part.makeBox(p["pcb_w"], 1.0, p["pcb_h"], V(-p["pcb_w"] / 2, 0, -p["pcb_h"] / 2)), 0), "Inside", (0.10, 0.45, 0.20))
+    add("BLE_module_nRF52840", L(Part.makeBox(10, 2.2, 15, V(-11, 0, -2)), 1.0), "Inside", (0.75, 0.75, 0.78))
+    add("EEG_ADS1299_4", L(Part.makeBox(10, 1.2, 10, V(2, 0, 2)), 1.0), "Inside", (0.12, 0.12, 0.12))
+    add("IMU_ICM42688", L(Part.makeBox(3, 0.9, 2.5, V(4, 0, -9)), 1.0), "Inside", (0.12, 0.12, 0.12))
+    add("Flash_8MB", L(Part.makeBox(5, 1.0, 6, V(8, 0, -9)), 1.0), "Inside", (0.12, 0.12, 0.12))
+    add("Clock_crystal", L(Part.makeBox(3.2, 1.0, 2.5, V(2, 0, -13)), 1.0), "Inside", (0.80, 0.80, 0.80))
+    add("Button", placed(Part.makeCylinder(3.5, 2.0, V(0, 0, 0), V(0, 1, 0)), -p["pod_angle"], p["pod_z"] + 8, s, lift + tL), "Pod_left_electronics", (0.2, 0.2, 0.2))
+    add("LED", placed(Part.makeCylinder(1.5, 1.0, V(0, 0, 0), V(0, 1, 0)), -p["pod_angle"], p["pod_z"] - 8, s, lift + tL), "Pod_left_electronics", (0.2, 0.9, 0.3))
+
+    # right pod contents: battery, charging board, magnetic pogo contacts
+    R = lambda shape, dy: placed(shape, p["pod_angle"], p["pod_z"] - 2, s, lift + p["wall"] + 0.5 + dy)  # noqa: E731
+    add("Battery_700mAh", R(Part.makeBox(p["bat_w"], p["bat_t"], p["bat_h"], V(-p["bat_w"] / 2, 0, -p["bat_h"] / 2)), 0), "Inside", (0.95, 0.75, 0.20))
+    for i in range(4):
+        add(f"Charge_pin_{i}", placed(Part.makeCylinder(1.2, 1.0, V(0, 0, 0), V(0, 1, 0)),
+                                      p["pod_angle"] + 7, p["pod_z"] - 22 + i * 4, s, lift + tR), "Pod_right_battery", (0.85, 0.70, 0.20))
+    doc.recompute()
+    return p
+
+
+def pictures(doc):
+    import FreeCADGui as Gui
+    v = Gui.ActiveDocument.ActiveView
+    Gui.SendMsgToActiveView("ViewFit")
+    # the head looks to +y, FreeCAD's "front" camera looks from -y: so viewFront shows the BACK of the head
+    shots = [("back", v.viewFront), ("left_side", v.viewLeft), ("right_side", v.viewRight)]
+    for name, f in shots:
+        f(); Gui.SendMsgToActiveView("ViewFit")
+        v.saveImage(os.path.join(HERE, f"headband_{name}.png"), 1600, 1300, "White")
+
+    def look_from(d):
+        z = V(*d); z.normalize()                         # camera axis, towards the viewer
+        up = V(0, 0, 1)
+        y = up - z * up.dot(z); y.normalize()
+        x = y.cross(z)
+        v.setCameraOrientation(App.Rotation(x, y, z, "ZYX"))
+        Gui.SendMsgToActiveView("ViewFit")
+
+    look_from((-0.55, -0.75, 0.35)); v.saveImage(os.path.join(HERE, "headband_back_left.png"), 1600, 1300, "White")
+    look_from((0.55, -0.75, 0.1)); v.saveImage(os.path.join(HERE, "headband_back_right.png"), 1600, 1300, "White")
+    # inside: pods transparent, close-up of the left pod
+    for o in doc.Objects:
+        if o.Name in ("Pod_left", "Pod_right") and hasattr(o, "ViewObject"):
+            o.ViewObject.Transparency = 75
+    look_from((-0.75, -0.6, 0.0))
+    v.saveImage(os.path.join(HERE, "headband_inside_left.png"), 1600, 1300, "White")
+
+
+def main():
+    doc = App.ActiveDocument if (App.ActiveDocument and App.ActiveDocument.getObject("Params")) else None
+    if doc is None:
+        doc = App.openDocument(DOC_FILE) if os.path.exists(DOC_FILE) else App.newDocument("EpiProtHeadband")
+    p = build(doc)
+    doc.saveAs(DOC_FILE)
+    if App.GuiUp:
+        import FreeCADGui as Gui
+        Gui.ActiveDocument = Gui.getDocument(doc.Name)
+        if os.environ.get("EPIPROT_SHOTS") == "1":
+            pictures(doc)
+            os._exit(0)
+    App.Console.PrintMessage(f"EpiProt headband rebuilt with {p}\n")
+
+
+main()

@@ -1,0 +1,26 @@
+{
+ "A": {
+  "supine_pressure_mm": 15.7,
+  "side_pressure_mm": 0.0,
+  "max_thickness_mm": 13.0,
+  "weight_g": 60.0
+ },
+ "B": {
+  "supine_pressure_mm": 0.0,
+  "side_pressure_mm": 13.4,
+  "max_thickness_mm": 10.0,
+  "weight_g": 60.0
+ },
+ "C": {
+  "supine_pressure_mm": 12.2,
+  "side_pressure_mm": 6.0,
+  "max_thickness_mm": 8.0,
+  "weight_g": 59.0
+ },
+ "D": {
+  "supine_pressure_mm": 0.0,
+  "side_pressure_mm": 0.0,
+  "max_thickness_mm": 19.2,
+  "weight_g": 58.0
+ }
+}
