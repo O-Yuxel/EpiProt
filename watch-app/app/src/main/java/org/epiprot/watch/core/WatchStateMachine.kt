@@ -15,7 +15,11 @@ sealed interface Screen {
     /** "Are you OK?" during recovery monitoring. */
     data class CheckIn(val alarmId: Long, val number: Int, val wrongAttempts: Int = 0) : Screen
 
-    data class Warning(val code: WarningCode, val impact: Impact) : Screen
+    /** [detail]: which part, e.g. the pads ("L-bottom,R-top") or the battery percentage. */
+    data class Warning(val code: WarningCode, val impact: Impact, val detail: String = "") : Screen
+
+    /** Morning summary of the warnings that came in quietly during night mode. */
+    data class NightSummary(val items: List<Pair<WarningCode, String>>) : Screen
 
     data class Info(val kind: InfoKind, val untilMs: Long) : Screen
 }
@@ -42,6 +46,8 @@ sealed interface Effect {
  *  - After the PIN window the alarm can no longer be cancelled on the watch.
  *  - Check-in: "Are you OK?" answered with the PIN.
  *  - Sensor warnings never interrupt an alarm or a check-in; they are shown right after.
+ *  - Night mode: non-urgent warnings are only listed, without vibration or waking the screen; when
+ *    night mode ends, one soft vibration and a summary. Alarms and urgent warnings are unchanged.
  */
 class WatchStateMachine(
     private var pinWindowMs: Long = 30_000,
@@ -58,6 +64,14 @@ class WatchStateMachine(
     val activeWarnings: Map<WarningCode, Impact> get() = warnings
     private val warnings = LinkedHashMap<WarningCode, Impact>()
     private val acknowledged = HashSet<WarningCode>()
+    private val details = HashMap<WarningCode, String>()
+    private val urgency = HashMap<WarningCode, Boolean>()
+    /** Warnings that came in quietly during night mode (for the morning summary). */
+    private val quiet = LinkedHashMap<WarningCode, String>()
+
+    val activeDetails: Map<WarningCode, String> get() = details
+    var night = false
+        private set
 
     fun setPinWindow(seconds: Int) {
         pinWindowMs = seconds.coerceIn(10, 120) * 1000L
@@ -116,19 +130,39 @@ class WatchStateMachine(
         else -> emptyList()
     }
 
-    fun sensorWarning(code: WarningCode, impact: Impact, now: Long): List<Effect> {
+    fun sensorWarning(code: WarningCode, impact: Impact, now: Long, detail: String = "", urgent: Boolean = true): List<Effect> {
         warnings[code] = impact
+        details[code] = detail
+        urgency[code] = urgent
         acknowledged.remove(code)          // a new warning or reminder is shown again
+        if (night && !urgent) {
+            quiet[code] = detail
+            return emptyList()
+        }
         return if (busy()) emptyList() else show(code)
     }
 
     fun sensorFixed(code: WarningCode, now: Long): List<Effect> {
         if (warnings.remove(code) == null) return emptyList()
+        details.remove(code)
+        val urgent = urgency.remove(code) ?: true
         acknowledged.remove(code)
         val s = screen
         if (s is Screen.Warning && s.code == code) {
+            if (night && !urgent) return next()
             screen = Screen.Info(InfoKind.SENSOR_FIXED, now + infoMs)
             return listOf(Effect.VibrateShort)
+        }
+        return emptyList()
+    }
+
+    /** Night mode on / off (called by the controller from the schedule). */
+    fun setNight(isNight: Boolean, now: Long): List<Effect> {
+        if (isNight == night) return emptyList()
+        night = isNight
+        if (!night && quiet.isNotEmpty() && (screen is Screen.Home)) {
+            showSummary()
+            return listOf(Effect.WakeScreen, Effect.VibrateShort)
         }
         return emptyList()
     }
@@ -140,6 +174,10 @@ class WatchStateMachine(
             next()
         }
         is Screen.Info -> next()
+        is Screen.NightSummary -> {
+            acknowledged.addAll(s.items.map { it.first }.filter { it in warnings })
+            next()
+        }
         else -> emptyList()
     }
 
@@ -175,7 +213,7 @@ class WatchStateMachine(
     fun openWarning(code: WarningCode): List<Effect> {
         val impact = warnings[code] ?: return emptyList()
         if (busy()) return emptyList()
-        screen = Screen.Warning(code, impact)
+        screen = Screen.Warning(code, impact, details[code] ?: "")
         return emptyList()
     }
 
@@ -192,13 +230,22 @@ class WatchStateMachine(
     private fun busy() = screen is Screen.Alarm || screen is Screen.AlarmActive || screen is Screen.CheckIn
 
     private fun show(code: WarningCode): List<Effect> {
-        screen = Screen.Warning(code, warnings.getValue(code))
+        screen = Screen.Warning(code, warnings.getValue(code), details[code] ?: "")
         return listOf(Effect.WakeScreen, Effect.VibrateWarning)
     }
 
+    private fun showSummary() {
+        screen = Screen.NightSummary(quiet.toList())
+        quiet.clear()
+    }
+
     private fun next(): List<Effect> {
-        val pending = warnings.keys.firstOrNull { it !in acknowledged }
+        val pending = warnings.keys.firstOrNull { it !in acknowledged && (!night || urgency[it] != false) }
         if (pending != null) return show(pending)
+        if (!night && quiet.isNotEmpty()) {
+            showSummary()
+            return listOf(Effect.VibrateShort)
+        }
         screen = Screen.Home
         return emptyList()
     }

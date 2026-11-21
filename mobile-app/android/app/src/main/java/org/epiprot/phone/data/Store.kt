@@ -41,6 +41,17 @@ class Settings(context: Context) {
         get() = p.getBoolean("real_sms", false)
         set(v) = p.edit().putBoolean("real_sms", v).apply()
 
+    /** Night mode on the watch: non-urgent warnings without vibration (minutes after midnight). */
+    var nightEnabled: Boolean
+        get() = p.getBoolean("night_enabled", true)
+        set(v) = p.edit().putBoolean("night_enabled", v).apply()
+    var nightStartMin: Int
+        get() = p.getInt("night_start_min", 23 * 60)
+        set(v) = p.edit().putInt("night_start_min", v.coerceIn(0, 24 * 60 - 1)).apply()
+    var nightEndMin: Int
+        get() = p.getInt("night_end_min", 7 * 60)
+        set(v) = p.edit().putInt("night_end_min", v.coerceIn(0, 24 * 60 - 1)).apply()
+
     /** "Delete all my data". */
     fun clearAll() { p.edit().clear().apply() }
 

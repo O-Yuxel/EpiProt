@@ -13,6 +13,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.epiprot.watch.core.Effect
 import org.epiprot.watch.core.Impact
+import org.epiprot.watch.core.NightMode
 import org.epiprot.watch.core.PinVerifier
 import org.epiprot.watch.core.Screen
 import org.epiprot.watch.core.SensorBatcher
@@ -52,6 +53,13 @@ class WatchController(private val app: Context) {
     val activeAlarm: StateFlow<Long?> = _activeAlarm
     private val _warnings = MutableStateFlow<Map<WarningCode, Impact>>(emptyMap())
     val warnings: StateFlow<Map<WarningCode, Impact>> = _warnings
+    private val _warningDetails = MutableStateFlow<Map<WarningCode, String>>(emptyMap())
+    val warningDetails: StateFlow<Map<WarningCode, String>> = _warningDetails
+    private val nightMode = NightMode(prefs.getBoolean("night_enabled", true),
+        prefs.getInt("night_start_min", 23 * 60), prefs.getInt("night_end_min", 7 * 60))
+    private val _night = MutableStateFlow(false)
+    /** Night mode active: non-urgent warnings do not vibrate. */
+    val night: StateFlow<Boolean> = _night
     private val _heartRate = MutableStateFlow(Float.NaN)
     val heartRate: StateFlow<Float> = _heartRate
     private val _simulated = MutableStateFlow(false)
@@ -71,7 +79,7 @@ class WatchController(private val app: Context) {
         machine.setPinWindow(prefs.getInt("pin_window_s", 30))
         scope.launch {
             while (isActive) {
-                apply(machine.tick(now()))
+                apply(machine.setNight(nightMode.isNight(minuteOfDay()), now()) + machine.tick(now()))
                 delay(250)
             }
         }
@@ -151,8 +159,9 @@ class WatchController(private val app: Context) {
             }
             is PhoneMessage.AlarmEnd -> apply(machine.alarmEnd(msg.alarmId, t))
             is PhoneMessage.CheckIn -> apply(machine.checkIn(msg.alarmId, msg.number, t))
-            is PhoneMessage.SensorWarning ->
-                WarningCode.fromWire(msg.code)?.let { apply(machine.sensorWarning(it, Impact.fromWire(msg.impact), t)) }
+            is PhoneMessage.SensorWarning -> WarningCode.fromWire(msg.code)?.let {
+                apply(machine.sensorWarning(it, Impact.fromWire(msg.impact), t, msg.detail, msg.urgent))
+            }
             is PhoneMessage.SensorFixed -> WarningCode.fromWire(msg.code)?.let { apply(machine.sensorFixed(it, t)) }
             is PhoneMessage.ConsentState -> {
                 prefs.edit().putBoolean("monitoring_allowed", msg.monitoringAllowed).apply()
@@ -161,7 +170,11 @@ class WatchController(private val app: Context) {
             }
             is PhoneMessage.Settings -> {
                 prefs.edit().putString("pin_salt", msg.pinSalt).putString("pin_hash", msg.pinHash)
-                    .putInt("pin_window_s", msg.pinWindowS).apply()
+                    .putInt("pin_window_s", msg.pinWindowS).putBoolean("night_enabled", msg.nightEnabled)
+                    .putInt("night_start_min", msg.nightStartMin).putInt("night_end_min", msg.nightEndMin).apply()
+                nightMode.enabled = msg.nightEnabled
+                nightMode.startMin = msg.nightStartMin
+                nightMode.endMin = msg.nightEndMin
                 pin = loadPin()
                 _demoPin.value = pin.isDemo
                 machine.setPinWindow(msg.pinWindowS)
@@ -179,6 +192,12 @@ class WatchController(private val app: Context) {
 
     fun openWarning(code: WarningCode) = apply(machine.openWarning(code))
 
+    /** Night mode on / off by hand (until the schedule changes next). */
+    fun toggleNight() {
+        nightMode.toggle(minuteOfDay())
+        apply(machine.setNight(nightMode.isNight(minuteOfDay()), now()))
+    }
+
     // ---------------------------------------------------------------- demo without a phone
 
     private var demoAlarmId = 9000L
@@ -188,6 +207,7 @@ class WatchController(private val app: Context) {
     fun demoAlarmEnd() = handle(PhoneMessage.AlarmEnd(demoAlarmId, "demo"))
     fun demoWarning() = handle(PhoneMessage.SensorWarning(WarningCode.BRAIN_WEAK.wire, Impact.LIMITED.wire))
     fun demoFixed() = handle(PhoneMessage.SensorFixed(WarningCode.BRAIN_WEAK.wire))
+    fun demoPad() = handle(PhoneMessage.SensorWarning(WarningCode.PAD_REPLACE.wire, Impact.NONE.wire, "L-bottom", urgent = false))
     fun demoShaking(on: Boolean) {
         (sensors as? SimulatedSensors)?.shaking = on
     }
@@ -198,6 +218,8 @@ class WatchController(private val app: Context) {
         _screen.value = machine.screen
         _activeAlarm.value = machine.activeAlarm
         _warnings.value = machine.activeWarnings.toMap()
+        _warningDetails.value = machine.activeDetails.toMap()
+        _night.value = machine.night
         for (e in effects) when (e) {
             is Effect.SendPin -> scope.launch {
                 link.send(Paths.PIN_RESULT, PinResult(e.context, e.alarmId, e.ok, e.attempt, now()).encode())
@@ -248,6 +270,11 @@ class WatchController(private val app: Context) {
     }
 
     private fun now() = System.currentTimeMillis()
+
+    private fun minuteOfDay(): Int {
+        val c = java.util.Calendar.getInstance()
+        return c.get(java.util.Calendar.HOUR_OF_DAY) * 60 + c.get(java.util.Calendar.MINUTE)
+    }
 
     companion object {
         const val PHONE_LOST_WARN_MS = 60_000L

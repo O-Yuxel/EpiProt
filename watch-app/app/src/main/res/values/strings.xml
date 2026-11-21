@@ -61,4 +61,21 @@
     <string name="home_no_consent_text">No consent for monitoring yet. Give it in the EpiProt phone app (Settings → Privacy &amp; consents).</string>
     <string name="notif_resume_title">EpiProt is not running</string>
     <string name="notif_resume_text">Tap to open EpiProt and resume.</string>
+
+    <!-- headband warnings (HeadbandAlerts on the phone) -->
+    <string name="warn_pad_contact_lost">No skin contact: %1$s. Press the pad back on or replace it.</string>
+    <string name="warn_pad_replace">Replace the pad %1$s: it is drying out.</string>
+    <string name="warn_headband_battery_low">Headband battery low (%1$s %%). Charge it soon.</string>
+    <string name="warn_headband_battery_critical">Headband battery almost empty (%1$s %%). Charge it now.</string>
+    <string name="warn_headband_charging">Headband is charging. Until it is worn again, detection uses the watch only.</string>
+    <string name="pad_l_top">behind the left ear, upper</string>
+    <string name="pad_l_bottom">behind the left ear, lower</string>
+    <string name="pad_r_top">behind the right ear, upper</string>
+    <string name="pad_r_bottom">behind the right ear, lower</string>
+    <string name="pad_bias">at the back of the neck</string>
+    <!-- night mode -->
+    <string name="night_mode">Night mode</string>
+    <string name="night_mode_text">Only urgent warnings vibrate. Alarms always do.</string>
+    <string name="night_summary_title">Night: %1$d quiet warnings</string>
+    <string name="demo_pad">Pad warning</string>
 </resources>

@@ -294,7 +294,7 @@ class PhoneMonitor(private val app: Context) {
         val salt = settings.pinSalt ?: return
         val hash = settings.pinHash ?: return
         lastSettingsSentMs = System.currentTimeMillis()
-        actions.watch(PhoneMessage.Settings(salt, hash, 30))
+        actions.watch(PhoneMessage.Settings(salt, hash, 30, settings.nightEnabled, settings.nightStartMin, settings.nightEndMin))
     }
 
     /** Replays a recorded seizure: fast until the alarm, then real time; waits until the alarm flow is over. */

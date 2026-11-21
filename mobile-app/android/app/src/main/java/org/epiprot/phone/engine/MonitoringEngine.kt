@@ -2,6 +2,9 @@ package org.epiprot.phone.engine
 
 import org.epiprot.phone.alarm.AlarmFlow
 import org.epiprot.phone.alarm.FlowEffect
+import org.epiprot.phone.headband.HeadbandAlerts
+import org.epiprot.phone.headband.HeadbandState
+import org.epiprot.phone.headband.WarningPolicy
 import org.epiprot.phone.health.HealthMonitor
 import org.epiprot.phone.model.Detector
 import org.epiprot.phone.model.DetectorConfig
@@ -30,11 +33,14 @@ data class EngineStatus(
     val flowState: AlarmFlow.State = AlarmFlow.State.Idle,
     val openWarnings: List<HealthMonitor.Episode> = emptyList(),
     val demo: Boolean = false,
+    val headband: HeadbandState? = null,
 )
 
 /**
  * The phone's monitoring chain for every 5 s window:
  * window features -> sensor health (warnings to the watch) -> detector -> alarm flow.
+ * Headband reports (contact, pads, battery, charging) give their own warnings (HeadbandAlerts);
+ * every warning goes to the watch with its urgency for night mode (WarningPolicy).
  */
 class MonitoringEngine(
     private val cfg: DetectorConfig,
@@ -43,6 +49,9 @@ class MonitoringEngine(
 ) {
     private var detector = Detector(cfg, models)
     private var health = HealthMonitor()
+    private var alerts = HeadbandAlerts()
+    /** Headband warnings of the health monitor held back while the band is charging ("charging" says it). */
+    private val heldBack = HashSet<String>()
     val flow = AlarmFlow()
     var demo = false
         private set
@@ -53,21 +62,17 @@ class MonitoringEngine(
     fun reset(demo: Boolean) {
         detector = Detector(cfg, models)
         health = HealthMonitor()
+        alerts = HeadbandAlerts()
+        heldBack.clear()
         this.demo = demo
         status = EngineStatus(demo = demo)
     }
 
     fun onWindow(w: WindowInput, endMs: Long): WindowResult {
         val f = WindowFeatures.compute(w)
-        val q = HealthMonitor.quality(f, w.contactBad)
-        for (e in health.next(q, endMs, flow.busy)) {
-            actions.sensor(e, demo)
-            actions.watch(when (e) {
-                is HealthMonitor.Event.Warning -> PhoneMessage.SensorWarning(e.episode.code, e.episode.impact)
-                is HealthMonitor.Event.Reminder -> PhoneMessage.SensorWarning(e.episode.code, e.episode.impact)
-                is HealthMonitor.Event.Fixed -> PhoneMessage.SensorFixed(e.episode.code)
-            })
-        }
+        val q = HealthMonitor.quality(f)          // electrode contact: HeadbandAlerts, from the lead-off bits
+        for (e in health.next(q, endMs, flow.busy)) sendHealth(e)
+        w.channels?.let { c -> for (e in alerts.onWindow(w.leadOff, c.contactOk, endMs)) send(e) }
         val r = detector.next(f, w)
         if (r.alarm) {
             val onsetMs = endMs - (r.index - r.onsetIndex!! + 1) * WindowAssembler.WINDOW_MS
@@ -79,8 +84,43 @@ class MonitoringEngine(
         }
         dispatch(flow.tick(endMs))
         status = status.copy(windows = r.index + 1, lastScore = r.score, fallback = r.fallback, noHeartRate = r.noHeartRate, quality = q,
-            heartRate = f["ecg_hr"] ?: Double.NaN, flowState = flow.state, openWarnings = health.openEpisodes)
+            heartRate = f["ecg_hr"] ?: Double.NaN, flowState = flow.state, openWarnings = openWarnings())
         return r
+    }
+
+    /** New headband state (status packet or contact check), from the headband receiver. */
+    fun onHeadbandState(s: HeadbandState, nowMs: Long) {
+        val wasCharging = alerts.charging
+        for (e in alerts.onState(s, nowMs)) send(e)
+        if (wasCharging && !alerts.charging) {     // charging over: problems that are still there are now told
+            for (ep in health.openEpisodes) if (ep.code in heldBack) send(HealthMonitor.Event.Warning(ep))
+            heldBack.clear()
+        }
+        status = status.copy(headband = s, openWarnings = openWarnings())
+    }
+
+    private fun openWarnings() = health.openEpisodes.filter { it.code !in heldBack } + alerts.openEpisodes
+
+    private fun sendHealth(e: HealthMonitor.Event) {
+        val ep = e.episode
+        if (ep.device == "headband" && alerts.charging) {
+            if (e is HealthMonitor.Event.Warning) heldBack += ep.code
+            return
+        }
+        if (ep.code in heldBack) {
+            if (e is HealthMonitor.Event.Fixed) heldBack -= ep.code
+            return
+        }
+        send(e)
+    }
+
+    private fun send(e: HealthMonitor.Event) {
+        actions.sensor(e, demo)
+        val ep = e.episode
+        actions.watch(when (e) {
+            is HealthMonitor.Event.Fixed -> PhoneMessage.SensorFixed(ep.code)
+            else -> PhoneMessage.SensorWarning(ep.code, ep.impact, ep.detail, WarningPolicy.urgent(ep.code, ep.impact))
+        })
     }
 
     fun tick(nowMs: Long) { dispatch(flow.tick(nowMs)); status = status.copy(flowState = flow.state) }

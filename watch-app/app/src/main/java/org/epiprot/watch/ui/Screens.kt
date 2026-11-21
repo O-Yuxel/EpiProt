@@ -74,7 +74,11 @@ fun EpiProtWatchApp(controller: WatchController, sensorPermission: Boolean, onRe
                 wrongAttempts = s.wrongAttempts,
                 onPin = controller::enterPin,
             )
-            is Screen.Warning -> MessageScreen(Orange, warningText(s.code), impactText(s.impact),
+            is Screen.Warning -> MessageScreen(Orange, warningText(s.code, s.detail), impactText(s.impact),
+                button = stringResource(R.string.ok), onButton = controller::dismiss)
+            is Screen.NightSummary -> MessageScreen(Teal,
+                pluralTitle(s.items.size),
+                s.items.map { (c, d) -> warningText(c, d) }.joinToString("\n\n"),
                 button = stringResource(R.string.ok), onButton = controller::dismiss)
             is Screen.Info -> MessageScreen(
                 if (s.kind == InfoKind.FALSE_ALARM_SENT || s.kind == InfoKind.ALARM_ENDED) Teal else Green,
@@ -93,6 +97,8 @@ private fun HomeScreen(controller: WatchController, sensorPermission: Boolean, o
     val simulated by controller.simulated.collectAsStateWithLifecycle()
     val demoPin by controller.demoPin.collectAsStateWithLifecycle()
     val warnings by controller.warnings.collectAsStateWithLifecycle()
+    val details by controller.warningDetails.collectAsStateWithLifecycle()
+    val night by controller.night.collectAsStateWithLifecycle()
     val activeAlarm by controller.activeAlarm.collectAsStateWithLifecycle()
     val allowed by controller.monitoringAllowed.collectAsStateWithLifecycle()
     var shaking by remember { mutableStateOf(false) }
@@ -144,11 +150,26 @@ private fun HomeScreen(controller: WatchController, sensorPermission: Boolean, o
                 for ((code, _) in warnings) item {
                     Chip(
                         onClick = { controller.openWarning(code) },
-                        label = { Text(warningText(code), maxLines = 3, fontSize = 12.sp) },
+                        label = { Text(warningText(code, details[code] ?: ""), maxLines = 3, fontSize = 12.sp) },
                         colors = ChipDefaults.chipColors(backgroundColor = Orange),
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
+            }
+            item {
+                ToggleChip(
+                    checked = night,
+                    onCheckedChange = { controller.toggleNight() },
+                    label = { Text(stringResource(R.string.night_mode)) },
+                    secondaryLabel = { Text(stringResource(R.string.night_mode_text), maxLines = 2, fontSize = 11.sp) },
+                    toggleControl = {
+                        androidx.wear.compose.material.Icon(
+                            imageVector = ToggleChipDefaults.switchIcon(checked = night),
+                            contentDescription = null,
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
             if (demoPin) item { Small(stringResource(R.string.home_demo_pin)) }
 
@@ -158,6 +179,7 @@ private fun HomeScreen(controller: WatchController, sensorPermission: Boolean, o
             item { DemoChip(stringResource(R.string.demo_alarm_end), controller::demoAlarmEnd) }
             item { DemoChip(stringResource(R.string.demo_warning), controller::demoWarning) }
             item { DemoChip(stringResource(R.string.demo_fixed), controller::demoFixed) }
+            item { DemoChip(stringResource(R.string.demo_pad), controller::demoPad) }
             if (simulated) item {
                 ToggleChip(
                     checked = shaking,
@@ -295,7 +317,32 @@ private fun MessageScreen(background: Color, title: String, text: String?, butto
 }
 
 @Composable
-private fun warningText(code: WarningCode) = stringResource(
+private fun pluralTitle(n: Int) = stringResource(R.string.night_summary_title, n)
+
+@Composable
+private fun padNames(detail: String): String {
+    val names = mapOf(
+        "L-top" to stringResource(R.string.pad_l_top),
+        "L-bottom" to stringResource(R.string.pad_l_bottom),
+        "R-top" to stringResource(R.string.pad_r_top),
+        "R-bottom" to stringResource(R.string.pad_r_bottom),
+        "bias" to stringResource(R.string.pad_bias),
+    )
+    return detail.split(",").filter { it.isNotBlank() }.joinToString("; ") { names[it] ?: it }
+}
+
+@Composable
+private fun warningText(code: WarningCode, detail: String = ""): String = when (code) {
+    WarningCode.PAD_CONTACT_LOST -> stringResource(R.string.warn_pad_contact_lost, padNames(detail))
+    WarningCode.PAD_REPLACE -> stringResource(R.string.warn_pad_replace, padNames(detail))
+    WarningCode.HEADBAND_BATTERY_LOW -> stringResource(R.string.warn_headband_battery_low, detail)
+    WarningCode.HEADBAND_BATTERY_CRITICAL -> stringResource(R.string.warn_headband_battery_critical, detail)
+    WarningCode.HEADBAND_CHARGING -> stringResource(R.string.warn_headband_charging)
+    else -> simpleWarningText(code)
+}
+
+@Composable
+private fun simpleWarningText(code: WarningCode) = stringResource(
     when (code) {
         WarningCode.HEADBAND_MISSING -> R.string.warn_headband_missing
         WarningCode.BRAIN_WEAK -> R.string.warn_brain_weak
@@ -304,6 +351,7 @@ private fun warningText(code: WarningCode) = stringResource(
         WarningCode.HEART_MISSING -> R.string.warn_heart_missing
         WarningCode.BODY_MOV_MISSING -> R.string.warn_body_mov_missing
         WarningCode.PHONE_DISCONNECTED -> R.string.warn_phone_disconnected
+        else -> R.string.warn_headband_missing
     }
 )
 

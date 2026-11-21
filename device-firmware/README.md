@@ -73,11 +73,11 @@ the packets that arrived in time, and the phone's sensor-health rules (`epiprot.
 | Battery runs out | headband missing, after 90 s | same | low battery reported first |
 
 **Decided with the user for the phone integration step:**
-- **Every headband warning is shown on the watch**: replace pad, electrode contact lost, brain signal weak,
+- ✅ (phone part 2) **Every headband warning is shown on the watch**: replace pad, electrode contact lost, brain signal weak,
   headband missing, battery low, charging, motion sensor error.
 - **The phone shows the headband's live state** (like the heart-rate status for the watch): connection, battery,
   contact of each pad, brain signal and head movement arriving or not, last contact check.
-- **Night mode on the watch** (time range set once on the phone, e.g. 23:00–07:00; can also be switched on the watch):
+- ✅ (phone part 2) **Night mode on the watch** (time range set once on the phone, e.g. 23:00–07:00; can also be switched on the watch):
   - the seizure alarm always vibrates (the patient must be able to cancel a false alarm, "Are you OK?" checks must work);
   - warnings that mean detection is not working still vibrate: headband missing, brain signal lost,
     battery about to run out (< 30 min);
@@ -88,10 +88,10 @@ the packets that arrived in time, and the phone's sensor-health rules (`epiprot.
 1. ✅ (phone part 1) Use the contact (lead-off) bits for the brain-signal check; without them a loose cable or a lost bias electrode
    goes unnoticed while the data are bad.
 2. ✅ (phone part 1) Switch the model to a backup channel pair when a pad of channel 1 or 2 loses contact.
-3. Show "headband charging" instead of "headband missing" when the status says so.
+3. ✅ (phone part 2) Show "headband charging" instead of "headband missing" when the status says so.
 4. ✅ (phone part 1) Ignore packets received twice (same sequence number); send catch-up packets to the diary, not to detection.
 5. ✅ (phone part 1) Movement: convert to the SeizeIT2 group-B scale (D14) and place samples in their 25 Hz slots (D13).
-6. Show "replace the pad behind the left ear (lower)" when a contact check reports a pad above 150 kOhm (D15),
+6. ✅ (phone part 2) Show "replace the pad behind the left ear (lower)" when a contact check reports a pad above 150 kOhm (D15),
    and leave EEG flagged as "contact check" out of detection.
 
 ## Why the model is not on the headband (yet)

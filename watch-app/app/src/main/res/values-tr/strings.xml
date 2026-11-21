@@ -56,4 +56,21 @@
     <string name="home_no_consent_text">İzleme için henüz onay yok. EpiProt telefon uygulamasından ver (Ayarlar → Gizlilik ve onaylar).</string>
     <string name="notif_resume_title">EpiProt çalışmıyor</string>
     <string name="notif_resume_text">Açıp devam etmek için dokun.</string>
+
+    <!-- kafa bandı uyarıları (telefondaki HeadbandAlerts) -->
+    <string name="warn_pad_contact_lost">Cilt teması yok: %1$s. Pedi geri bastırın ya da değiştirin.</string>
+    <string name="warn_pad_replace">Pedi değiştirin (%1$s): kuruyor.</string>
+    <string name="warn_headband_battery_low">Kafa bandının pili azaldı (%%%1$s). Yakında şarj edin.</string>
+    <string name="warn_headband_battery_critical">Kafa bandının pili bitmek üzere (%%%1$s). Hemen şarj edin.</string>
+    <string name="warn_headband_charging">Kafa bandı şarjda. Tekrar takılana kadar tespit yalnızca saatle yapılıyor.</string>
+    <string name="pad_l_top">sol kulak arkası, üst</string>
+    <string name="pad_l_bottom">sol kulak arkası, alt</string>
+    <string name="pad_r_top">sağ kulak arkası, üst</string>
+    <string name="pad_r_bottom">sağ kulak arkası, alt</string>
+    <string name="pad_bias">ense</string>
+    <!-- gece modu -->
+    <string name="night_mode">Gece modu</string>
+    <string name="night_mode_text">Sadece acil uyarılar titrer. Alarm her zaman titrer.</string>
+    <string name="night_summary_title">Gece: %1$d sessiz uyarı</string>
+    <string name="demo_pad">Ped uyarısı</string>
 </resources>

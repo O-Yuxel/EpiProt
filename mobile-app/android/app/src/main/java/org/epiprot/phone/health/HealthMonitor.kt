@@ -16,12 +16,14 @@ class HealthMonitor {
         val device: String, val code: String, val impact: String, val problem: String,
         val signals: Set<String>, val badFromMs: Long, val warnedMs: Long,
         val reminders: MutableList<Long> = mutableListOf(), var fixedMs: Long? = null,
+        val detail: String = "",           // e.g. the pads concerned ("L-bottom,R-top")
     )
 
     sealed interface Event {
-        data class Warning(val episode: Episode) : Event
-        data class Reminder(val episode: Episode) : Event
-        data class Fixed(val episode: Episode) : Event
+        val episode: Episode
+        data class Warning(override val episode: Episode) : Event
+        data class Reminder(override val episode: Episode) : Event
+        data class Fixed(override val episode: Episode) : Event
     }
 
     private class DeviceState(val device: String, val keys: List<String>, val others: List<String>) {

@@ -152,9 +152,15 @@ sealed interface PhoneMessage {
     data class AlarmStart(val alarmId: Long, val pinWindowS: Int) : PhoneMessage
     data class AlarmEnd(val alarmId: Long, val reason: String) : PhoneMessage
     data class CheckIn(val alarmId: Long, val number: Int) : PhoneMessage
-    data class SensorWarning(val code: String, val impact: String) : PhoneMessage
+    /**
+     * [detail]: which part, e.g. the pads ("L-bottom,R-top"); [urgent]: vibrates also in night mode
+     * (detection is not working or about to stop). The phone decides urgency (WarningPolicy).
+     */
+    data class SensorWarning(val code: String, val impact: String, val detail: String = "", val urgent: Boolean = true) : PhoneMessage
     data class SensorFixed(val code: String) : PhoneMessage
-    data class Settings(val pinSalt: String, val pinHash: String, val pinWindowS: Int) : PhoneMessage
+    /** Night mode: from [nightStartMin] to [nightEndMin] (minutes after midnight, watch's local time). */
+    data class Settings(val pinSalt: String, val pinHash: String, val pinWindowS: Int,
+                        val nightEnabled: Boolean = true, val nightStartMin: Int = 23 * 60, val nightEndMin: Int = 7 * 60) : PhoneMessage
     data class ConsentState(val monitoringAllowed: Boolean) : PhoneMessage
 
     companion object {
@@ -164,9 +170,11 @@ sealed interface PhoneMessage {
                 Paths.ALARM_START -> AlarmStart(j.getLong("alarm_id"), j.optInt("pin_window_s", 30))
                 Paths.ALARM_END -> AlarmEnd(j.getLong("alarm_id"), j.optString("reason", ""))
                 Paths.CHECKIN -> CheckIn(j.getLong("alarm_id"), j.optInt("number", 1))
-                Paths.SENSOR_WARNING -> SensorWarning(j.getString("code"), j.optString("impact", "none"))
+                Paths.SENSOR_WARNING -> SensorWarning(j.getString("code"), j.optString("impact", "none"),
+                    j.optString("detail", ""), j.optBoolean("urgent", true))
                 Paths.SENSOR_FIXED -> SensorFixed(j.getString("code"))
-                Paths.SETTINGS -> Settings(j.getString("pin_salt"), j.getString("pin_hash"), j.optInt("pin_window_s", 30))
+                Paths.SETTINGS -> Settings(j.getString("pin_salt"), j.getString("pin_hash"), j.optInt("pin_window_s", 30),
+                    j.optBoolean("night_enabled", true), j.optInt("night_start_min", 23 * 60), j.optInt("night_end_min", 7 * 60))
                 Paths.CONSENT -> ConsentState(j.getBoolean("monitoring_allowed"))
                 else -> null
             }
@@ -181,9 +189,11 @@ sealed interface PhoneMessage {
                 is AlarmEnd -> Paths.ALARM_END to JSONObject().put("alarm_id", msg.alarmId).put("reason", msg.reason)
                 is CheckIn -> Paths.CHECKIN to JSONObject().put("alarm_id", msg.alarmId).put("number", msg.number)
                 is SensorWarning -> Paths.SENSOR_WARNING to JSONObject().put("code", msg.code).put("impact", msg.impact)
+                    .put("detail", msg.detail).put("urgent", msg.urgent)
                 is SensorFixed -> Paths.SENSOR_FIXED to JSONObject().put("code", msg.code)
                 is Settings -> Paths.SETTINGS to JSONObject().put("pin_salt", msg.pinSalt).put("pin_hash", msg.pinHash)
-                    .put("pin_window_s", msg.pinWindowS)
+                    .put("pin_window_s", msg.pinWindowS).put("night_enabled", msg.nightEnabled)
+                    .put("night_start_min", msg.nightStartMin).put("night_end_min", msg.nightEndMin)
                 is ConsentState -> Paths.CONSENT to JSONObject().put("monitoring_allowed", msg.monitoringAllowed)
             }
             return path to j.toString().toByteArray()
