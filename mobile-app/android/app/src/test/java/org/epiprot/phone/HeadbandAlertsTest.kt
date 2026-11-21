@@ -71,7 +71,7 @@ class HeadbandAlertsTest {
         val codes = ch.map { (if (it is HealthMonitor.Event.Fixed) "fixed:" else "") + it.episode.code }.toSet()
         assertEquals(setOf("headband_charging", "fixed:headband_battery_low", "fixed:headband_battery_critical"), codes)
         assertTrue(a.charging)
-        assertFalse(WarningPolicy.urgent("headband_charging", "limited"))
+        assertFalse(WarningPolicy.urgent("headband_charging", "no_alarms"))
     }
 }
 

@@ -14,7 +14,7 @@ import org.epiprot.phone.headband.HeadbandProtocol as P
  *  pad_replace        a contact check found a pad still touching but above 150 kOhm: drying out.
  *  headband_battery_low       below 15 % (the headband's low-battery bit)
  *  headband_battery_critical  2 % or less and not charging: detection stops soon
- *  headband_charging          charger attached: band off the head, detection uses the watch only
+ *  headband_charging          charger attached: band off the head, seizure detection is off (impact no_alarms)
  *
  * [detail] of a warning = the pads concerned, e.g. "L-bottom,R-top".
  */
@@ -53,7 +53,7 @@ class HeadbandAlerts {
     fun onState(s: HeadbandState, nowMs: Long): List<Event> {
         val out = mutableListOf<Event>()
         // charging
-        if (s.chargerAttached && CHARGING !in open) out += replace(CHARGING, "limited", "", nowMs, nowMs)
+        if (s.chargerAttached && CHARGING !in open) out += replace(CHARGING, "no_alarms", "", nowMs, nowMs)
         if (!s.chargerAttached && CHARGING in open) out += fix(CHARGING, nowMs)
         // battery
         if (s.batteryPct >= 0) {
@@ -103,7 +103,8 @@ class HeadbandAlerts {
 
 /** Which warnings vibrate on the watch in night mode (decided with the user). */
 object WarningPolicy {
-    /** Urgent = detection is limited or about to stop. Charging is limited too, but the patient chose it. */
+    /** Urgent = detection is limited or about to stop. Charging stops it too, but the patient chose it: quiet at night. */
     fun urgent(code: String, impact: String): Boolean =
-        code == HeadbandAlerts.BATTERY_CRITICAL || (impact == "limited" && code != HeadbandAlerts.CHARGING) || impact == "no_alarms"
+        code != HeadbandAlerts.CHARGING &&
+            (code == HeadbandAlerts.BATTERY_CRITICAL || impact == "limited" || impact == "no_alarms")
 }

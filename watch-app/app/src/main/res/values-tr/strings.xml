@@ -62,7 +62,7 @@
     <string name="warn_pad_replace">Pedi değiştirin (%1$s): kuruyor.</string>
     <string name="warn_headband_battery_low">Kafa bandının pili azaldı (%%%1$s). Yakında şarj edin.</string>
     <string name="warn_headband_battery_critical">Kafa bandının pili bitmek üzere (%%%1$s). Hemen şarj edin.</string>
-    <string name="warn_headband_charging">Kafa bandı şarjda. Tekrar takılana kadar tespit yalnızca saatle yapılıyor.</string>
+    <string name="warn_headband_charging">Kafa bandı şarjda. Kafa bandı tekrar takılana kadar nöbet tespiti ÇALIŞMIYOR.</string>
     <string name="pad_l_top">sol kulak arkası, üst</string>
     <string name="pad_l_bottom">sol kulak arkası, alt</string>
     <string name="pad_r_top">sağ kulak arkası, üst</string>

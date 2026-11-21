@@ -121,8 +121,9 @@ time stamps accurate; the 32 MHz radio crystal also clocks the motion sensor (D1
 | **Total** | **~9.5 mA, ~11.4 mA with 20 % margin** | |
 
 That is about 275 mAh a day, so **700 mAh lasts about 2 days**. Charging takes about 2 hours.
-During charging the band is off the head and the phone keeps monitoring with the watch-only backup
-models. The phone reminds the patient when the battery is low.
+During charging the band is off the head and **seizure detection is not working** (every model needs the brain
+signal; a watch-only model was considered and not built). The watch shows "headband charging", so the best time to
+charge is during the day while someone is around, e.g. while showering. The phone reminds the patient when the battery is low.
 
 **Why rechargeable:** a coin cell cannot deliver 11 mA continuously, AAA batteries are too heavy
 for the head, and body-heat or motion harvesting gives far too little power.
