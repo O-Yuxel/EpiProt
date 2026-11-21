@@ -78,6 +78,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -155,6 +156,15 @@ class MainActivity : ComponentActivity() {
 
     fun granted(perm: String) = ContextCompat.checkSelfPermission(this, perm) == PackageManager.PERMISSION_GRANTED
 
+    /** Asks for exactly these permissions (caregiver mode). */
+    fun requestPerms(perms: List<String>) {
+        val missing = perms.filterNot(::granted)
+        if (missing.isNotEmpty()) { fromButton = true; askPermissions.launch(missing.toTypedArray()) }
+    }
+
+    /** A number to follow, from the caregiver-mode "patient added you" notification. */
+    val prefillNumber = mutableStateOf<String?>(null)
+
     fun requestPermissions(fromButton: Boolean = false) {
         val missing = permissionGroups.flatMap { it.second }.filterNot(::granted)
         if (missing.isEmpty()) {
@@ -226,6 +236,7 @@ class MainActivity : ComponentActivity() {
 
     /** "Tap to resume" notification: start monitoring again from the foreground. */
     private fun handleResume(i: Intent?) {
+        i?.getStringExtra(org.epiprot.phone.caregiver.CaregiverMode.EXTRA_NUMBER)?.let { prefillNumber.value = it }
         if (i?.getBooleanExtra(MonitoringService.EXTRA_RESUME, false) == true &&
             EpiProtPhoneApp.monitor(this).consents.value.canMonitor) MonitoringService.start(this)
     }
@@ -253,6 +264,23 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun App(m: PhoneMonitor, activity: MainActivity) {
     val consents by m.consents.collectAsStateWithLifecycle()
+    // who uses this phone; an installation that was set up before the role existed is a patient phone
+    var role by rememberSaveable { mutableStateOf(m.settings.role ?: if (!consents.setupNeeded) "patient" else null) }
+    fun setRole(r: String) {
+        m.settings.role = r; role = r
+        if (r == "caregiver") { MonitoringService.stop(activity); m.disconnectHeadbandQuietly() }
+    }
+    when (role) {
+        null -> { RoleChoice { setRole(it) }; return }
+        "caregiver" -> {
+            Scaffold(containerColor = C.Background) { pad ->
+                Column(Modifier.padding(pad)) {
+                    CaregiverHome(activity, activity.prefillNumber.value) { setRole("patient") }
+                }
+            }
+            return
+        }
+    }
     if (consents.setupNeeded) { Onboarding(m, activity); return }
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var sub by rememberSaveable { mutableStateOf<String?>(null) }      // settings sub-page
@@ -906,6 +934,22 @@ private fun SettingsMenu(m: PhoneMonitor, activity: MainActivity, open: (String)
                 colors = SwitchDefaults.colors(checkedTrackColor = C.Teal))
         }
     }
+    // the same app on a caregiver's phone: switch this phone to caregiver mode
+    var roleAsk by remember { mutableStateOf(false) }
+    MenuCard {
+        MenuRow(Icons.Rounded.Favorite, stringResource(R.string.role_switch_to_caregiver), stringResource(R.string.role_switch_to_caregiver_sub)) {
+            roleAsk = true
+        }
+    }
+    if (roleAsk) AlertDialog(onDismissRequest = { roleAsk = false },
+        title = { Text(stringResource(R.string.hb_confirm_title)) },
+        text = { Text(stringResource(R.string.role_switch_caregiver_text)) },
+        confirmButton = { TextButton({
+            roleAsk = false
+            s.role = "caregiver"; MonitoringService.stop(activity); m.disconnectHeadbandQuietly()
+            activity.recreate()
+        }) { Text(stringResource(R.string.hb_yes)) } },
+        dismissButton = { TextButton({ roleAsk = false }) { Text(stringResource(R.string.hb_cancel)) } })
 }
 
 @Composable

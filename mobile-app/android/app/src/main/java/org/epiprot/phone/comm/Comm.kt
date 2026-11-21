@@ -71,7 +71,8 @@ class CaregiverMessenger(private val context: Context, private val settings: Set
         if (!consent.smsAllowed || !consent.caregiverConfirmed(to)) return
         val name = settings.patientName.ifBlank { context.getString(R.string.patient_default) }
         val text = context.getString(R.string.sms_intro, name,
-            context.getString(if (consent.locationAllowed) R.string.sms_intro_with_location else R.string.sms_intro_no_location))
+            context.getString(if (consent.locationAllowed) R.string.sms_intro_with_location else R.string.sms_intro_no_location)) +
+            "\n" + CaregiverTag.INTRO
         deliver(nowMs, 0, to, text)
     }
 
@@ -140,7 +141,8 @@ class CaregiverMessenger(private val context: Context, private val settings: Set
             CaregiverMessage.HANDOVER -> R.string.sms_handover
         }
         val emergency = consent.region?.emergency ?: context.getString(R.string.emergency_local)
-        val text = (if (demo) "[DEMO] " else "") + context.getString(res, name, time, where, emergency)
+        // the tag lets EpiProt in caregiver mode ring on the caregiver's phone (any language, no internet)
+        val text = (if (demo) "[DEMO] " else "") + context.getString(res, name, time, where, emergency) + "\n" + CaregiverTag.of(kind)
         val numbers = settings.caregivers
         if (numbers.isEmpty()) { log.message(nowMs, eventId, "-", text, "no_number"); return }
         // no SMS consent: nothing leaves the phone, the message is only kept in the log
@@ -153,6 +155,22 @@ class CaregiverMessenger(private val context: Context, private val settings: Set
         const val TRIES = 3
         const val RETRY_MS = 20_000L
         const val SENT_TIMEOUT_MS = 60_000L
+    }
+}
+
+/**
+ * Machine-readable end of every caregiver SMS, read by EpiProt in caregiver mode on the caregiver's phone:
+ * A seizure alarm, F false alarm, E emergency (> 5 min), N no answer after the seizure, H handover, I introduction.
+ * Same table in caregiver/CaregiverSms.kt (caregiver mode of this app).
+ */
+object CaregiverTag {
+    const val INTRO = "[EP:I]"
+    fun of(kind: CaregiverMessage) = when (kind) {
+        CaregiverMessage.SEIZURE_ALERT -> "[EP:A]"
+        CaregiverMessage.FALSE_ALARM -> "[EP:F]"
+        CaregiverMessage.EMERGENCY -> "[EP:E]"
+        CaregiverMessage.NO_ANSWER -> "[EP:N]"
+        CaregiverMessage.HANDOVER -> "[EP:H]"
     }
 }
 

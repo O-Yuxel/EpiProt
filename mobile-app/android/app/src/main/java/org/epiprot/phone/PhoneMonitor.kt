@@ -167,6 +167,9 @@ class PhoneMonitor(private val app: Context) {
         turnedOff("disconnected")
     }
 
+    /** This phone became a caregiver phone: let go of the headband without telling the watch anything. */
+    fun disconnectHeadbandQuietly() { hbLink.disconnect(); hbAckJob?.cancel() }
+
     /** The patient switches the headband off in the app. */
     fun powerOffHeadband() {
         hbLink.powerOff()

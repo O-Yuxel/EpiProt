@@ -26,6 +26,33 @@ class Settings(context: Context) {
         get() = Vault.decrypt(p.getString("doctor", null))
         set(v) = p.edit().putString("doctor", Vault.encrypt(v.trim())).apply()
 
+    /**
+     * Who uses this phone: "patient" (monitoring, the whole app) or "caregiver" (only rings the seizure alarm when a
+     * followed patient's phone sends an EpiProt SMS); null = not chosen yet (first start).
+     */
+    var role: String?
+        get() = p.getString("role", null)
+        set(v) = p.edit().putString("role", v).apply()
+
+    /** Caregiver mode: the patients this phone follows, "name\tnumber" per line (encrypted). */
+    var followed: List<Pair<String, String>>
+        get() = Vault.decrypt(p.getString("followed", null)).split('\n').filter { '\t' in it }
+            .map { it.substringBefore('\t') to it.substringAfter('\t') }
+        set(v) = p.edit().putString("followed", Vault.encrypt(v.joinToString("\n") { "${it.first.trim()}\t${it.second.trim()}" })).apply()
+
+    /** Caregiver mode: the last received EpiProt messages as JSON lines, newest first (encrypted). */
+    var caregiverLog: List<String>
+        get() = Vault.decrypt(p.getString("caregiver_log", null)).split('\n').filter { it.isNotBlank() }
+        set(v) = p.edit().putString("caregiver_log", Vault.encrypt(v.take(30).joinToString("\n"))).apply()
+
+    /** Caregiver mode: an alarm is ringing now; the alarm volume to restore afterwards (-1 = none saved). */
+    var caregiverRinging: Boolean
+        get() = p.getBoolean("cg_ringing", false)
+        set(v) = p.edit().putBoolean("cg_ringing", v).apply()
+    var savedAlarmVolume: Int
+        get() = p.getInt("cg_volume", -1)
+        set(v) = p.edit().putInt("cg_volume", v).apply()
+
     /** History and Settings open only after the phone's own screen lock / fingerprint (if the phone has one). */
     var appLock: Boolean
         get() = p.getBoolean("app_lock", true)
