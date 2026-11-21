@@ -118,6 +118,10 @@ internal fun CaregiverHome(activity: MainActivity, prefillNumber: String?, onSwi
             Need(stringResource(R.string.cg_need_sms), smsOk) {
                 activity.requestPerms(listOf(Manifest.permission.RECEIVE_SMS))
             }
+            val replyOk = ContextCompat.checkSelfPermission(c, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED
+            Need(stringResource(R.string.cg_need_reply), replyOk) {
+                activity.requestPerms(listOf(Manifest.permission.SEND_SMS))
+            }
             if (Build.VERSION.SDK_INT >= 33) Need(stringResource(R.string.cg_need_notif), notifOk) {
                 activity.requestPerms(listOf(Manifest.permission.POST_NOTIFICATIONS))
             }
@@ -132,6 +136,15 @@ internal fun CaregiverHome(activity: MainActivity, prefillNumber: String?, onSwi
                     CaregiverSms.Kind.SEIZURE, c.getString(R.string.cg_test_text)))
             }
             Text(stringResource(R.string.cg_test_note), color = C.InkSoft, style = MaterialTheme.typography.bodySmall)
+        }
+
+        // the caregiver's own name, sent with "I am going"
+        var myName by remember { mutableStateOf(org.epiprot.phone.data.Settings(c).caregiverName) }
+        EpiCard {
+            CardHeader(Icons.Rounded.Person, stringResource(R.string.cg_my_name_title))
+            OutlinedTextField(myName, { myName = it.take(30); org.epiprot.phone.data.Settings(c).caregiverName = myName },
+                label = { Text(stringResource(R.string.cg_my_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            Text(stringResource(R.string.cg_my_name_note), color = C.InkSoft, style = MaterialTheme.typography.bodySmall)
         }
 
         // followed patients
@@ -216,8 +229,10 @@ class CaregiverAlarmActivity : ComponentActivity() {
             Text(dateTime(r.timeMs), color = if (ringing) Color.White else C.InkSoft)
             EpiCard { Text(CaregiverSms.readable(r.text), color = C.Ink) }
             if (ringing) PrimaryButton(stringResource(R.string.cg_going), color = C.CoralDark) {
-                CaregiverMode.stop(this@CaregiverAlarmActivity); ringing = false
+                CaregiverMode.acknowledge(this@CaregiverAlarmActivity, r); ringing = false
             }
+            if (!ringing && r.kind.rings && r.number.isNotBlank()) Text(stringResource(R.string.cg_reply_sent),
+                color = C.InkSoft, style = MaterialTheme.typography.bodySmall)
             CaregiverSms.mapsLink(r.text)?.let { link ->
                 PrimaryButton(stringResource(R.string.cg_open_map), Icons.Rounded.LocationOn) {
                     startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))

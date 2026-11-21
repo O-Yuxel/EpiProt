@@ -626,4 +626,15 @@
     <string name="sms_shower_ok">EpiProt: %1$s answered: out of the shower and fine (%2$s).</string>
     <string name="cg_alarm_shower">%1$s does not answer after the shower</string>
     <string name="cg_shower_ok">%1$s is out of the shower and fine</string>
+    <!-- caregiver "I am going" reply -->
+    <string name="cg_reply_coming">EpiProt: %1$s is on the way.</string>
+    <string name="cg_reply_someone">Your caregiver</string>
+    <string name="cg_reply_sent">The patient\'s phone was told that you are on the way.</string>
+    <string name="cg_need_reply">Tell the patient \"I am going\" (send SMS)</string>
+    <string name="cg_my_name_title">Your name</string>
+    <string name="cg_my_name">Your name (shown to the patient)</string>
+    <string name="cg_my_name_note">When you tap \"I am going\", the patient\'s watch shows \"&lt;your name&gt; is coming\", and the other caregivers learn that you are on the way.</string>
+    <string name="cg_other_going">%1$s is going to %2$s</string>
+    <string name="sms_on_the_way">EpiProt: %1$s is on the way to %2$s (%3$s).</string>
+    <string name="alarm_coming">%1$s is coming (%2$s)</string>
 </resources>

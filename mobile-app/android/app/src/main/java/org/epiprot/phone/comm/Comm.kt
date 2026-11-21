@@ -155,6 +155,22 @@ class CaregiverMessenger(private val context: Context, private val settings: Set
         for (to in consent.recipients(numbers)) deliver(nowMs, eventId, to, text)
     }
 
+    /**
+     * "<name> is on the way" to every other confirmed caregiver (not the one who answered), so they know who goes;
+     * their alarm keeps ringing until they answer themselves.
+     */
+    suspend fun sendOnTheWay(eventId: Long, who: String, exceptNumber: String, nowMs: Long = System.currentTimeMillis()) {
+        val consent = consents()
+        if (!consent.smsAllowed) return
+        val name = settings.patientName.ifBlank { context.getString(R.string.patient_default) }
+        val time = DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(nowMs))
+        val whoText = who.ifBlank { context.getString(R.string.cg_reply_someone) }
+        val text = context.getString(R.string.sms_on_the_way, whoText, name, time) + "\n" +
+            org.epiprot.phone.caregiver.CaregiverSms.tag(org.epiprot.phone.caregiver.CaregiverSms.Kind.ON_THE_WAY, who)
+        for (to in consent.recipients(settings.caregivers).filterNot { org.epiprot.phone.caregiver.CaregiverSms.sameNumber(it, exceptNumber) })
+            deliver(nowMs, eventId, to, text)
+    }
+
     companion object {
         const val TRIES = 3
         const val RETRY_MS = 20_000L

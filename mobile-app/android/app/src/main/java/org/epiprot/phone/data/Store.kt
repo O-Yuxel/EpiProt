@@ -45,6 +45,11 @@ class Settings(context: Context) {
         get() = Vault.decrypt(p.getString("caregiver_log", null)).split('\n').filter { it.isNotBlank() }
         set(v) = p.edit().putString("caregiver_log", Vault.encrypt(v.take(30).joinToString("\n"))).apply()
 
+    /** Caregiver mode: the caregiver's own name, sent with "I am going" (encrypted). */
+    var caregiverName: String
+        get() = Vault.decrypt(p.getString("cg_name", null))
+        set(v) = p.edit().putString("cg_name", Vault.encrypt(v.trim())).apply()
+
     /** Caregiver mode: an alarm is ringing now; the alarm volume to restore afterwards (-1 = none saved). */
     var caregiverRinging: Boolean
         get() = p.getBoolean("cg_ringing", false)

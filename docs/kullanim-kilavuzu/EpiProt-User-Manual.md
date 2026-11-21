@@ -129,9 +129,10 @@ Fully charge the headband before its first use (about 2 hours). Bring the charge
 If you want your caregiver's phone to **ring loudly during a seizure, even when it is on silent**:
 
 1. Your caregiver installs the EpiProt app on their phone and chooses **"I am a caregiver"**.
-2. In **"Patients I follow"**, they enter your name and your phone number. (If your app sent them an introduction SMS, they can also tap the notification to add your number ready-made.)
-3. In the list **"Will the alarm ring?"** they tap **Allow** for every item: read EpiProt SMS, show notifications, ring through "Do Not Disturb", full-screen alarm over the lock screen.
-4. They put the phone on silent and tap **"Test the alarm"**. The phone must ring loudly. They silence it with **"I am going – silence the alarm"**.
+2. In **"Your name"**, they enter their own name (your watch then shows, for example, "Mehmet is coming").
+3. In **"Patients I follow"**, they enter your name and your phone number. (If your app sent them an introduction SMS, they can also tap the notification to add your number ready-made.)
+4. In the list **"Will the alarm ring?"** they tap **Allow** for every item: read EpiProt SMS, tell the patient "I am going" (send SMS), show notifications, ring through "Do Not Disturb", full-screen alarm over the lock screen.
+5. They put the phone on silent and tap **"Test the alarm"**. The phone must ring loudly. They silence it with **"I am going – silence the alarm"**.
 
 If your caregiver does not install the app, they still receive normal SMS; but if their phone is on silent, they may notice the message late.
 
@@ -207,11 +208,12 @@ Keep spare pads in their packaging in a cool, dry place. The app warns you when 
 4. If no PIN is entered, the alarm continues and your caregiver comes to you.
 5. If the seizure lasts **longer than 5 minutes**, your caregiver gets an **emergency** message.
 6. When the seizure is over, your watch asks **"Are you OK?" every 5 minutes**. When you feel yourself again, enter your PIN.
-7. If you still have not answered **15 minutes** after the seizure, your caregiver is alerted again. After **60 minutes** without an answer, monitoring is handed over to your caregiver.
+7. If your caregiver tapped "I am going", your watch shows **"(your caregiver's name) is coming"**; it also appears on the alarm card on your phone's home screen.
+8. If you still have not answered **15 minutes** after the seizure, your caregiver is alerted again. After **60 minutes** without an answer, monitoring is handed over to your caregiver.
 
 ### What the caregiver should do
 
-1. When the alarm comes, tap **"I am going – silence the alarm"** and go to the patient at once. With **Open the location** you see where they are; with **Call the patient** you can call them.
+1. When the alarm comes, tap **"I am going – silence the alarm"** and go to the patient at once. Your phone automatically sends the patient's phone an "I am going" message: the patient's watch shows **"(your name) is coming"**, and the other caregivers learn that you are on the way. Their alarm still rings, so that someone else is still alerted if you cannot go. With **Open the location** you see where they are; with **Call the patient** you can call them.
 2. During the seizure:
    - Stay calm, stay with the person and note the time.
    - Turn the person on their side (face slightly down) and put something soft under their head.

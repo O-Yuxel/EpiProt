@@ -31,6 +31,8 @@ object Paths {
     const val SETTINGS = "/epiprot/settings"
     /** Whether the user's consent allows monitoring; without it the watch does not run its sensors. */
     const val CONSENT = "/epiprot/consent"
+    /** A caregiver answered "I am going" (the phone got their reply SMS). */
+    const val CAREGIVER_COMING = "/epiprot/caregiver_coming"
 }
 
 /** Capability names declared in res/values/wear.xml of each app. */
@@ -189,6 +191,8 @@ sealed interface PhoneMessage {
     data class Settings(val pinSalt: String, val pinHash: String, val pinWindowS: Int,
                         val nightEnabled: Boolean = true, val nightStartMin: Int = 23 * 60, val nightEndMin: Int = 7 * 60) : PhoneMessage
     data class ConsentState(val monitoringAllowed: Boolean) : PhoneMessage
+    /** [name] of the caregiver on the way ("" = name unknown), when they answered. */
+    data class CaregiverComing(val name: String, val timeMs: Long) : PhoneMessage
 
     companion object {
         fun decode(path: String, bytes: ByteArray): PhoneMessage? = try {
@@ -203,6 +207,7 @@ sealed interface PhoneMessage {
                 Paths.SETTINGS -> Settings(j.getString("pin_salt"), j.getString("pin_hash"), j.optInt("pin_window_s", 30),
                     j.optBoolean("night_enabled", true), j.optInt("night_start_min", 23 * 60), j.optInt("night_end_min", 7 * 60))
                 Paths.CONSENT -> ConsentState(j.getBoolean("monitoring_allowed"))
+                Paths.CAREGIVER_COMING -> CaregiverComing(j.optString("name", ""), j.optLong("time_ms"))
                 else -> null
             }
         } catch (e: Exception) {
@@ -222,6 +227,7 @@ sealed interface PhoneMessage {
                     .put("pin_window_s", msg.pinWindowS).put("night_enabled", msg.nightEnabled)
                     .put("night_start_min", msg.nightStartMin).put("night_end_min", msg.nightEndMin)
                 is ConsentState -> Paths.CONSENT to JSONObject().put("monitoring_allowed", msg.monitoringAllowed)
+                is CaregiverComing -> Paths.CAREGIVER_COMING to JSONObject().put("name", msg.name).put("time_ms", msg.timeMs)
             }
             return path to j.toString().toByteArray()
         }

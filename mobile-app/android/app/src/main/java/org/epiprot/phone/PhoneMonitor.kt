@@ -246,6 +246,32 @@ class PhoneMonitor(private val app: Context) {
         if (shown) s.padReminderMs = nowMs
     }
 
+    // ---------------------------------------------------------------- a caregiver answered "I am going"
+    /** The last event whose alert went to the caregivers (seizure alarm, call for help, shower); 0 = none. */
+    private var lastAlertEventId = 0L
+    private var lastAlertMs = 0L
+    private val _coming = MutableStateFlow<List<Pair<String, Long>>>(emptyList())
+    /** Caregivers on the way for the last alert: name (or number) and when they answered. */
+    val caregiversComing: StateFlow<List<Pair<String, Long>>> = _coming
+
+    private fun alertSent(eventId: Long, nowMs: Long) {
+        if (eventId != lastAlertEventId) _coming.value = emptyList()
+        lastAlertEventId = eventId; lastAlertMs = nowMs
+    }
+
+    /** SMS from a caregiver's phone in caregiver mode ("I am going", CaregiverMode.acknowledge). */
+    fun onCaregiverComing(number: String, name: String, nowMs: Long) {
+        val who = name.ifBlank { number }
+        _coming.value = _coming.value.filterNot { it.first == who } + (who to nowMs)
+        actions.watch(PhoneMessage.CaregiverComing(name, nowMs))
+        val id = if (nowMs - lastAlertMs < 3 * 3_600_000L) lastAlertEventId else 0L
+        if (id > 0) {
+            log.step(id, nowMs, "caregiver coming", "$who answered \"I am going\"")
+            scope.launch(Dispatchers.IO) { messenger.sendOnTheWay(id, name, number); changed() }
+        }
+        changed()
+    }
+
     // ---------------------------------------------------------------- shower mode
     private val shower = org.epiprot.phone.alarm.ShowerWatch()
     private var showerEventId = 0L
@@ -254,6 +280,7 @@ class PhoneMonitor(private val app: Context) {
         for (e in effects) when (e) {
             is org.epiprot.phone.alarm.ShowerWatch.Effect.Alert -> {
                 showerEventId = log.addShowerEvent(nowMs, e.minutes)
+                alertSent(showerEventId, nowMs)
                 changed()
                 scope.launch(Dispatchers.IO) {
                     messenger.send(showerEventId, org.epiprot.phone.alarm.CaregiverMessage.SHOWER_OVERDUE, false); changed()
@@ -316,8 +343,10 @@ class PhoneMonitor(private val app: Context) {
             when (effect) {
                 is FlowEffect.Step -> log.step(effect.eventId, effect.timeMs, effect.step, effect.detail)
                 is FlowEffect.Update -> log.update(effect.eventId, effect.fields)
-                is FlowEffect.Sms -> scope.launch(Dispatchers.IO) {
-                    messenger.send(effect.eventId, effect.message, demo); changed()
+                is FlowEffect.Sms -> {
+                    if (!demo && effect.message != org.epiprot.phone.alarm.CaregiverMessage.FALSE_ALARM)
+                        alertSent(effect.eventId, System.currentTimeMillis())
+                    scope.launch(Dispatchers.IO) { messenger.send(effect.eventId, effect.message, demo); changed() }
                 }
                 is FlowEffect.Watch -> Unit      // sent via watch()
             }
@@ -525,6 +554,7 @@ class PhoneMonitor(private val app: Context) {
                     Paths.SOS -> {                  // "Call for help" on the watch: caregivers get an SMS with the location
                         val t = org.epiprot.phone.protocol.SosRequest.decode(data).timeMs
                         val id = log.addHelpEvent(t)
+                        alertSent(id, now)
                         log.step(id, now, "help", "patient pressed \"Call for help\" on the watch")
                         changed()
                         scope.launch(Dispatchers.IO) { messenger.send(id, org.epiprot.phone.alarm.CaregiverMessage.SOS, false); changed() }

@@ -62,6 +62,9 @@ can miss seizures, call 112 in an emergency).
   6-digit passkey from its user manual, so only this phone can connect, nobody nearby can read the brain signals and
   nobody can inject fake data (`device-firmware/PROTOCOL.md`). The second-phone test headband used in development
   cannot bond; the button to connect it without encryption appears only in development (debug) builds.
+* **Caregiver mode and replies:** on a caregiver's phone EpiProt reads only SMS ending with an EpiProt tag
+  ([EP:x]) from the patient numbers entered there; on the patient's phone it reads only the "I am going" tag
+  ([EP:C]) from the caregiver numbers entered there. Every other SMS is ignored and nothing is stored from it.
 * **Watch:** the phone tells the watch whether the consent allows monitoring; without it the watch does not run its
   sensors (off until the phone says yes) and shows why.
 

@@ -61,8 +61,13 @@ object CaregiverMode {
 
     /** An incoming SMS (from [CaregiverSmsReceiver], or the "test the alarm" button). */
     fun handle(c: Context, sender: String, text: String, nowMs: Long) {
-        if (Settings(c).role != "caregiver") return
         val kind = CaregiverSms.kind(text) ?: return
+        if (Settings(c).role != "caregiver") {
+            // patient's phone: a caregiver answered "I am going"
+            if (kind == CaregiverSms.Kind.COMING && Settings(c).caregivers.any { CaregiverSms.sameNumber(it, sender) })
+                org.epiprot.phone.EpiProtPhoneApp.monitor(c).onCaregiverComing(sender, CaregiverSms.arg(text), nowMs)
+            return
+        }
         val p = find(c, sender)
         if (p == null) {
             // only the introduction of a new patient is shown from an unknown number; an alarm never rings from one
@@ -76,6 +81,9 @@ object CaregiverMode {
             kind.rings -> ring(c, r)
             kind == CaregiverSms.Kind.FALSE_ALARM -> { stop(c); info(c, c.getString(R.string.cg_false_alarm, p.first), CaregiverSms.readable(text)) }
             kind == CaregiverSms.Kind.SHOWER_OK -> { stop(c); info(c, c.getString(R.string.cg_shower_ok, p.first), CaregiverSms.readable(text)) }
+            kind == CaregiverSms.Kind.ON_THE_WAY ->      // another caregiver is going; this alarm keeps ringing until answered here
+                info(c, c.getString(R.string.cg_other_going, CaregiverSms.arg(text).ifBlank { c.getString(R.string.cg_reply_someone) }, p.first),
+                    CaregiverSms.readable(text))
             else -> info(c, c.getString(R.string.cg_intro, p.first), CaregiverSms.readable(text))
         }
     }
@@ -121,6 +129,25 @@ object CaregiverMode {
         try { c.getSystemService(NotificationManager::class.java).notify(ALARM_ID, n) } catch (_: SecurityException) { }
     }
 
+    /**
+     * "I am going" on the alarm screen: silence the alarm and tell the patient's phone (SMS tagged [EP:C:name]); the
+     * patient's watch then shows "<name> is coming" and the other caregivers learn who is on the way.
+     */
+    fun acknowledge(c: Context, r: Received) {
+        stop(c)
+        if (!r.kind.rings || r.number.isBlank()) return                  // test alarm or nothing to answer
+        if (androidx.core.content.ContextCompat.checkSelfPermission(c, android.Manifest.permission.SEND_SMS) !=
+            android.content.pm.PackageManager.PERMISSION_GRANTED) return
+        val me = Settings(c).caregiverName
+        val text = c.getString(R.string.cg_reply_coming, me.ifBlank { c.getString(R.string.cg_reply_someone) }) + "\n" +
+            CaregiverSms.tag(CaregiverSms.Kind.COMING, me)
+        try {
+            val sms = if (android.os.Build.VERSION.SDK_INT >= 31) c.getSystemService(android.telephony.SmsManager::class.java)
+                      else @Suppress("DEPRECATION") android.telephony.SmsManager.getDefault()
+            sms.sendMultipartTextMessage(r.number, null, sms.divideMessage(text), null, null)
+        } catch (e: Exception) { android.util.Log.w("EpiProt", "reply SMS failed", e) }
+    }
+
     /** "I am going" on the alarm screen, or the false-alarm SMS: silence and restore the alarm volume. */
     fun stop(c: Context) {
         val s = Settings(c)
@@ -153,6 +180,7 @@ object CaregiverMode {
         CaregiverSms.Kind.SOS -> R.string.cg_alarm_sos
         CaregiverSms.Kind.SHOWER -> R.string.cg_alarm_shower
         CaregiverSms.Kind.SHOWER_OK -> R.string.cg_shower_ok
+        CaregiverSms.Kind.COMING, CaregiverSms.Kind.ON_THE_WAY -> R.string.cg_intro
     }
 
     const val EXTRA_NUMBER = "cg_number"

@@ -64,13 +64,19 @@ fun EpiProtWatchApp(controller: WatchController, sensorPermission: Boolean, onRe
     MaterialTheme {
         // the help call is shown over the home screen, never over an alarm or a check-in
         if (sos != null && screen is Screen.Home) { SosScreen(controller, sos!!); return@MaterialTheme }
+        val coming by controller.coming.collectAsStateWithLifecycle()
+        if (coming != null && screen is Screen.Home) {
+            MessageScreen(Green, comingTitle(coming!!), stringResource(R.string.coming_text),
+                button = stringResource(R.string.ok), onButton = controller::dismissComing)
+            return@MaterialTheme
+        }
         val shower by controller.shower.collectAsStateWithLifecycle()
         if (shower != null && screen is Screen.Home) { ShowerScreen(controller, shower!!); return@MaterialTheme }
         when (val s = screen) {
             is Screen.Home -> HomeScreen(controller, sensorPermission, onRequestPermission)
             is Screen.Alarm -> AlarmScreen(s, controller::enterPin)
             is Screen.AlarmActive -> MessageScreen(Red, stringResource(R.string.alarm_active_title),
-                stringResource(R.string.alarm_active_text), button = stringResource(R.string.home_button),
+                coming?.let { comingTitle(it) } ?: stringResource(R.string.alarm_active_text), button = stringResource(R.string.home_button),
                 onButton = controller::goHome)
             is Screen.CheckIn -> PinScreen(
                 background = Amber,
@@ -115,6 +121,10 @@ private fun SosScreen(controller: WatchController, sos: WatchController.Sos) {
             button = stringResource(R.string.ok), onButton = controller::sosClose)
     }
 }
+
+@Composable
+private fun comingTitle(name: String) =
+    if (name.isBlank()) stringResource(R.string.coming_unknown) else stringResource(R.string.coming_title, name)
 
 // ------------------------------------------------------------------ shower mode
 

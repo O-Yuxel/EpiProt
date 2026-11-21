@@ -111,4 +111,8 @@
     <string name="shower_alerted_title">Caregiver alerted</string>
     <string name="shower_alerted_text">You did not answer, so your caregiver was told to check on you.</string>
     <string name="shower_ok_now">I am fine</string>
+    <!-- caregiver coming -->
+    <string name="coming_title">%1$s is coming</string>
+    <string name="coming_unknown">Your caregiver is coming</string>
+    <string name="coming_text">Your caregiver answered and is on the way. Stay where you are, lie on your side if you can.</string>
 </resources>

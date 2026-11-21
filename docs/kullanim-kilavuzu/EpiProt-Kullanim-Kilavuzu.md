@@ -129,9 +129,10 @@ Uygulamada **Ayarlar → Hasta ve bakıcılar** bölümüne girin:
 Bakıcınızın telefonu nöbet anında **sessizdeyken bile yüksek sesle çalsın** istiyorsanız:
 
 1. Bakıcınız EpiProt uygulamasını kendi telefonuna kurar ve **"Bakıcıyım"** seçer.
-2. **"Takip ettiğim hastalar"** bölümüne sizin adınızı ve telefon numaranızı yazar. (Sizin uygulamanız ona tanıtım SMS'i gönderdiyse, gelen bildirime dokunarak numaranızı hazır olarak da ekleyebilir.)
-3. **"Alarm çalabilecek mi?"** listesindeki her maddede **İzin ver**'e dokunur: SMS okuma, bildirim, "Rahatsız Etmeyin" açıkken de çalma, kilit ekranında tam ekran alarm.
-4. Telefonu sessize alıp **"Alarmı dene"**'ye dokunur. Telefon yüksek sesle çalmalı. **Gidiyorum – alarmı sustur** ile susturur.
+2. **"Adınız"** bölümüne kendi adını yazar (hastanın saatinde "Mehmet geliyor" gibi görünür).
+3. **"Takip ettiğim hastalar"** bölümüne sizin adınızı ve telefon numaranızı yazar. (Sizin uygulamanız ona tanıtım SMS'i gönderdiyse, gelen bildirime dokunarak numaranızı hazır olarak da ekleyebilir.)
+4. **"Alarm çalabilecek mi?"** listesindeki her maddede **İzin ver**'e dokunur: SMS okuma, hastaya "geliyorum" demek (SMS gönderme), bildirim, "Rahatsız Etmeyin" açıkken de çalma, kilit ekranında tam ekran alarm.
+5. Telefonu sessize alıp **"Alarmı dene"**'ye dokunur. Telefon yüksek sesle çalmalı. **Gidiyorum – alarmı sustur** ile susturur.
 
 Bakıcınız uygulamayı kurmazsa da normal SMS alır; ama telefonu sessizdeyse mesajı geç fark edebilir.
 
@@ -207,11 +208,12 @@ Yedek pedleri serin ve kuru bir yerde, ambalajında saklayın. Yedek ped 10'un a
 4. Şifre girilmezse alarm devam eder ve bakıcınız size doğru yola çıkar.
 5. Nöbet **5 dakikayı geçerse** bakıcınıza **acil durum** mesajı gider.
 6. Nöbet bitince saatiniz **5 dakikada bir "İyi misiniz?"** diye sorar. Kendinize gelince şifrenizi girin.
-7. Nöbetten **15 dakika** sonra hâlâ cevap vermediyseniz bakıcınıza tekrar haber verilir. **60 dakika** cevap gelmezse takip bakıcınıza devredilir.
+7. Bakıcınız "Gidiyorum"a dokunduysa saatinizde **"(bakıcınızın adı) geliyor"** yazar; telefonunuzun ana ekranındaki alarm kartında da görünür.
+8. Nöbetten **15 dakika** sonra hâlâ cevap vermediyseniz bakıcınıza tekrar haber verilir. **60 dakika** cevap gelmezse takip bakıcınıza devredilir.
 
 ### Bakıcının yapması gerekenler
 
-1. Alarm geldiğinde **"Gidiyorum – alarmı sustur"**'a dokunun ve hemen hastanın yanına gidin. **Konumu aç** ile konumu, **Hastayı ara** ile hastayı arayabilirsiniz.
+1. Alarm geldiğinde **"Gidiyorum – alarmı sustur"**'a dokunun ve hemen hastanın yanına gidin. Telefonunuz hastanın telefonuna otomatik olarak "geliyorum" mesajı gönderir: hastanın saatinde **"(adınız) geliyor"** yazar, diğer bakıcılar da sizin yola çıktığınızı öğrenir. Onların alarmı yine de çalar; böylece siz gidemezseniz başkası hâlâ uyarılmış olur. **Konumu aç** ile konumu, **Hastayı ara** ile hastayı arayabilirsiniz.
 2. Nöbet sırasında:
    - Sakin olun, kişinin yanında kalın ve saati not edin.
    - Kişiyi yan yatırın (yüzü hafifçe aşağı bakacak şekilde) ve başının altına yumuşak bir şey koyun.

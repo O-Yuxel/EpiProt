@@ -106,4 +106,8 @@
     <string name="shower_alerted_title">Bakıcınıza haber verildi</string>
     <string name="shower_alerted_text">Cevap vermediğiniz için bakıcınızdan sizi kontrol etmesi istendi.</string>
     <string name="shower_ok_now">İyiyim</string>
+    <!-- bakıcı geliyor -->
+    <string name="coming_title">%1$s geliyor</string>
+    <string name="coming_unknown">Bakıcınız geliyor</string>
+    <string name="coming_text">Bakıcınız cevap verdi ve yolda. Olduğunuz yerde kalın, yapabiliyorsanız yan yatın.</string>
 </resources>

@@ -616,4 +616,15 @@
     <string name="sms_shower_ok">EpiProt: %1$s cevap verdi: duştan çıktı ve iyi (%2$s).</string>
     <string name="cg_alarm_shower">%1$s duştan sonra cevap vermiyor</string>
     <string name="cg_shower_ok">%1$s duştan çıktı ve iyi</string>
+    <!-- bakıcının "geliyorum" cevabı -->
+    <string name="cg_reply_coming">EpiProt: %1$s yola çıktı, geliyor.</string>
+    <string name="cg_reply_someone">Bakıcınız</string>
+    <string name="cg_reply_sent">Hastanın telefonuna yola çıktığınız bildirildi.</string>
+    <string name="cg_need_reply">Hastaya \"geliyorum\" demek (SMS gönderme)</string>
+    <string name="cg_my_name_title">Adınız</string>
+    <string name="cg_my_name">Adınız (hastaya gösterilir)</string>
+    <string name="cg_my_name_note">\"Gidiyorum\"a dokunduğunuzda hastanın saatinde \"&lt;adınız&gt; geliyor\" yazar ve diğer bakıcılar yola çıktığınızı öğrenir.</string>
+    <string name="cg_other_going">%1$s, %2$s için yola çıktı</string>
+    <string name="sms_on_the_way">EpiProt: %1$s, %2$s için yola çıktı (%3$s).</string>
+    <string name="alarm_coming">%1$s geliyor (%2$s)</string>
 </resources>

@@ -150,7 +150,7 @@ class MainActivity : ComponentActivity() {
     /** Permission groups shown in the app: label -> permissions. */
     val permissionGroups: List<Pair<Int, List<String>>> = buildList {
         add(R.string.perm_location to listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
-        add(R.string.perm_sms to listOf(Manifest.permission.SEND_SMS))
+        add(R.string.perm_sms to listOf(Manifest.permission.SEND_SMS, Manifest.permission.RECEIVE_SMS))   // receive: caregivers' "I am going"
         if (Build.VERSION.SDK_INT >= 33) add(R.string.perm_notifications to listOf(Manifest.permission.POST_NOTIFICATIONS))
         if (Build.VERSION.SDK_INT >= 31) add(R.string.perm_bluetooth to listOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN))
     }
@@ -182,7 +182,7 @@ class MainActivity : ComponentActivity() {
             when (k) {
                 "notifications" -> if (Build.VERSION.SDK_INT >= 33) listOf(Manifest.permission.POST_NOTIFICATIONS) else emptyList()
                 "bluetooth" -> if (Build.VERSION.SDK_INT >= 31) listOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN) else emptyList()
-                "sms" -> listOf(Manifest.permission.SEND_SMS)
+                "sms" -> listOf(Manifest.permission.SEND_SMS, Manifest.permission.RECEIVE_SMS)
                 "location" -> listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
                 else -> emptyList()
             }
@@ -710,6 +710,11 @@ private fun AlarmCard(m: PhoneMonitor, s: AlarmFlow.State, now: Long, demo: Bool
                     is AlarmFlow.State.Recovery -> stringResource(R.string.alarm_recovery, s.checkIns)
                     AlarmFlow.State.Idle -> ""
                 }, color = Color.White, style = MaterialTheme.typography.bodyLarge)
+                // caregivers who answered "I am going" (caregiver mode on their phone)
+                val coming by m.caregiversComing.collectAsStateWithLifecycle()
+                coming.forEach { (who, at) ->
+                    Text(stringResource(R.string.alarm_coming, who, time(at)), color = Color.White, fontWeight = FontWeight.SemiBold)
+                }
                 if (s !is AlarmFlow.State.Alarm) {
                     Text(stringResource(R.string.caregiver_here), color = Color.White.copy(alpha = 0.85f))
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {

@@ -33,3 +33,18 @@ class CaregiverSmsTest {
         assertFalse(CaregiverSms.sameNumber("112", "112"))                  // short numbers never match
     }
 }
+
+class CaregiverReplyTest {
+    @Test
+    fun comingTagCarriesTheName() {
+        val tag = org.epiprot.phone.caregiver.CaregiverSms.tag(org.epiprot.phone.caregiver.CaregiverSms.Kind.COMING, "Mehmet")
+        org.junit.Assert.assertEquals("[EP:C:Mehmet]", tag)
+        val sms = "EpiProt: Mehmet yola çıktı, geliyor.\n$tag"
+        org.junit.Assert.assertEquals(org.epiprot.phone.caregiver.CaregiverSms.Kind.COMING, org.epiprot.phone.caregiver.CaregiverSms.kind(sms))
+        org.junit.Assert.assertEquals("Mehmet", org.epiprot.phone.caregiver.CaregiverSms.arg(sms))
+        org.junit.Assert.assertEquals("[EP:K]", org.epiprot.phone.caregiver.CaregiverSms.tag(org.epiprot.phone.caregiver.CaregiverSms.Kind.ON_THE_WAY, " "))
+        org.junit.Assert.assertEquals("[EP:C:Ali Veli]", org.epiprot.phone.caregiver.CaregiverSms.tag(org.epiprot.phone.caregiver.CaregiverSms.Kind.COMING, "Ali [Veli]:"))
+        org.junit.Assert.assertEquals("", org.epiprot.phone.caregiver.CaregiverSms.arg("x [EP:A]"))     // old tags still read
+        org.junit.Assert.assertEquals(org.epiprot.phone.caregiver.CaregiverSms.Kind.SEIZURE, org.epiprot.phone.caregiver.CaregiverSms.kind("x [EP:A]"))
+    }
+}

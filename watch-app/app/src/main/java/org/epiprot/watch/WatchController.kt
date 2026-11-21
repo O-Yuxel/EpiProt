@@ -168,6 +168,11 @@ class WatchController(private val app: Context) {
                 _monitoringAllowed.value = msg.monitoringAllowed
                 updateSensors()
             }
+            is PhoneMessage.CaregiverComing -> {
+                _coming.value = msg.name
+                haptics.short()
+                Notifications.wake(app)
+            }
             is PhoneMessage.Settings -> {
                 prefs.edit().putString("pin_salt", msg.pinSalt).putString("pin_hash", msg.pinHash)
                     .putInt("pin_window_s", msg.pinWindowS).putBoolean("night_enabled", msg.nightEnabled)
@@ -229,6 +234,12 @@ class WatchController(private val app: Context) {
     }
 
     fun sosCancel() { sosJob?.cancel(); _sos.value = null }
+
+    // ---------------------------------------------------------------- a caregiver answered "I am going"
+    private val _coming = MutableStateFlow<String?>(null)
+    /** Name of the caregiver on the way ("" = name unknown); null = nobody announced. */
+    val coming: StateFlow<String?> = _coming
+    fun dismissComing() { _coming.value = null }
 
     // ---------------------------------------------------------------- shower mode
     /**
