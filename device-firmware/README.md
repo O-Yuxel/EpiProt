@@ -123,7 +123,7 @@ reconnected by itself, rebuilt 25 past windows from the stored data, no crash; t
 onset (onset time estimated to ±10 s because the log of the test phone was lost), instead of 88 s after it. This run also
 found a crash (stored packets that arrive before the first live packet were placed in 1970), fixed and covered by a test.
 
-**Test deviations:** no bonding / encryption (passkey) yet; the test band changes its Bluetooth address on every start
+**Test deviations:** the phone app now pairs with the passkey (bonding, encrypted), but the second-phone test band cannot bond reliably, so the app offers "Test headband: connect without code" after a failed pairing; POWER_OFF / UNPAIR are not implemented in the test band; the test band changes its Bluetooth address on every start
 (a real band keeps one).
 
 ## Why the model is not on the headband (yet)

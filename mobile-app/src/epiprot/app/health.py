@@ -58,6 +58,7 @@ def window_quality(F: np.ndarray, names: list[str]) -> dict[str, np.ndarray]:
 
 # Codes sent to the watch app (watch-app/.../core/Warnings.kt); the watch shows the text in its own language.
 IMPACT_TEXT = {
+    "no_alarms": "Seizure alarms do NOT work until this is fixed.",
     "limited": "Seizure detection is LIMITED until this is fixed.",
     "weaker": "Seizure detection may be weaker until this is fixed.",
     "backup": "Detection continues without movement (backup model).",
@@ -73,8 +74,11 @@ WARNING_TEXT = {
 }
 
 
-def impact_code(signals: set[str], other_bad: set[str]) -> str:
+def impact_code(signals: set[str], other_bad: set[str], problem: str = "poor") -> str:
     bad = signals | other_bad
+    # every model needs the brain signal: without it there is no detection at all (no watch-only model)
+    if "brain" in signals and problem == "missing":
+        return "no_alarms"
     if "brain" in bad:
         return "limited"
     if "heart" in bad:
@@ -94,8 +98,8 @@ def warning_code(device: str, signals: set[str], problem: str) -> str:
     return "heart_missing" if "heart" in signals else "body_mov_missing"
 
 
-def impact(signals: set[str], other_bad: set[str]) -> str:
-    return IMPACT_TEXT[impact_code(signals, other_bad)]
+def impact(signals: set[str], other_bad: set[str], problem: str = "poor") -> str:
+    return IMPACT_TEXT[impact_code(signals, other_bad, problem)]
 
 
 def advice(device: str, signals: set[str], problem: str) -> str:
@@ -159,8 +163,8 @@ def monitor(q: dict[str, np.ndarray], busy: list[tuple[float, float]] = ()) -> l
                         problem = "missing" if miss else "poor"
                         other_bad = {k for k in others if (q[k][lo:i + 1] != OK).mean() >= 0.5}
                         ep = Episode(dev, lo * W, t, sig, problem, advice(dev, sig, problem),
-                                     impact(sig, other_bad), code=warning_code(dev, sig, problem),
-                                     impact_code=impact_code(sig, other_bad))
+                                     impact(sig, other_bad, problem), code=warning_code(dev, sig, problem),
+                                     impact_code=impact_code(sig, other_bad, problem))
                         good_run = 0
             else:
                 good_run = 0 if bad[i] else good_run + 1

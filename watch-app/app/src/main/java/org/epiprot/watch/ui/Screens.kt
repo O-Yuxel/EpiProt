@@ -338,6 +338,11 @@ private fun warningText(code: WarningCode, detail: String = ""): String = when (
     WarningCode.HEADBAND_BATTERY_LOW -> stringResource(R.string.warn_headband_battery_low, detail)
     WarningCode.HEADBAND_BATTERY_CRITICAL -> stringResource(R.string.warn_headband_battery_critical, detail)
     WarningCode.HEADBAND_CHARGING -> stringResource(R.string.warn_headband_charging)
+    WarningCode.HEADBAND_OFF -> stringResource(when (detail) {
+        "disconnected" -> R.string.warn_headband_disconnected
+        "unpaired" -> R.string.warn_headband_unpaired
+        else -> R.string.warn_headband_off
+    })
     else -> simpleWarningText(code)
 }
 

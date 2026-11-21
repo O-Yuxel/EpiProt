@@ -119,6 +119,8 @@ The phone asks the patient to replace a pad when its impedance is above 150 kOhm
 | 0x05 | IDENTIFY | none | Blink the LED for 5 s, so the patient can tell which band is connected |
 | 0x06 | STATUS | none | Send a status packet now |
 | 0x07 | CONTACT_CHECK | none | Run a contact check now (e.g. right after the patient replaced pads) |
+| 0x08 | POWER_OFF | none | The patient switched the band off in the app: store what is unconfirmed, switch off. It wakes up when taken off the charger or when its button is held for 2 s |
+| 0x09 | UNPAIR | none | Forget the bond with this phone, switch off. A new phone needs the passkey again |
 
 The phone sends ACK every 5 seconds.
 
@@ -144,12 +146,26 @@ other settings needs no app change (rule P1).
 
 ### Pairing (once)
 
-1. In the phone app the patient taps "Connect headband" and holds the band's button for 2 s.
-2. The phone finds the band, the patient types the 6-digit passkey printed in the user manual that
-   comes in the box (or scans the QR code next to it). The headband has no screen, so the passkey
-   comes from paper; it is not on the device itself.
-3. The link is encrypted and both sides store the bond. From now on the band only accepts this
-   phone. Holding the button for 10 s deletes the bond (new phone).
+1. The patient holds the band's button for 2 s (the light blinks fast: pairing mode) and taps
+   "Pair headband" in the phone app (Headband page; the pairing steps are shown there).
+2. The phone finds the band and Android asks for the 6-digit passkey printed in the user manual in the
+   box. The headband has no screen, so the passkey comes from paper; it is not on the device itself.
+   Purpose: only this patient's phone can connect, nobody nearby can read the brain signals, and nobody
+   can send fake data (e.g. "all normal") that would hide a seizure.
+3. The link is encrypted and both sides store the bond. From now on the band only accepts this phone
+   and the phone connects by itself whenever the band is on. "Unpair headband" in the app (UNPAIR)
+   removes the bond on both sides (new phone or new band).
+
+### Switching on and off (D20)
+
+- **On:** the band switches on when it is taken off the charger (or button held 2 s) and connects by itself.
+- **Off:** only in the phone app ("Switch headband off", with a confirmation) or by putting it on the
+  charger. The button cannot switch it off: a pillow or a convulsion must never switch it off by accident.
+- **Connected / not connected:** the app always shows the state; "Connect" when it is not connected,
+  "Disconnect" when it is (the band stays on, the phone stops using it). Disconnect, switch off and
+  unpair each ask for a confirmation and the watch says at once that seizure detection is off
+  (warning `headband_off`, quiet at night like charging, since the patient chose it).
+- **Forgotten on the table:** no pad contact and no movement for 30 min → the band sleeps.
 
 ### Connection settings
 

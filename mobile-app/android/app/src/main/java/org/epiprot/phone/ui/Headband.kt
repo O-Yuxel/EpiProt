@@ -22,7 +22,9 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -73,7 +75,23 @@ private fun padColor(c: PadStatus.Contact) = when (c) {
     PadStatus.Contact.UNKNOWN -> C.Grey
 }
 
-/** Live state of the headband: connection, battery, every pad's contact, signals, channels in use. */
+private typealias L = org.epiprot.phone.headband.HeadbandLink.State
+
+private enum class Confirm { DISCONNECT, OFF, UNPAIR }
+
+private fun linkText(s: L) = when (s) {
+    L.IDLE -> R.string.hb_link_idle
+    L.SCANNING -> R.string.hb_link_scanning
+    L.PAIRING -> R.string.hb_link_pairing
+    L.CONNECTING -> R.string.hb_link_connecting
+    L.CONNECTED -> R.string.hb_link_connected
+    L.RECONNECTING -> R.string.hb_link_reconnecting
+}
+
+/**
+ * Live state of the headband: pairing (first use), connection with connect / disconnect, switch off,
+ * unpair (each with a confirmation: detection stops), battery, every pad's contact, signals, channels.
+ */
 @Composable
 internal fun HeadbandPage(m: PhoneMonitor, activity: MainActivity) {
     val st by m.status.collectAsStateWithLifecycle()
@@ -83,6 +101,10 @@ internal fun HeadbandPage(m: PhoneMonitor, activity: MainActivity) {
     LaunchedEffect(Unit) { while (true) { now = System.currentTimeMillis(); delay(1_000) } }
     val hb = st.headband
     val ok = headbandConnected(hb, now)
+    val paired by m.headbandPaired.collectAsStateWithLifecycle()
+    val note by m.headbandNote.collectAsStateWithLifecycle()
+    var confirm by remember { mutableStateOf<Confirm?>(null) }
+    var noPerm by remember { mutableStateOf(false) }
 
     EpiCard {
         CardHeader(Icons.Rounded.Face, stringResource(R.string.headband), tint = if (ok) C.TealDark else C.Grey,
@@ -103,27 +125,70 @@ internal fun HeadbandPage(m: PhoneMonitor, activity: MainActivity) {
                 InfoRow(stringResource(R.string.hb_missing), "${hb.missing}")
             }
         }
-        if (!st.demo) {
-            InfoRow(stringResource(R.string.hb_link), stringResource(when (link) {
-                org.epiprot.phone.headband.HeadbandLink.State.IDLE -> R.string.hb_link_idle
-                org.epiprot.phone.headband.HeadbandLink.State.SCANNING -> R.string.hb_link_scanning
-                org.epiprot.phone.headband.HeadbandLink.State.CONNECTING -> R.string.hb_link_connecting
-                org.epiprot.phone.headband.HeadbandLink.State.CONNECTED -> R.string.hb_link_connected
-                org.epiprot.phone.headband.HeadbandLink.State.RECONNECTING -> R.string.hb_link_reconnecting
-            }))
-            var noPerm by remember { mutableStateOf(false) }
-            if (link == org.epiprot.phone.headband.HeadbandLink.State.IDLE) {
+        if (!st.demo && paired) {
+            InfoRow(stringResource(R.string.hb_link), stringResource(linkText(link)))
+            when (note) {
+                "off" -> Text(stringResource(R.string.hb_off_note), color = C.Amber, style = MaterialTheme.typography.bodySmall)
+                "disconnected" -> Text(stringResource(R.string.hb_disconnected_note), color = C.Amber, style = MaterialTheme.typography.bodySmall)
+                else -> Text(stringResource(R.string.hb_auto_note), color = C.InkSoft, style = MaterialTheme.typography.bodySmall)
+            }
+            if (link == L.CONNECTED) {
+                SoftButton(stringResource(R.string.hb_check_now)) { m.requestContactCheck() }
+                SoftButton(stringResource(R.string.hb_disconnect)) { confirm = Confirm.DISCONNECT }
+            } else if (link == L.IDLE) {
                 PrimaryButton(stringResource(R.string.hb_connect)) {
                     noPerm = !m.connectHeadband()
                     if (noPerm) activity.requestPermissions(fromButton = true)
                 }
-                if (noPerm) Text(stringResource(R.string.hb_need_permission), color = C.Amber, style = MaterialTheme.typography.bodySmall)
-            } else {
-                if (link == org.epiprot.phone.headband.HeadbandLink.State.CONNECTED)
-                    SoftButton(stringResource(R.string.hb_check_now)) { m.requestContactCheck() }
-                SoftButton(stringResource(R.string.hb_disconnect)) { m.disconnectHeadband() }
+            }
+            if (noPerm) Text(stringResource(R.string.hb_need_permission), color = C.Amber, style = MaterialTheme.typography.bodySmall)
+            HorizontalDivider(color = C.Line)
+            if (link == L.CONNECTED) SoftButton(stringResource(R.string.hb_power_off)) { confirm = Confirm.OFF }
+            SoftButton(stringResource(R.string.hb_unpair)) { confirm = Confirm.UNPAIR }
+        }
+    }
+
+    // not paired yet: the pairing steps
+    if (!st.demo && !paired) EpiCard(container = C.TealSoft) {
+        CardHeader(Icons.Rounded.Face, stringResource(R.string.hb_pair_title), bubble = Color.White)
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(stringResource(R.string.hb_pair_step1), color = C.Ink)
+            Text(stringResource(R.string.hb_pair_step2), color = C.Ink)
+            Text(stringResource(R.string.hb_pair_step3), color = C.Ink)
+        }
+        if (link == L.IDLE) {
+            PrimaryButton(stringResource(R.string.hb_pair)) {
+                noPerm = !m.pairHeadband()
+                if (noPerm) activity.requestPermissions(fromButton = true)
+            }
+        } else InfoRow(stringResource(R.string.hb_link), stringResource(linkText(link)))
+        if (noPerm) Text(stringResource(R.string.hb_need_permission), color = C.Amber, style = MaterialTheme.typography.bodySmall)
+        if (note == "pair_failed") {
+            Text(stringResource(R.string.hb_pair_failed), color = C.Coral, style = MaterialTheme.typography.bodySmall)
+            SoftButton(stringResource(R.string.hb_pair_test)) {
+                noPerm = !m.connectHeadbandWithoutPasskey()
+                if (noPerm) activity.requestPermissions(fromButton = true)
             }
         }
+    }
+
+    confirm?.let { c ->
+        AlertDialog(onDismissRequest = { confirm = null },
+            title = { Text(stringResource(R.string.hb_confirm_title)) },
+            text = { Text(stringResource(when (c) {
+                Confirm.DISCONNECT -> R.string.hb_confirm_disconnect
+                Confirm.OFF -> R.string.hb_confirm_off
+                Confirm.UNPAIR -> R.string.hb_confirm_unpair
+            })) },
+            confirmButton = { TextButton({
+                when (c) {
+                    Confirm.DISCONNECT -> m.disconnectHeadband()
+                    Confirm.OFF -> m.powerOffHeadband()
+                    Confirm.UNPAIR -> m.unpairHeadband()
+                }
+                confirm = null
+            }) { Text(stringResource(R.string.hb_yes), color = C.Coral) } },
+            dismissButton = { TextButton({ confirm = null }) { Text(stringResource(R.string.hb_cancel)) } })
     }
 
     val pads = PadStatus.of(hb)

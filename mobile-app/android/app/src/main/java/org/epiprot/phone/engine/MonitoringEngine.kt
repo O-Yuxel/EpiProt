@@ -51,7 +51,7 @@ class MonitoringEngine(
     private var detector = Detector(cfg, models)
     private var health = HealthMonitor()
     private var alerts = HeadbandAlerts()
-    /** Headband warnings of the health monitor held back while the band is charging ("charging" says it). */
+    /** Headband warnings of the health monitor held back while the band is charging or switched off (those say it). */
     private val heldBack = HashSet<String>()
     private val ends = ArrayDeque<Long>()           // end times of the last processed windows, newest last
     val flow = AlarmFlow()
@@ -105,20 +105,30 @@ class MonitoringEngine(
 
     /** New headband state (status packet or contact check), from the headband receiver. */
     fun onHeadbandState(s: HeadbandState, nowMs: Long) {
-        val wasCharging = alerts.charging
+        val wasAway = alerts.away
         for (e in alerts.onState(s, nowMs)) send(e)
-        if (wasCharging && !alerts.charging) {     // charging over: problems that are still there are now told
+        releaseHeldBack(wasAway)
+        status = status.copy(headband = s, openWarnings = openWarnings())
+    }
+
+    /** The patient switched the headband off, disconnected or unpaired it in the app. */
+    fun onHeadbandTurnedOff(how: String, nowMs: Long) {
+        for (e in alerts.turnedOff(how, nowMs)) send(e)
+        status = status.copy(openWarnings = openWarnings())
+    }
+
+    private fun releaseHeldBack(wasAway: Boolean) {
+        if (wasAway && !alerts.away) {             // charging / off over: problems that are still there are now told
             for (ep in health.openEpisodes) if (ep.code in heldBack) send(HealthMonitor.Event.Warning(ep))
             heldBack.clear()
         }
-        status = status.copy(headband = s, openWarnings = openWarnings())
     }
 
     private fun openWarnings() = health.openEpisodes.filter { it.code !in heldBack } + alerts.openEpisodes
 
     private fun sendHealth(e: HealthMonitor.Event) {
         val ep = e.episode
-        if (ep.device == "headband" && alerts.charging) {
+        if (ep.device == "headband" && alerts.away) {
             if (e is HealthMonitor.Event.Warning) heldBack += ep.code
             return
         }

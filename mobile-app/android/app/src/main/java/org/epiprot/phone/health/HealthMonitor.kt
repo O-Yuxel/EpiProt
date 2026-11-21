@@ -60,7 +60,7 @@ class HealthMonitor {
                     val missing = sig.all { share(it) { v -> v == Quality.MISSING } >= 0.5 }
                     val problem = if (missing) "missing" else "poor"
                     val otherBad = d.others.filter { share(it) { v -> v != Quality.OK } >= 0.5 }.toSet()
-                    val e = Episode(d.device, warningCode(d.device, sig, problem), impactCode(sig, otherBad), problem,
+                    val e = Episode(d.device, warningCode(d.device, sig, problem), impactCode(sig, otherBad, problem), problem,
                         sig, endMs - BAD_WIN * WINDOW_MS, endMs)
                     d.episode = e
                     d.goodRun = 0
@@ -114,9 +114,11 @@ class HealthMonitor {
                 "heart" to present("ecg_hr"), "body_mov" to present("body_acc_std"))
         }
 
-        fun impactCode(signals: Set<String>, otherBad: Set<String>): String {
+        fun impactCode(signals: Set<String>, otherBad: Set<String>, problem: String = "poor"): String {
             val bad = signals + otherBad
             return when {
+                // every model needs the brain signal: without it there is no detection at all (no watch-only model)
+                "brain" in signals && problem == "missing" -> "no_alarms"
                 "brain" in bad -> "limited"
                 "heart" in bad -> "weaker"
                 bad.containsAll(listOf("head_mov", "body_mov")) -> "backup"

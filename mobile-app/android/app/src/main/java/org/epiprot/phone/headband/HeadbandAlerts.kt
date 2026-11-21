@@ -15,6 +15,8 @@ import org.epiprot.phone.headband.HeadbandProtocol as P
  *  headband_battery_low       below 15 % (the headband's low-battery bit)
  *  headband_battery_critical  2 % or less and not charging: detection stops soon
  *  headband_charging          charger attached: band off the head, seizure detection is off (impact no_alarms)
+ *  headband_off               the patient turned the band off, disconnected or unpaired it in the app: detection is
+ *                             off (impact no_alarms); detail = off | disconnected | unpaired. Cleared by the next data.
  *
  * [detail] of a warning = the pads concerned, e.g. "L-bottom,R-top".
  */
@@ -25,6 +27,12 @@ class HeadbandAlerts {
 
     val openEpisodes: List<Episode> get() = open.values.toList()
     val charging: Boolean get() = CHARGING in open
+    /** Band charging or switched off on purpose: missing-headband warnings are held back (these say why). */
+    val away: Boolean get() = CHARGING in open || OFF in open
+
+    /** The patient switched the band off / disconnected / unpaired it in the app ([how] = detail). */
+    fun turnedOff(how: String, nowMs: Long): List<Event> =
+        if (open[OFF]?.detail == how) emptyList() else replace(OFF, "no_alarms", how, nowMs, nowMs)
 
     /** One headband 5 s window ending at [endMs]. */
     fun onWindow(leadOff: Int, contactOk: Boolean, endMs: Long): List<Event> {
@@ -52,6 +60,7 @@ class HeadbandAlerts {
     /** New headband state (status packet or contact check) at [nowMs]. */
     fun onState(s: HeadbandState, nowMs: Long): List<Event> {
         val out = mutableListOf<Event>()
+        if (OFF in open) out += fix(OFF, nowMs)        // data again: the band is on and connected
         // charging
         if (s.chargerAttached && CHARGING !in open) out += replace(CHARGING, "no_alarms", "", nowMs, nowMs)
         if (!s.chargerAttached && CHARGING in open) out += fix(CHARGING, nowMs)
@@ -95,6 +104,7 @@ class HeadbandAlerts {
         const val BATTERY_LOW = "headband_battery_low"
         const val BATTERY_CRITICAL = "headband_battery_critical"
         const val CHARGING = "headband_charging"
+        const val OFF = "headband_off"
         const val REPLACE_PAD_KOHM = 150         // [EST], HARDWARE.md D15
         const val CRITICAL_PCT = 2               // ~30 min left at ~2 days per charge
         const val LOW_CLEAR_PCT = 20
@@ -103,8 +113,8 @@ class HeadbandAlerts {
 
 /** Which warnings vibrate on the watch in night mode (decided with the user). */
 object WarningPolicy {
-    /** Urgent = detection is limited or about to stop. Charging stops it too, but the patient chose it: quiet at night. */
+    /** Urgent = detection is limited or about to stop. Charging or switching off stops it too, but the patient chose it: quiet at night. */
     fun urgent(code: String, impact: String): Boolean =
-        code != HeadbandAlerts.CHARGING &&
+        code != HeadbandAlerts.CHARGING && code != HeadbandAlerts.OFF &&
             (code == HeadbandAlerts.BATTERY_CRITICAL || impact == "limited" || impact == "no_alarms")
 }

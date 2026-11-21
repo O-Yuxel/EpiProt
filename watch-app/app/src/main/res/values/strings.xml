@@ -68,6 +68,9 @@
     <string name="warn_headband_battery_low">Headband battery low (%1$s %%). Charge it soon.</string>
     <string name="warn_headband_battery_critical">Headband battery almost empty (%1$s %%). Charge it now.</string>
     <string name="warn_headband_charging">Headband is charging. Seizure detection is OFF until the headband is worn again.</string>
+    <string name="warn_headband_off">Headband was switched off in the app. Seizure detection is OFF until it is switched on again.</string>
+    <string name="warn_headband_disconnected">Headband was disconnected in the app. Seizure detection is OFF until you connect it again.</string>
+    <string name="warn_headband_unpaired">Headband was unpaired from the phone. Seizure detection is OFF until a headband is paired.</string>
     <string name="pad_l_top">behind the left ear, upper</string>
     <string name="pad_l_bottom">behind the left ear, lower</string>
     <string name="pad_r_top">behind the right ear, upper</string>

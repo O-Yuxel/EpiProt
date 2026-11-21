@@ -89,6 +89,12 @@ class PhoneMonitor(private val app: Context) {
     private var hbReceiver: org.epiprot.phone.headband.HeadbandReceiver? = null
     private var hbLastPublish = 0L
     private var hbAckJob: Job? = null
+    private val _hbPaired = MutableStateFlow(settings.headbandAddress != null)
+    /** A headband is paired with this phone (bonded with the passkey, or the test band connected once). */
+    val headbandPaired: StateFlow<Boolean> = _hbPaired
+    private val _hbNote = MutableStateFlow<String?>(null)
+    /** Last thing the patient did / what went wrong: pair_failed, off, disconnected (null = nothing to say). */
+    val headbandNote: StateFlow<String?> = _hbNote
 
     /** Live headband data go into the same 5 s windows as the watch data (only while monitoring runs). */
     private val hbSink = object : org.epiprot.phone.headband.HeadbandSink {
@@ -102,6 +108,8 @@ class PhoneMonitor(private val app: Context) {
         org.epiprot.phone.headband.HeadbandLink(app, object : org.epiprot.phone.headband.HeadbandLink.Listener {
             override fun onInfo(info: org.epiprot.phone.headband.HeadbandProtocol.DeviceInfo, address: String) {
                 settings.headbandAddress = address
+                _hbPaired.value = true
+                _hbNote.value = null
                 scope.launch(engineThread) { hbReceiver = org.epiprot.phone.headband.HeadbandReceiver(info, hbSink) }
             }
             override fun onPacket(arrivalMs: Long, bytes: ByteArray) {
@@ -119,6 +127,10 @@ class PhoneMonitor(private val app: Context) {
                 }
             }
             override fun onState(state: org.epiprot.phone.headband.HeadbandLink.State) { _headbandLink.value = state }
+            override fun onPairResult(ok: Boolean, address: String?) {
+                if (ok && address != null) { settings.headbandAddress = address; _hbPaired.value = true; _hbNote.value = null }
+                else _hbNote.value = "pair_failed"
+            }
         })
     }
 
@@ -127,10 +139,19 @@ class PhoneMonitor(private val app: Context) {
             androidx.core.content.ContextCompat.checkSelfPermission(app, it) == android.content.pm.PackageManager.PERMISSION_GRANTED
         }
 
-    /** Find (or reconnect to) the headband; the phone confirms received packets every 5 s. */
-    fun connectHeadband(): Boolean {
+    /** First use: find the headband in pairing mode and bond (Android asks for the passkey). */
+    fun pairHeadband(): Boolean = startLink { hbLink.pair() }
+
+    /** Test headband (second phone) only: no passkey. */
+    fun connectHeadbandWithoutPasskey(): Boolean = startLink { hbLink.connectWithoutPasskey() }
+
+    /** Connect to the paired headband; also done by itself when monitoring starts. */
+    fun connectHeadband(): Boolean = startLink { hbLink.connect(settings.headbandAddress) }
+
+    private fun startLink(go: () -> Unit): Boolean {
         if (!hasBluetoothPermission()) return false
-        hbLink.connect(settings.headbandAddress)
+        _hbNote.value = null
+        go()
         if (hbAckJob?.isActive != true) hbAckJob = scope.launch(engineThread) {
             while (isActive) {
                 delay(5_000)
@@ -140,9 +161,32 @@ class PhoneMonitor(private val app: Context) {
         return true
     }
 
-    fun disconnectHeadband() { hbLink.disconnect(); hbAckJob?.cancel() }
+    /** The patient disconnects in the app: the band stays on, but its data are not used (detection off). */
+    fun disconnectHeadband() {
+        hbLink.disconnect(); hbAckJob?.cancel()
+        turnedOff("disconnected")
+    }
 
-    fun forgetHeadband() { disconnectHeadband(); settings.headbandAddress = null }
+    /** The patient switches the headband off in the app. */
+    fun powerOffHeadband() {
+        hbLink.powerOff()
+        turnedOff("off")
+    }
+
+    /** The patient unpairs the headband (e.g. new phone or new band). */
+    fun unpairHeadband() {
+        hbLink.unpair(); hbAckJob?.cancel()
+        settings.headbandAddress = null
+        _hbPaired.value = false
+        turnedOff("unpaired")
+    }
+
+    private fun turnedOff(how: String) {
+        _hbNote.value = how
+        scope.launch(engineThread) {
+            if (!engine.demo) { engine.onHeadbandTurnedOff(how, System.currentTimeMillis()); publish() }
+        }
+    }
 
     fun requestContactCheck() = hbLink.requestContactCheck()
     private var loop: Job? = null
@@ -294,6 +338,7 @@ class PhoneMonitor(private val app: Context) {
         if (!_consents.value.canMonitor) return          // no health-data consent: nothing is processed
         _running.value = true
         sendSettingsToWatch()
+        if (_hbPaired.value) connectHeadband()           // the paired headband is connected by itself
         loop = scope.launch(engineThread) {
             pipeline = org.epiprot.phone.headband.HeadbandPipeline(System.currentTimeMillis(),
                 onWindow = { w, end -> if (!engine.demo) { recorder.add(w, end); engine.onWindow(w, end) } },

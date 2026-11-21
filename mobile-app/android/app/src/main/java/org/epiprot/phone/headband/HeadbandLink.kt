@@ -12,7 +12,10 @@ import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -27,17 +30,21 @@ import java.util.UUID
  * connect, ask for 247-byte packets, read the device info, switch on the data notifications,
  * confirm received packets (ACK) and reconnect by itself when the link drops.
  *
- * Bonding with the passkey from the user manual is not done here yet (see PROTOCOL.md); the test
- * headband on a PC cannot bond reliably.
+ * Pairing ([pair]) bonds with the headband: Android shows its own dialog where the patient types the
+ * 6-digit passkey from the user manual (LE Secure Connections, PROTOCOL.md). After that the bonded
+ * band is reconnected by itself. [connectWithoutPasskey] skips bonding: only for the second-phone test
+ * headband, which cannot bond reliably.
  */
 @SuppressLint("MissingPermission")     // the caller checks BLUETOOTH_SCAN / BLUETOOTH_CONNECT
 class HeadbandLink(private val ctx: Context, private val listener: Listener) {
-    enum class State { IDLE, SCANNING, CONNECTING, CONNECTED, RECONNECTING }
+    enum class State { IDLE, SCANNING, PAIRING, CONNECTING, CONNECTED, RECONNECTING }
 
     interface Listener {
         fun onInfo(info: HeadbandProtocol.DeviceInfo, address: String)
         fun onPacket(arrivalMs: Long, bytes: ByteArray)
         fun onState(state: State)
+        /** Pairing finished: [ok] = bonded (passkey right), false = cancelled, wrong passkey or not found. */
+        fun onPairResult(ok: Boolean, address: String?) {}
     }
 
     private val main = Handler(Looper.getMainLooper())
@@ -45,6 +52,7 @@ class HeadbandLink(private val ctx: Context, private val listener: Listener) {
     private var gatt: BluetoothGatt? = null
     private var device: BluetoothDevice? = null
     private var wanted = false
+    private var pairing = false
     var state = State.IDLE
         private set
 
@@ -68,7 +76,7 @@ class HeadbandLink(private val ctx: Context, private val listener: Listener) {
             if (!wanted) return
             val d = device
             val now = System.currentTimeMillis()
-            if (state != State.CONNECTED && state != State.SCANNING && adapter?.isEnabled == true && now - lastAttemptMs > RETRY_MS) {
+            if (state != State.CONNECTED && state != State.SCANNING && state != State.PAIRING && adapter?.isEnabled == true && now - lastAttemptMs > RETRY_MS) {
                 gatt?.let { try { it.close() } catch (e: Exception) { } }
                 gatt = null
                 failedAttempts++
@@ -81,8 +89,41 @@ class HeadbandLink(private val ctx: Context, private val listener: Listener) {
         }
     }
 
+    /** First use: find the headband (its button held for 2 s) and bond with the passkey. */
+    fun pair() {
+        pairing = true
+        connect(null)
+    }
+
+    /** Test headband only: connect without bonding. */
+    fun connectWithoutPasskey() {
+        pairing = false
+        connect(null)
+    }
+
+    /**
+     * Switch the headband off (command 0x08). The phone keeps looking for it in the background, so it
+     * connects by itself as soon as the patient switches it on again (off the charger / button).
+     */
+    fun powerOff() {
+        write(byteArrayOf(0x08))
+        main.postDelayed({ gatt?.disconnect() }, 400)
+    }
+
+    /** Unpair: the headband forgets this phone (0x09), the phone forgets the headband. */
+    fun unpair() {
+        val d = device
+        write(byteArrayOf(0x09))
+        main.postDelayed({
+            disconnect()
+            d?.let { try { it.javaClass.getMethod("removeBond").invoke(it) } catch (e: Exception) { Log.w(TAG, "removeBond", e) } }
+            device = null
+        }, 400)
+    }
+
     fun disconnect() {
         wanted = false
+        pairing = false
         stopScan()
         main.removeCallbacksAndMessages(null)
         gatt?.disconnect(); gatt?.close(); gatt = null
@@ -100,7 +141,8 @@ class HeadbandLink(private val ctx: Context, private val listener: Listener) {
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             stopScan()
-            open(result.device)
+            val d = result.device
+            if (pairing && d.bondState != BluetoothDevice.BOND_BONDED) bond(d) else open(d)
         }
         override fun onScanFailed(errorCode: Int) { Log.w(TAG, "scan failed $errorCode"); set(State.IDLE) }
     }
@@ -111,12 +153,45 @@ class HeadbandLink(private val ctx: Context, private val listener: Listener) {
         scanner.startScan(listOf(ScanFilter.Builder().setServiceUuid(ParcelUuid(SERVICE)).build()),
             ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build(), scanCallback)
         main.postDelayed({
-            if (state == State.SCANNING) { stopScan(); set(if (wanted) State.RECONNECTING else State.IDLE); lastAttemptMs = System.currentTimeMillis() }
+            if (state == State.SCANNING) {
+                stopScan()
+                if (pairing) { listener.onPairResult(false, null); disconnect() }     // no headband in pairing mode found
+                else { set(if (wanted) State.RECONNECTING else State.IDLE); lastAttemptMs = System.currentTimeMillis() }
+            }
         }, SCAN_TIMEOUT_MS)
     }
 
     private fun stopScan() {
         try { adapter?.bluetoothLeScanner?.stopScan(scanCallback) } catch (e: Exception) { }
+    }
+
+    // ------------------------------------------------------------------ pairing (bonding)
+
+    private var bondReceiver: BroadcastReceiver? = null
+
+    private fun bond(d: BluetoothDevice) {
+        device = d
+        set(State.PAIRING)
+        main.removeCallbacks(watchdog)                    // the patient is typing the passkey: no retries now
+        val r = object : BroadcastReceiver() {
+            override fun onReceive(c: Context, i: Intent) {
+                @Suppress("DEPRECATION") val dev = i.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
+                if (dev?.address != d.address) return
+                when (i.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE)) {
+                    BluetoothDevice.BOND_BONDED -> { endBond(); pairing = false; listener.onPairResult(true, d.address)
+                        open(d); main.postDelayed(watchdog, WATCHDOG_MS) }
+                    BluetoothDevice.BOND_NONE -> { endBond(); listener.onPairResult(false, null); disconnect() }
+                }
+            }
+        }
+        bondReceiver = r
+        ctx.registerReceiver(r, IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED))
+        if (!d.createBond()) { endBond(); listener.onPairResult(false, null); disconnect() }
+    }
+
+    private fun endBond() {
+        bondReceiver?.let { try { ctx.unregisterReceiver(it) } catch (e: Exception) { } }
+        bondReceiver = null
     }
 
     // ------------------------------------------------------------------ connection

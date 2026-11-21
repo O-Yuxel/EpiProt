@@ -107,4 +107,29 @@ class HeadbandEngineTest {
         assertTrue(after.urgent)
         assertTrue(rec.watch.any { it is PhoneMessage.SensorFixed && it.code == "headband_charging" })
     }
+
+    @Test
+    fun switchedOffInTheAppSaysOffQuietlyNotHeadbandMissing() = with(Fixtures) {
+        val rec = Recorder()
+        val e = MonitoringEngine(config, models, rec)
+        e.reset(demo = false)
+        val t0 = 1_000_000_000L
+        e.onHeadbandTurnedOff("off", t0)
+        for (i in 1..40) e.onWindow(watchOnly(), t0 + i * 5_000L)              // 200 s without headband data
+        val warned = rec.watch.filterIsInstance<PhoneMessage.SensorWarning>()
+        assertEquals(listOf("headband_off"), warned.map { it.code })
+        assertEquals("no_alarms", warned.single().impact)
+        assertEquals("off", warned.single().detail)
+        assertFalse(warned.single().urgent)                                    // the patient chose it: quiet at night
+        // switched on again: data arrive, "off" is fixed
+        e.onHeadbandState(HeadbandState(batteryPct = 70), t0 + 205_000)
+        assertTrue(rec.watch.any { it is PhoneMessage.SensorFixed && it.code == "headband_off" })
+    }
+
+    @Test
+    fun noBrainSignalAtAllMeansNoAlarmsNotLimited() {
+        assertEquals("no_alarms", HealthMonitor.impactCode(setOf("brain", "head_mov"), emptySet(), "missing"))
+        assertEquals("limited", HealthMonitor.impactCode(setOf("brain"), emptySet(), "poor"))
+        assertTrue(WarningPolicy.urgent("headband_missing", "no_alarms"))
+    }
 }
