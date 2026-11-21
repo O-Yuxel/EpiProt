@@ -80,7 +80,8 @@ class PhoneMonitor(private val app: Context) {
     private val _logVersion = MutableStateFlow(0)
     val logVersion: StateFlow<Int> = _logVersion
 
-    private var assembler: WindowAssembler? = null
+    /** Live 5 s windows (headband + watch) and late headband data after a gap; null while monitoring is off. */
+    private var pipeline: org.epiprot.phone.headband.HeadbandPipeline? = null
 
     // ---------------------------------------------------------------- headband (Bluetooth LE)
     private val _headbandLink = MutableStateFlow(org.epiprot.phone.headband.HeadbandLink.State.IDLE)
@@ -91,8 +92,10 @@ class PhoneMonitor(private val app: Context) {
 
     /** Live headband data go into the same 5 s windows as the watch data (only while monitoring runs). */
     private val hbSink = object : org.epiprot.phone.headband.HeadbandSink {
-        override fun eeg(firstMs: Double, uv: Array<FloatArray>, leadOff: Int) { assembler?.addHeadbandEeg(firstMs, uv, leadOff) }
-        override fun movement(tMs: Double, accG: FloatArray, gyrDps: FloatArray) { assembler?.addHeadMovement(tMs, accG, gyrDps) }
+        override fun eeg(firstMs: Double, uv: Array<FloatArray>, leadOff: Int) { pipeline?.eeg(firstMs, uv, leadOff) }
+        override fun movement(tMs: Double, accG: FloatArray, gyrDps: FloatArray) { pipeline?.movement(tMs, accG, gyrDps) }
+        override fun lateEeg(firstMs: Double, uv: Array<FloatArray>, leadOff: Int) { pipeline?.lateEeg(firstMs, uv, leadOff) }
+        override fun lateMovement(tMs: Double, accG: FloatArray, gyrDps: FloatArray) { pipeline?.lateMovement(tMs, accG, gyrDps) }
     }
 
     private val hbLink by lazy {
@@ -292,11 +295,13 @@ class PhoneMonitor(private val app: Context) {
         _running.value = true
         sendSettingsToWatch()
         loop = scope.launch(engineThread) {
-            assembler = WindowAssembler(System.currentTimeMillis())
+            pipeline = org.epiprot.phone.headband.HeadbandPipeline(System.currentTimeMillis(),
+                onWindow = { w, end -> if (!engine.demo) { recorder.add(w, end); engine.onWindow(w, end) } },
+                onLateWindow = { w, end -> if (!engine.demo) engine.onLateWindow(w, end) })
             while (isActive) {
                 val now = System.currentTimeMillis()
                 try {
-                    for ((w, end) in assembler!!.closeReady(now)) if (!engine.demo) { recorder.add(w, end); engine.onWindow(w, end) }
+                    pipeline!!.tick(now)
                     engine.tick(now)
                     publish()
                 } catch (e: Exception) {
@@ -309,7 +314,7 @@ class PhoneMonitor(private val app: Context) {
 
     fun stop() {
         loop?.cancel(); loop = null
-        assembler = null
+        pipeline = null
         _running.value = false
     }
 
@@ -320,7 +325,7 @@ class PhoneMonitor(private val app: Context) {
                 when (path) {
                     Paths.SENSOR -> {
                         val b = SensorBatch.decode(data)
-                        assembler?.addWatch(b)
+                        pipeline?.addWatch(b)
                         _watch.value = _watch.value.copy(lastDataMs = now,
                             heartRate = if (b.heartRate.isFinite()) b.heartRate else _watch.value.heartRate)
                     }

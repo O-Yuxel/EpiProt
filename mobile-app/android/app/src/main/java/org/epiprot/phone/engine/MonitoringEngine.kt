@@ -53,6 +53,7 @@ class MonitoringEngine(
     private var alerts = HeadbandAlerts()
     /** Headband warnings of the health monitor held back while the band is charging ("charging" says it). */
     private val heldBack = HashSet<String>()
+    private val ends = ArrayDeque<Long>()           // end times of the last processed windows, newest last
     val flow = AlarmFlow()
     var demo = false
         private set
@@ -65,6 +66,7 @@ class MonitoringEngine(
         health = HealthMonitor()
         alerts = HeadbandAlerts()
         heldBack.clear()
+        ends.clear()
         this.demo = demo
         status = EngineStatus(demo = demo)
     }
@@ -75,6 +77,7 @@ class MonitoringEngine(
         for (e in health.next(q, endMs, flow.busy)) sendHealth(e)
         w.channels?.let { c -> for (e in alerts.onWindow(w.leadOff, c.contactOk, endMs)) send(e) }
         val r = detector.next(f, w)
+        ends.addLast(endMs); if (ends.size > 150) ends.removeFirst()
         if (r.alarm) {
             val onsetMs = endMs - (r.index - r.onsetIndex!! + 1) * WindowAssembler.WINDOW_MS
             val id = actions.newDeviceEvent(endMs, onsetMs, demo)
@@ -88,6 +91,16 @@ class MonitoringEngine(
             heartRate = f["ecg_hr"] ?: Double.NaN, flowState = flow.state, openWarnings = openWarnings(),
             channels = w.channels ?: status.channels)
         return r
+    }
+
+    /**
+     * Headband data that arrived late (after a Bluetooth gap) for the window ending at [endMs]: the
+     * detector's memory of the recent past gets the real values (no score, no alarm for the past).
+     */
+    fun onLateWindow(w: WindowInput, endMs: Long) {
+        val pos = ends.lastIndexOf(endMs)
+        if (pos < 0) return
+        detector.backfill(ends.size - 1 - pos, WindowFeatures.compute(w), w)
     }
 
     /** New headband state (status packet or contact check), from the headband receiver. */

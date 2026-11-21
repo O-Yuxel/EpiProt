@@ -47,6 +47,19 @@ class ContextExpander(private val nBase: Int, private val median: RunningMedian 
         return out
     }
 
+    /**
+     * Late data for a window already processed ([age] = how many windows ago, 0 = the latest): its
+     * history row, which was filled with the running median while the data were missing, gets the
+     * real values, so later windows compare against the true recent past.
+     */
+    fun replace(age: Int, base: DoubleArray) {
+        require(base.size == nBase)
+        if (age < 0 || age >= history.size) return
+        median.add(base)
+        val med = fixedMedian ?: median.current()
+        history[history.size - 1 - age] = DoubleArray(nBase) { i -> if (base[i].isNaN()) med[i] else base[i] }
+    }
+
     /** Mean of the previous w filled rows; the first window uses itself. */
     private fun prevMean(w: Int, cur: DoubleArray): DoubleArray {
         if (history.isEmpty()) return cur.copyOf()
@@ -238,6 +251,14 @@ class ChangeExpander30(private val n: Int) {
 
     fun useFixed(median: DoubleArray, iqr: DoubleArray) { fixed = median to iqr }
 
+    /** Late data for a 30 s block already processed ([age] blocks ago): see ContextExpander.replace. */
+    fun replace(age: Int, base: DoubleArray) {
+        if (age < 0 || age >= history.size) return
+        stats.add(base)
+        val med = fixed?.first ?: stats.current()
+        history[history.size - 1 - age] = DoubleArray(n) { if (base[it].isNaN()) med[it] else base[it] }
+    }
+
     fun next(base: DoubleArray): DoubleArray {
         stats.add(base)
         val (med, iqr) = fixed ?: (stats.current() to stats.iqr())
@@ -271,6 +292,8 @@ class ModelB(private val cfg: ModelBConfig, private val model: Gbdt,
              private val backup: HrBackupConfig? = null, private val modelNohr: Gbdt? = null) {
     private val expander = ChangeExpander30(cfg.baseFeatures.size)
     private val buf = ArrayList<WindowInput>(6)
+    private val raws = ArrayDeque<WindowInput>()        // last windows, for late data (newest last)
+    private var seen = 0L
     var heldScore = 0.0
         private set
     /** Held scaled score of the backup model without heart rate. */
@@ -288,21 +311,43 @@ class ModelB(private val cfg: ModelBConfig, private val model: Gbdt,
 
     /** Feed one 5 s window; returns the (possibly new) held scaled score. */
     fun next(w: WindowInput?): Double {
-        buf += w ?: WindowInput(null, emptyMap(), FloatArray(0))
+        val win = w ?: WindowInput(null, emptyMap(), FloatArray(0))
+        buf += win
+        raws.addLast(win); if (raws.size > KEEP) raws.removeFirst()
+        seen++
         if (buf.size < 6) return heldScore
-        val n5 = WindowFeatures.EEG_N
-        fun eeg(ch: Int): FloatArray? =
-            if (buf.any { it.eegUv == null }) null
-            else FloatArray(6 * n5) { buf[it / n5].eegUv!![ch][it % n5] }
-        val hr = buf.flatMap { it.heartRate.toList() }.toFloatArray()
-        val watchSent = buf.any { it.heartRate.isNotEmpty() || it.mov.containsKey("body_acc") }
-        val base = Features30s.compute(eeg(0), eeg(1), hr, watchSent)
+        val base = base30(buf)
         buf.clear()
         val x = expander.next(base)
         heldScore = cfg.scale.scale(model.predict(x))
         if (idxNohr != null) heldScoreNohr = backup!!.scaleB.scale(modelNohr!!.predict(DoubleArray(idxNohr.size) { x[idxNohr[it]] }))
         return heldScore
     }
+
+    private fun base30(ws: List<WindowInput>): DoubleArray {
+        val n5 = WindowFeatures.EEG_N
+        fun eeg(ch: Int): FloatArray? =
+            if (ws.any { it.eegUv == null }) null
+            else FloatArray(6 * n5) { ws[it / n5].eegUv!![ch][it % n5] }
+        val hr = ws.flatMap { it.heartRate.toList() }.toFloatArray()
+        val watchSent = ws.any { it.heartRate.isNotEmpty() || it.mov.containsKey("body_acc") }
+        return Features30s.compute(eeg(0), eeg(1), hr, watchSent)
+    }
+
+    /** Late data for the window [age] windows ago: recompute its 30 s block's history row (no new score). */
+    fun backfill(age: Int, w: WindowInput) {
+        if (age < 0 || age >= raws.size) return
+        raws[raws.size - 1 - age] = w
+        val idx = seen - 1 - age                       // window number since the start
+        val block = idx / 6
+        val done = seen / 6                            // blocks already scored
+        if (block >= done) { buf[(idx % 6).toInt()] = w; return }   // block still being collected
+        val first = (block * 6 - (seen - raws.size)).toInt()        // position of the block in raws
+        if (first < 0) return
+        expander.replace((done - 1 - block).toInt(), base30(List(6) { raws[first + it] }))
+    }
+
+    companion object { const val KEEP = 132 }
 }
 
 /** Result of one 5 s window. Times are window indices since monitoring started. */
@@ -400,6 +445,17 @@ class Detector(private val cfg: DetectorConfig, private val modelA: Gbdt, privat
             if (below >= cfg.endAfterLow) { active = false; ended = index - below }
         }
         return WindowResult(index, p, s, sm, fallback, alarm, onset, ended, noHr)
+    }
+
+    /**
+     * Late data (headband catch-up after a Bluetooth gap) for the window [age] windows ago, 0 = the
+     * latest: the models' memory of the recent past gets the real values instead of the stand-ins used
+     * while the data were missing. No score or alarm for the past window; later windows benefit.
+     */
+    fun backfill(age: Int, features: Map<String, Double>, raw: WindowInput) {
+        if (age < 0 || age >= ContextExpander.LONG) return
+        expander.replace(age, DoubleArray(cfg.baseFeatures.size) { features[cfg.baseFeatures[it]] ?: Double.NaN })
+        b?.backfill(age, raw)
     }
 
     /**

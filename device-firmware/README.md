@@ -111,7 +111,12 @@ SeizeIT2 seizure, sub-058) in real time over Bluetooth LE. The EpiProt phone app
 **Why 88 s and not 15 s:** the same stream replayed in software gives 15 s without a gap and 85 s with the same
 ~97 s gap in live data (phone Bluetooth off, about 5 minutes before the seizure). So the radio link itself is fine;
 the delay comes from the gap in the model's history. Data stored during a gap reach the phone 10-20 s after
-reconnecting but currently go only to the diary. **Improvement found:** use them to fill the model's history too.
+reconnecting; they used to go only to the diary.
+
+**Fixed (late data fill the model's memory):** the phone now rebuilds the past windows from the stored data (headband
+part) and the live watch data, and the detector replaces the stand-in values it had used during the gap
+(`HeadbandPipeline`, `Detector.backfill`; no alarm is raised for the past). Same gap replayed in software
+(`HeadbandBackfillTest`): no gap 15 s, gap without late data 85 s, **gap with late data 15 s** (20 past windows rebuilt).
 
 **Test deviations:** no bonding / encryption (passkey) yet; the test band changes its Bluetooth address on every start
 (a real band keeps one).

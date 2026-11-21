@@ -12,6 +12,12 @@ interface HeadbandSink {
 
     /** Stored data sent after a reconnect: too late for detection, kept for the event diary. */
     fun catchUp(packet: P.Packet, phoneMs: Double) {}
+
+    /** Catch-up EEG (µV), for the model's memory of the recent past (HeadbandPipeline). */
+    fun lateEeg(firstMs: Double, uv: Array<FloatArray>, leadOff: Int) {}
+
+    /** Catch-up head movement, one sample. */
+    fun lateMovement(tMs: Double, accG: FloatArray, gyrDps: FloatArray) {}
 }
 
 /** What the phone knows about the headband right now (for the status screen and the warnings). */
@@ -77,6 +83,12 @@ class HeadbandReceiver(val info: P.DeviceInfo, private val sink: HeadbandSink) {
         if (catchUp) {
             state = state.copy(catchUp = state.catchUp + 1)
             sink.catchUp(p, phoneMs)
+            when (p) {
+                is P.Eeg -> sink.lateEeg(phoneMs, toMicrovolts(p), p.leadOff)
+                is P.Mov -> for ((i, r) in p.raw.withIndex()) sink.lateMovement(phoneMs + i * 1000.0 / info.movRate,
+                    FloatArray(3) { r[it] / info.accLsbPerG.toFloat() }, FloatArray(3) { r[3 + it] / info.gyrLsbPerDps })
+                else -> {}
+            }
             return
         }
         when (p) {
