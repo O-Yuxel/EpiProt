@@ -1,0 +1,660 @@
+{
+ "band_free_length_mm_per_side": 49.0,
+ "wire_options": [
+  {
+   "material": "nitinol",
+   "wire_mm": 1.0,
+   "k_N_per_mm": 0.0171,
+   "preload_mm_per_side": 87.7,
+   "force_N": {
+    "small": 1.51,
+    "medium": 1.5,
+    "large": 1.67,
+    "longnarrow": 1.46,
+    "shortwide": 1.52
+   },
+   "donning_stress_MPa": 1103.0,
+   "worn_stress_max_MPa": 1039.0,
+   "donning_strain_pct": 1.84,
+   "stress_ok": false
+  },
+  {
+   "material": "nitinol",
+   "wire_mm": 1.2,
+   "k_N_per_mm": 0.0355,
+   "preload_mm_per_side": 42.3,
+   "force_N": {
+    "small": 1.51,
+    "medium": 1.5,
+    "large": 1.86,
+    "longnarrow": 1.42,
+    "shortwide": 1.54
+   },
+   "donning_stress_MPa": 745.0,
+   "worn_stress_max_MPa": 669.0,
+   "donning_strain_pct": 1.24,
+   "stress_ok": false
+  },
+  {
+   "material": "nitinol",
+   "wire_mm": 1.3,
+   "k_N_per_mm": 0.0489,
+   "preload_mm_per_side": 30.7,
+   "force_N": {
+    "small": 1.52,
+    "medium": 1.5,
+    "large": 2.0,
+    "longnarrow": 1.39,
+    "shortwide": 1.55
+   },
+   "donning_stress_MPa": 647.0,
+   "worn_stress_max_MPa": 565.0,
+   "donning_strain_pct": 1.08,
+   "stress_ok": false
+  },
+  {
+   "material": "nitinol",
+   "wire_mm": 1.4,
+   "k_N_per_mm": 0.0657,
+   "preload_mm_per_side": 22.8,
+   "force_N": {
+    "small": 1.52,
+    "medium": 1.5,
+    "large": 2.17,
+    "longnarrow": 1.36,
+    "shortwide": 1.57
+   },
+   "donning_stress_MPa": 580.0,
+   "worn_stress_max_MPa": 491.0,
+   "donning_strain_pct": 0.97,
+   "stress_ok": false
+  },
+  {
+   "material": "nitinol",
+   "wire_mm": 1.5,
+   "k_N_per_mm": 0.0866,
+   "preload_mm_per_side": 17.3,
+   "force_N": {
+    "small": 1.53,
+    "medium": 1.5,
+    "large": 2.38,
+    "longnarrow": 1.31,
+    "shortwide": 1.6
+   },
+   "donning_stress_MPa": 534.0,
+   "worn_stress_max_MPa": 438.0,
+   "donning_strain_pct": 0.89,
+   "stress_ok": false
+  },
+  {
+   "material": "nitinol",
+   "wire_mm": 1.6,
+   "k_N_per_mm": 0.1121,
+   "preload_mm_per_side": 13.4,
+   "force_N": {
+    "small": 1.54,
+    "medium": 1.5,
+    "large": 2.64,
+    "longnarrow": 1.26,
+    "shortwide": 1.62
+   },
+   "donning_stress_MPa": 503.0,
+   "worn_stress_max_MPa": 401.0,
+   "donning_strain_pct": 0.84,
+   "stress_ok": false
+  },
+  {
+   "material": "nitinol",
+   "wire_mm": 1.8,
+   "k_N_per_mm": 0.1796,
+   "preload_mm_per_side": 8.4,
+   "force_N": {
+    "small": 1.57,
+    "medium": 1.5,
+    "large": 3.33,
+    "longnarrow": 1.11,
+    "shortwide": 1.7
+   },
+   "donning_stress_MPa": 469.0,
+   "worn_stress_max_MPa": 355.0,
+   "donning_strain_pct": 0.78,
+   "stress_ok": false
+  },
+  {
+   "material": "nitinol",
+   "wire_mm": 2.0,
+   "k_N_per_mm": 0.2737,
+   "preload_mm_per_side": 5.5,
+   "force_N": {
+    "small": 1.6,
+    "medium": 1.5,
+    "large": 4.29,
+    "longnarrow": 0.91,
+    "shortwide": 1.8
+   },
+   "donning_stress_MPa": 460.0,
+   "worn_stress_max_MPa": 333.0,
+   "donning_strain_pct": 0.77,
+   "stress_ok": false
+  },
+  {
+   "material": "beta-titanium",
+   "wire_mm": 1.0,
+   "k_N_per_mm": 0.0299,
+   "preload_mm_per_side": 50.1,
+   "force_N": {
+    "small": 1.51,
+    "medium": 1.5,
+    "large": 1.81,
+    "longnarrow": 1.44,
+    "shortwide": 1.53
+   },
+   "donning_stress_MPa": 1232.0,
+   "worn_stress_max_MPa": 1121.0,
+   "donning_strain_pct": 1.17,
+   "stress_ok": false
+  },
+  {
+   "material": "beta-titanium",
+   "wire_mm": 1.2,
+   "k_N_per_mm": 0.0621,
+   "preload_mm_per_side": 24.2,
+   "force_N": {
+    "small": 1.52,
+    "medium": 1.5,
+    "large": 2.13,
+    "longnarrow": 1.37,
+    "shortwide": 1.57
+   },
+   "donning_stress_MPa": 900.0,
+   "worn_stress_max_MPa": 766.0,
+   "donning_strain_pct": 0.86,
+   "stress_ok": false
+  },
+  {
+   "material": "beta-titanium",
+   "wire_mm": 1.3,
+   "k_N_per_mm": 0.0855,
+   "preload_mm_per_side": 17.5,
+   "force_N": {
+    "small": 1.53,
+    "medium": 1.5,
+    "large": 2.37,
+    "longnarrow": 1.32,
+    "shortwide": 1.59
+   },
+   "donning_stress_MPa": 815.0,
+   "worn_stress_max_MPa": 670.0,
+   "donning_strain_pct": 0.78,
+   "stress_ok": true
+  },
+  {
+   "material": "beta-titanium",
+   "wire_mm": 1.4,
+   "k_N_per_mm": 0.115,
+   "preload_mm_per_side": 13.0,
+   "force_N": {
+    "small": 1.54,
+    "medium": 1.5,
+    "large": 2.67,
+    "longnarrow": 1.25,
+    "shortwide": 1.63
+   },
+   "donning_stress_MPa": 761.0,
+   "worn_stress_max_MPa": 605.0,
+   "donning_strain_pct": 0.72,
+   "stress_ok": true
+  },
+  {
+   "material": "beta-titanium",
+   "wire_mm": 1.5,
+   "k_N_per_mm": 0.1515,
+   "preload_mm_per_side": 9.9,
+   "force_N": {
+    "small": 1.56,
+    "medium": 1.5,
+    "large": 3.05,
+    "longnarrow": 1.17,
+    "shortwide": 1.67
+   },
+   "donning_stress_MPa": 727.0,
+   "worn_stress_max_MPa": 560.0,
+   "donning_strain_pct": 0.69,
+   "stress_ok": true
+  },
+  {
+   "material": "beta-titanium",
+   "wire_mm": 1.6,
+   "k_N_per_mm": 0.1962,
+   "preload_mm_per_side": 7.6,
+   "force_N": {
+    "small": 1.57,
+    "medium": 1.5,
+    "large": 3.5,
+    "longnarrow": 1.08,
+    "shortwide": 1.72
+   },
+   "donning_stress_MPa": 709.0,
+   "worn_stress_max_MPa": 531.0,
+   "donning_strain_pct": 0.68,
+   "stress_ok": true
+  },
+  {
+   "material": "beta-titanium",
+   "wire_mm": 1.8,
+   "k_N_per_mm": 0.3143,
+   "preload_mm_per_side": 4.8,
+   "force_N": {
+    "small": 1.62,
+    "medium": 1.5,
+    "large": 4.71,
+    "longnarrow": 0.82,
+    "shortwide": 1.85
+   },
+   "donning_stress_MPa": 702.0,
+   "worn_stress_max_MPa": 501.0,
+   "donning_strain_pct": 0.67,
+   "stress_ok": true
+  },
+  {
+   "material": "beta-titanium",
+   "wire_mm": 2.0,
+   "k_N_per_mm": 0.479,
+   "preload_mm_per_side": 3.1,
+   "force_N": {
+    "small": 1.68,
+    "medium": 1.5,
+    "large": 6.39,
+    "longnarrow": 0.47,
+    "shortwide": 2.03
+   },
+   "donning_stress_MPa": 718.0,
+   "worn_stress_max_MPa": 495.0,
+   "donning_strain_pct": 0.68,
+   "stress_ok": true
+  },
+  {
+   "material": "spring steel",
+   "wire_mm": 1.0,
+   "k_N_per_mm": 0.0572,
+   "preload_mm_per_side": 26.2,
+   "force_N": {
+    "small": 1.52,
+    "medium": 1.5,
+    "large": 2.08,
+    "longnarrow": 1.38,
+    "shortwide": 1.56
+   },
+   "donning_stress_MPa": 1506.0,
+   "worn_stress_max_MPa": 1293.0,
+   "donning_strain_pct": 0.75,
+   "stress_ok": false
+  },
+  {
+   "material": "spring steel",
+   "wire_mm": 1.2,
+   "k_N_per_mm": 0.1186,
+   "preload_mm_per_side": 12.7,
+   "force_N": {
+    "small": 1.54,
+    "medium": 1.5,
+    "large": 2.71,
+    "longnarrow": 1.25,
+    "shortwide": 1.63
+   },
+   "donning_stress_MPa": 1229.0,
+   "worn_stress_max_MPa": 973.0,
+   "donning_strain_pct": 0.61,
+   "stress_ok": false
+  },
+  {
+   "material": "spring steel",
+   "wire_mm": 1.3,
+   "k_N_per_mm": 0.1633,
+   "preload_mm_per_side": 9.2,
+   "force_N": {
+    "small": 1.56,
+    "medium": 1.5,
+    "large": 3.17,
+    "longnarrow": 1.15,
+    "shortwide": 1.68
+   },
+   "donning_stress_MPa": 1171.0,
+   "worn_stress_max_MPa": 895.0,
+   "donning_strain_pct": 0.59,
+   "stress_ok": false
+  },
+  {
+   "material": "spring steel",
+   "wire_mm": 1.4,
+   "k_N_per_mm": 0.2197,
+   "preload_mm_per_side": 6.8,
+   "force_N": {
+    "small": 1.58,
+    "medium": 1.5,
+    "large": 3.74,
+    "longnarrow": 1.03,
+    "shortwide": 1.74
+   },
+   "donning_stress_MPa": 1144.0,
+   "worn_stress_max_MPa": 846.0,
+   "donning_strain_pct": 0.57,
+   "stress_ok": false
+  },
+  {
+   "material": "spring steel",
+   "wire_mm": 1.5,
+   "k_N_per_mm": 0.2895,
+   "preload_mm_per_side": 5.2,
+   "force_N": {
+    "small": 1.61,
+    "medium": 1.5,
+    "large": 4.45,
+    "longnarrow": 0.88,
+    "shortwide": 1.82
+   },
+   "donning_stress_MPa": 1138.0,
+   "worn_stress_max_MPa": 819.0,
+   "donning_strain_pct": 0.57,
+   "stress_ok": false
+  },
+  {
+   "material": "spring steel",
+   "wire_mm": 1.6,
+   "k_N_per_mm": 0.3748,
+   "preload_mm_per_side": 4.0,
+   "force_N": {
+    "small": 1.64,
+    "medium": 1.5,
+    "large": 5.32,
+    "longnarrow": 0.69,
+    "shortwide": 1.91
+   },
+   "donning_stress_MPa": 1147.0,
+   "worn_stress_max_MPa": 807.0,
+   "donning_strain_pct": 0.57,
+   "stress_ok": false
+  },
+  {
+   "material": "spring steel",
+   "wire_mm": 1.8,
+   "k_N_per_mm": 0.6003,
+   "preload_mm_per_side": 2.5,
+   "force_N": {
+    "small": 1.73,
+    "medium": 1.5,
+    "large": 7.62,
+    "longnarrow": 0.21,
+    "shortwide": 2.16
+   },
+   "donning_stress_MPa": 1195.0,
+   "worn_stress_max_MPa": 811.0,
+   "donning_strain_pct": 0.6,
+   "stress_ok": false
+  },
+  {
+   "material": "spring steel",
+   "wire_mm": 2.0,
+   "k_N_per_mm": 0.9149,
+   "preload_mm_per_side": 1.6,
+   "force_N": {
+    "small": 1.84,
+    "medium": 1.5,
+    "large": 10.83,
+    "longnarrow": -0.47,
+    "shortwide": 2.51
+   },
+   "donning_stress_MPa": 1267.0,
+   "worn_stress_max_MPa": 841.0,
+   "donning_strain_pct": 0.63,
+   "stress_ok": false
+  }
+ ],
+ "chosen_wire": {
+  "material": "beta-titanium",
+  "wire_mm": 1.3,
+  "k_N_per_mm": 0.0855,
+  "preload_mm_per_side": 17.5,
+  "force_N": {
+   "small": 1.53,
+   "medium": 1.5,
+   "large": 2.37,
+   "longnarrow": 1.32,
+   "shortwide": 1.59
+  },
+  "donning_stress_MPa": 815.0,
+  "worn_stress_max_MPa": 670.0,
+  "donning_strain_pct": 0.78,
+  "stress_ok": true
+ },
+ "pad_pressure_mmHg": {
+  "small": 22.6,
+  "medium": 22.1,
+  "large": 34.9,
+  "longnarrow": 19.5,
+  "shortwide": 23.4
+ },
+ "pad_pressure_note": "left side (2 pads, the higher one); right side has 3 pads: x0.77",
+ "fit_one_size": {
+  "small": {
+   "circumference_mm": 527.0,
+   "R": {
+    "pad_off_mastoid_mm": [
+     8.9,
+     9.9
+    ],
+    "min_body_skin_gap_mm": 3.6
+   },
+   "L": {
+    "pad_off_mastoid_mm": [
+     11.0,
+     11.0
+    ],
+    "min_body_skin_gap_mm": -0.5
+   }
+  },
+  "medium": {
+   "circumference_mm": 553.0,
+   "R": {
+    "pad_off_mastoid_mm": [
+     0.0,
+     0.0
+    ],
+    "min_body_skin_gap_mm": 0.9
+   },
+   "L": {
+    "pad_off_mastoid_mm": [
+     0.0,
+     0.0
+    ],
+    "min_body_skin_gap_mm": 1.0
+   }
+  },
+  "large": {
+   "circumference_mm": 565.0,
+   "R": {
+    "pad_off_mastoid_mm": [
+     15.2,
+     14.1
+    ],
+    "min_body_skin_gap_mm": -17.1
+   },
+   "L": {
+    "pad_off_mastoid_mm": [
+     17.6,
+     16.5
+    ],
+    "min_body_skin_gap_mm": -12.6
+   }
+  },
+  "longnarrow": {
+   "circumference_mm": 556.0,
+   "R": {
+    "pad_off_mastoid_mm": [
+     1.9,
+     3.9
+    ],
+    "min_body_skin_gap_mm": -1.1
+   },
+   "L": {
+    "pad_off_mastoid_mm": [
+     1.6,
+     1.5
+    ],
+    "min_body_skin_gap_mm": -1.8
+   }
+  },
+  "shortwide": {
+   "circumference_mm": 540.0,
+   "R": {
+    "pad_off_mastoid_mm": [
+     15.4,
+     15.4
+    ],
+    "min_body_skin_gap_mm": -18.8
+   },
+   "L": {
+    "pad_off_mastoid_mm": [
+     17.7,
+     20.0
+    ],
+    "min_body_skin_gap_mm": -10.8
+   }
+  }
+ },
+ "sizing_per_head": {
+  "small": {
+   "size_band_length_mm": 118.0,
+   "size_pad_spread_mm": 132.7,
+   "size_ear_top_to_upper_pad_mm": [
+    -19.6,
+    -9.6
+   ],
+   "size_pod_to_upper_pad_mm": 73.3,
+   "min_skin_gap_mm_side_R": 0.8,
+   "min_skin_gap_mm_band": 2.8,
+   "battery_inside_body_pct": 100.0,
+   "pillow_back_mm_side_R": 0.0,
+   "pillow_side_mm_side_R": 16.0
+  },
+  "medium": {
+   "size_band_length_mm": 122.0,
+   "size_pad_spread_mm": 132.0,
+   "size_ear_top_to_upper_pad_mm": [
+    -21.1,
+    -18.4
+   ],
+   "size_pod_to_upper_pad_mm": 73.4,
+   "min_skin_gap_mm_side_R": 0.9,
+   "min_skin_gap_mm_band": 2.4,
+   "battery_inside_body_pct": 100.0,
+   "pillow_back_mm_side_R": 0.0,
+   "pillow_side_mm_side_R": 13.9
+  },
+  "large": {
+   "size_band_length_mm": 189.0,
+   "size_pad_spread_mm": 148.4,
+   "size_ear_top_to_upper_pad_mm": [
+    -31.6,
+    -29.4
+   ],
+   "size_pod_to_upper_pad_mm": 72.4,
+   "min_skin_gap_mm_side_R": 0.9,
+   "min_skin_gap_mm_band": 2.8,
+   "battery_inside_body_pct": 100.0,
+   "pillow_back_mm_side_R": 0.0,
+   "pillow_side_mm_side_R": 13.0
+  },
+  "longnarrow": {
+   "size_band_length_mm": 123.0,
+   "size_pad_spread_mm": 128.4,
+   "size_ear_top_to_upper_pad_mm": [
+    -19.8,
+    -19.8
+   ],
+   "size_pod_to_upper_pad_mm": 72.1,
+   "min_skin_gap_mm_side_R": 0.9,
+   "min_skin_gap_mm_band": 2.6,
+   "battery_inside_body_pct": 100.0,
+   "pillow_back_mm_side_R": 0.0,
+   "pillow_side_mm_side_R": 16.6
+  },
+  "shortwide": {
+   "size_band_length_mm": 137.0,
+   "size_pad_spread_mm": 133.7,
+   "size_ear_top_to_upper_pad_mm": [
+    -33.8,
+    -27.1
+   ],
+   "size_pod_to_upper_pad_mm": 71.6,
+   "min_skin_gap_mm_side_R": 0.9,
+   "min_skin_gap_mm_band": 2.7,
+   "battery_inside_body_pct": 100.0,
+   "pillow_back_mm_side_R": 0.0,
+   "pillow_side_mm_side_R": 15.0
+  }
+ },
+ "breakaway_clasp": {
+  "opens_at_N": 5.0,
+  "largest_service_pull_N (half the device at 6 g)": 1.71,
+  "snag: pull needed to drag both hooks off the ears_N": 10.8,
+  "ok": true
+ },
+ "staying_on": {
+  "weight_g": 58.0,
+  "hook_wire_mm": 1.0,
+  "hook_release_force_N_each": 4.95,
+  "pad_friction_N_total": 0.9,
+  "holds": {
+   "down": [
+    "ear hooks carry it (rest on both ear roots)",
+    null
+   ],
+   "backward": [
+    "both hook tips must lift over the ear roots + pad friction",
+    10.8
+   ],
+   "up": [
+    "nape band must ride over the occipital bump + hooks lift + friction",
+    10.8
+   ],
+   "forward": [
+    "nape band is behind the neck",
+    null
+   ],
+   "sideways": [
+    "far-side hook must lift + friction",
+    5.85
+   ]
+  },
+  "cases": {
+   "standing still": {
+    "inertial_load_N": 0.57,
+    "weakest_hold_N": 5.85,
+    "safety_factor": 10.3
+   },
+   "walking (head peak ~1.5 g)": {
+    "inertial_load_N": 0.85,
+    "weakest_hold_N": 5.85,
+    "safety_factor": 6.9
+   },
+   "running (head peak ~3 g)": {
+    "inertial_load_N": 1.71,
+    "weakest_hold_N": 5.85,
+    "safety_factor": 3.4
+   },
+   "convulsion, head jerks (design 3 g)": {
+    "inertial_load_N": 1.71,
+    "weakest_hold_N": 5.85,
+    "safety_factor": 3.4
+   },
+   "fall, head hits bed/floor (design 6 g)": {
+    "inertial_load_N": 3.41,
+    "weakest_hold_N": 5.85,
+    "safety_factor": 1.7
+   }
+  }
+ },
+ "ear_root_pressure_mmHg": 19.5,
+ "skin_limit_note": "capillary closing pressure ~32 mmHg (Landis 1930); pads and ear root must stay below"
+}

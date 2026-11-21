@@ -1,0 +1,103 @@
+{
+ "ear_right": [
+  80.9,
+  -0.6,
+  -1.5
+ ],
+ "ear_left": [
+  -79.8,
+  0.6,
+  1.5
+ ],
+ "ear_top_right": [
+  79.9,
+  -1.8,
+  26.6
+ ],
+ "ear_bottom_right": [
+  79.1,
+  10.5,
+  -29.6
+ ],
+ "ear_back_right": [
+  80.0,
+  -15.7,
+  6.7
+ ],
+ "ear_front_right": [
+  79.1,
+  14.5,
+  -23.3
+ ],
+ "ear_top_left": [
+  -79.1,
+  -0.2,
+  26.2
+ ],
+ "ear_bottom_left": [
+  -77.4,
+  15.8,
+  -23.1
+ ],
+ "ear_back_left": [
+  -78.8,
+  -15.2,
+  8.2
+ ],
+ "ear_front_left": [
+  -77.2,
+  16.5,
+  -17.3
+ ],
+ "head_top": [
+  0.0,
+  10.6,
+  130.0
+ ],
+ "back_of_head": [
+  0.0,
+  -73.9,
+  43.3
+ ],
+ "nape_top": [
+  0.0,
+  -59.4,
+  -19.4
+ ],
+ "neck_back_upper": [
+  0.1,
+  -52.5,
+  -43.1
+ ],
+ "neck_back": [
+  0.0,
+  -55.0,
+  -71.2
+ ],
+ "mastoid_upper_right": [
+  64.3,
+  -21.6,
+  6.8
+ ],
+ "mastoid_lower_right": [
+  58.2,
+  -21.3,
+  -14.8
+ ],
+ "mastoid_upper_left": [
+  -64.1,
+  -21.7,
+  9.2
+ ],
+ "mastoid_lower_left": [
+  -58.4,
+  -21.7,
+  -10.6
+ ],
+ "head_circumference_mm": 556.0,
+ "head_circumference_height_mm": 44,
+ "head_breadth_mm": 153.0,
+ "ear_height_mm": 56.0,
+ "head_length_mm": 197.0,
+ "source": "NIOSH longnarrow digital headform (NIOSH NPPTL), via NIH 3D Print Exchange 3DPX-015142 by tprestero, CC-BY. Converted to mm and EpiProt axes."
+}

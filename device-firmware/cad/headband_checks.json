@@ -1,0 +1,30 @@
+{
+ "pod_straight_min_gap_mm_R": 2.5,
+ "pod_straight_length_mm_R": 44.7,
+ "pod_straight_min_gap_mm_L": 2.5,
+ "pod_straight_length_mm_L": 46.5,
+ "pad_pressure_mmHg": 22.1,
+ "battery_swelling_room_mm": 0.6,
+ "battery_inside_body_pct": 100.0,
+ "carrier_inside_body_pct_R": 100.0,
+ "carrier_inside_body_pct_L": 100.0,
+ "board_inside_body_pct": 100.0,
+ "min_skin_gap_mm_side_R": 0.9,
+ "min_skin_gap_mm_side_L": 0.9,
+ "min_skin_gap_mm_band": 2.4,
+ "pillow_back_mm_side_R": 0.0,
+ "pillow_side_mm_side_R": 13.9,
+ "pillow_back_mm_side_L": 0.0,
+ "pillow_side_mm_side_L": 13.6,
+ "pillow_back_mm_band": 1.7,
+ "pillow_side_mm_band": 0.0,
+ "weight_g_est": 58.0,
+ "head": "NIOSH medium, circumference 553.0 mm",
+ "size_pad_spread_mm": 132.0,
+ "size_ear_top_to_upper_pad_mm": [
+  -21.1,
+  -18.4
+ ],
+ "size_band_length_mm": 122.0,
+ "size_pod_to_upper_pad_mm": 73.4
+}

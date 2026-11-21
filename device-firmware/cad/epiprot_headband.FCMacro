@@ -1,63 +1,79 @@
 # -*- coding: utf-8 -*-
-"""EpiProt headband, concept D (two pods at the lower back corners of the head) - parametric FreeCAD model.
+"""EpiProt headband v3 - one-piece side bodies + nape spring band, on a real head (NIOSH medium headform).
 
-How to use
-  * In FreeCAD: Macro > Macros... > epiprot_headband.FCMacro > Execute.
-    The first run creates the document with a spreadsheet "Params". Change values there (band width, pod
-    sizes, battery size, pod position, ...), run the macro again: the model is rebuilt from the new values.
-  * From a terminal (also writes pictures):  freecad.exe device-firmware/cad/epiprot_headband.FCMacro
+Design (HARDWARE.md D16):
+  * Each side is ONE continuous soft-touch body: ear hook over the ear root -> electrode module on the mastoid
+    (upper + lower pad, third position below: bias on the right, blank on the left; same mould both sides)
+    -> pod on the side of the neck (right: 700 mAh LiPo 603040, left: electronics).
+  * A thin spring band (nitinol wire in silicone) joins the two pods around the nape. It is made narrower than
+    the head, so it presses the pads with a set force (mechanics: headform/mechanics.py).
+  * Inside each pod a rigid carrier (PC/PA12) holds the battery or the board; everything is overmoulded with
+    medical silicone (production) or cast/printed in a soft shell (prototype).
+  * Pod positions come from headform/pod_placement_study.py: no pillow contact lying on the back or on the side.
 
-Coordinates (mm): x = to the patient's right, y = forward, z = up, ear canal at z = 0. The head is a simple
-average adult head made of smooth shapes (not a scan). Component sizes come from HARDWARE.md.
+Use: FreeCAD 1.1 > Macro > epiprot_headband.FCMacro > Execute (first run creates the spreadsheet "Params";
+change values there and run again). Pictures: EPIPROT_SHOTS=1 freecad.exe epiprot_headband.FCMacro
+Writes headband_checks.json and headform/device_geometry.json (input for headform/mechanics.py).
+Other head: set EPIPROT_HEAD=small|large|longnarrow|shortwide -> the device is fitted to that NIOSH head and only
+headband_checks_<head>.json is written (sizing study; the .FCStd stays the medium model).
+
+Coordinates (mm): x = patient's right, y = forward, z = up, origin between the auricle centres.
 """
+import json
 import math
 import os
 
 import FreeCAD as App
+import Mesh
 import Part
 from FreeCAD import Vector as V
 
 HERE = os.path.dirname(os.path.abspath(__file__)) if "__file__" in dir() else os.getcwd()
+HEAD = os.environ.get("EPIPROT_HEAD", "medium")
 DOC_FILE = os.path.join(HERE, "epiprot_headband.FCStd")
+HEAD_STL = os.path.join(HERE, "headform", f"headform_{HEAD}_mm.stl")
+LM = json.load(open(os.path.join(HERE, "headform", f"landmarks_{HEAD}.json")))
 
-DEFAULTS = [  # alias, value, unit / meaning
-    ("head_scale", 1.00, "1.00 = average adult head (circumference ~57 cm)"),
-    ("band_width", 20.0, "mm, elastic fabric band"),
-    ("band_thick", 2.0, "mm"),
-    ("band_low", -30.0, "mm, height of the band at the back (below the occipital bump)"),
-    ("pod_angle", 50.0, "deg from the back centre to each pod"),
-    ("pod_z", -44.0, "mm, height of the pod centres"),
-    ("podL_w", 32.0, "mm, left pod (electronics) width"),
-    ("podL_h", 36.0, "mm, height"),
-    ("podL_t", 9.0, "mm, thickness"),
-    ("podR_w", 40.0, "mm, right pod (battery) width"),
-    ("podR_h", 56.0, "mm, height"),
-    ("podR_t", 10.0, "mm, thickness"),
-    ("wall", 1.5, "mm, enclosure wall"),
-    ("bat_w", 34.0, "mm, 700 mAh LiPo (603450)"),
-    ("bat_h", 50.0, "mm"),
+DEFAULTS = [  # alias, value, meaning
+    ("hook_d", 4.0, "mm, ear hook thickness"),
+    ("hook_w", 6.0, "mm, ear hook width: flat underside on the ear root (keeps the pressure < 32 mmHg)"),
+    ("mod_w", 19.0, "mm, electrode module width (18 mm pads + 0.5 mm lip)"),
+    ("mod_t", 5.5, "mm, electrode module thickness"),
+    ("pod_w", 34.0, "mm, pod width (across the body)"),
+    ("pod_len", 50.0, "mm, pod length (along the body; its straight rigid part, ~45 mm, holds the 43 mm carrier)"),
+    ("pod_t", 10.0, "mm, battery pod: 0.6 silicone + 1.0 wall + 0.2 foam + 6.0 cell + 0.6 swelling room + 1.0 + 0.6"),
+    ("pod_angle", 76.0, "deg from the back centre (pod_placement_study.py: 0 mm pillow contact)"),
+    ("pod_z", -64.0, "mm, pod centre height (0 = auricle centre)"),
+    ("podL_t", 7.0, "mm, electronics pod: 0.6 + 1.0 + board 0.8 + parts 2.2 + 0.6 room + 1.0 + 0.6 (same outline)"),
+    ("pod_gap", 2.5, "mm, pod inner face to skin (pods do not press)"),
+    ("band_w", 5.5, "mm, nape band width"),
+    ("band_t", 4.0, "mm, nape band thickness"),
+    ("band_z", -60.0, "mm, height where the band crosses the nape"),
+    ("neck_gap", 3.0, "mm, band to skin at the nape"),
+    ("pad_d", 18.0, "mm, semi-dry pad diameter"),
+    ("pad_t", 2.5, "mm, pad thickness"),
+    ("pad_squeeze", 0.6, "mm, pad compression into the skin"),
+    ("clamp_N", 1.5, "N per side, design clamping force (mechanics.py sizes the wire for it)"),
+    ("bat_w", 30.0, "mm, 700 mAh LiPo 603040"),
+    ("bat_len", 40.0, "mm"),
     ("bat_t", 6.0, "mm"),
-    ("pcb_w", 26.0, "mm, main board"),
-    ("pcb_h", 30.0, "mm"),
-    ("pad_d", 20.0, "mm, semi-dry pad diameter"),
-    ("top_strap", 0.0, "1 = add a strap over the crown (better hold during a convulsion)"),
+    ("wall", 1.0, "mm, carrier wall (PC / PA12)"),
+    ("skin_sil", 0.6, "mm, silicone skin over the carrier"),
 ]
+BODY = (0.19, 0.20, 0.22)
+INNER = (0.33, 0.35, 0.38)
 
-HEAD = dict(c=V(0, -5, 20), r=(76.0, 98.0, 105.0))
 
-
-# ------------------------------------------------------------------ parameters
 def params(doc):
     sh = doc.getObject("Params")
     if sh is None:
         sh = doc.addObject("Spreadsheet::Sheet", "Params")
         sh.set("A1", "parameter"); sh.set("B1", "value"); sh.set("C1", "meaning")
         for i, (a, v, m) in enumerate(DEFAULTS, start=2):
-            sh.set(f"A{i}", a); sh.set(f"B{i}", str(v)); sh.set(f"C{i}", m)
-            sh.setAlias(f"B{i}", a)
+            sh.set(f"A{i}", a); sh.set(f"B{i}", str(v)); sh.set(f"C{i}", m); sh.setAlias(f"B{i}", a)
         doc.recompute()
     p = {}
-    for i, (a, v, _) in enumerate(DEFAULTS, start=2):
+    for a, v, _ in DEFAULTS:
         try:
             p[a] = float(sh.get(a))
         except Exception:
@@ -65,224 +81,475 @@ def params(doc):
     return p
 
 
-# ------------------------------------------------------------------ head
-def ellipsoid(c, r):
-    m = App.Matrix(); m.scale(*r)
-    return Part.makeSphere(1.0).transformGeometry(m).translated(c)
+# ------------------------------------------------------------------ skin (ray casting on the headform)
+class Skin:
+    def __init__(self, path):
+        import numpy as np
+        self.np = np
+        self.mesh = Mesh.Mesh(path)
+        pts = np.array([[q.x, q.y, q.z] for q in self.mesh.Points])
+        fac = np.array([f.PointIndices for f in self.mesh.Facets])
+        t = pts[fac]
+        self.t = t[t[:, :, 2].max(1) > -140]
+        self.e1 = self.t[:, 1] - self.t[:, 0]
+        self.e2 = self.t[:, 2] - self.t[:, 0]
+
+    def hit(self, origin, direction):
+        np = self.np
+        o = np.array([origin.x, origin.y, origin.z]); d = np.array([direction.x, direction.y, direction.z])
+        d = d / np.linalg.norm(d)
+        pv = np.cross(d, self.e2)
+        det = (self.e1 * pv).sum(1)
+        ok = np.abs(det) > 1e-9
+        inv = np.where(ok, 1.0 / np.where(ok, det, 1), 0)
+        tv = o - self.t[:, 0]
+        u = (tv * pv).sum(1) * inv
+        qv = np.cross(tv, self.e1)
+        v = (d * qv).sum(1) * inv
+        dist = (self.e2 * qv).sum(1) * inv
+        m = ok & (u >= 0) & (v >= 0) & (u + v <= 1) & (dist > 0)
+        if not m.any():
+            return None, None
+        i = np.flatnonzero(m)[np.argmin(dist[m])]
+        n = np.cross(self.e1[i], self.e2[i]); n /= np.linalg.norm(n)
+        if n.dot(d) > 0:
+            n = -n
+        return V(*(o + d * dist[i])), V(*n)
+
+    def around(self, theta, z, yc=-15.0):
+        """Skin point seen horizontally from outside at angle theta (0 = back centre, +90 = right), height z."""
+        t = math.radians(theta)
+        d = V(math.sin(t), -math.cos(t), 0)
+        return self.hit(V(0, yc, z) + d * 250, d * -1)
+
+    def towards(self, target, theta_out):
+        t = math.radians(theta_out)
+        d = V(math.sin(t), -math.cos(t), 0)
+        return self.hit(target + d * 80, d * -1)
+
+    def gap(self, point, n):
+        """Distance from point to the skin along -n (negative = the point is inside the head)."""
+        q, _ = self.hit(point + n * 30, n * -1)
+        return None if q is None else (point + n * 30 - q).Length - 30
 
 
-def head(s):
-    c, r = HEAD["c"], HEAD["r"]
-    cran = ellipsoid(c * s, tuple(x * s for x in r))
-    face = ellipsoid(V(0, 32, -38) * s, (62 * s, 72 * s, 80 * s))
-    jaw = ellipsoid(V(0, 40, -82) * s, (48 * s, 52 * s, 40 * s))
-    nose = ellipsoid(V(0, 100, -20) * s, (11 * s, 16 * s, 26 * s))
-    neck = Part.makeCylinder(54 * s, 150 * s, V(0, -18 * s, -215 * s), V(0, 0, 1))
-    ears = []
-    for sx in (-1, 1):
-        e = ellipsoid(V(0, 0, 0), (7 * s, 17 * s, 31 * s))
-        e.rotate(V(0, 0, 0), V(1, 0, 0), -12)
-        ears.append(e.translated(V(sx * 77 * s, -4 * s, 2 * s)))
-    return cran.fuse([face, jaw, nose, neck] + ears).removeSplitter()
+# ------------------------------------------------------------------ geometry helpers
+def rr_wire(w, h, center, ax_w, ax_h, r=None):
+    r = h / 2 - 0.02 if r is None else r
+    r = max(0.2, min(r, w / 2 - 0.02, h / 2 - 0.02))
+    pts = []
+    for cx, cy, a0 in ((w / 2 - r, h / 2 - r, 0), (-w / 2 + r, h / 2 - r, 90), (-w / 2 + r, -h / 2 + r, 180), (w / 2 - r, -h / 2 + r, 270)):
+        for k in range(7):
+            a = math.radians(a0 + 90 * k / 6)
+            pts.append(center + ax_w * (cx + r * math.cos(a)) + ax_h * (cy + r * math.sin(a)))
+    return Part.makePolygon(pts + [pts[0]])
 
 
-def surf(theta_deg, z, s, off=0.0):
-    """Point on the cranium at angle theta (0 = back centre, +90 = right ear) and height z, plus normal."""
-    c, (rx, ry, rz) = HEAD["c"] * s, (HEAD["r"][0] * s, HEAD["r"][1] * s, HEAD["r"][2] * s)
-    k = max(0.05, 1 - ((z - c.z) / rz) ** 2) ** 0.5
-    k = max(k, 0.72)                     # below the skull the neck carries the band: do not curl inwards
-    t = math.radians(theta_deg)
-    p = V(rx * k * math.sin(t), c.y - ry * k * math.cos(t), z)
-    nz = max(-0.25, min(0.25, (p.z - c.z) / rz ** 2 * rx ** 2 * 0.5))   # mostly horizontal normal
-    n = V(p.x / rx ** 2 * rx ** 2, (p.y - c.y) / ry ** 2 * rx ** 2, 0)
-    n.normalize()
-    n = n + V(0, 0, nz); n.normalize()
-    return p + n * off, n
-
-
-# ------------------------------------------------------------------ strip along the head (band, ear arms)
-def strip(path, width, thick, s, off):
-    """Solid strip lying on the skin through [(theta, z), ...]: thickness along the skin normal."""
-    secs = []
-    pts = [surf(t, z, s, off + thick / 2) for t, z in path]
-    for i, (p, n) in enumerate(pts):
-        a = pts[max(0, i - 1)][0]; b = pts[min(len(pts) - 1, i + 1)][0]
-        tg = b - a; tg.normalize()
-        w = tg.cross(n); w.normalize()
-        q = [p + w * (width / 2) + n * (thick / 2), p - w * (width / 2) + n * (thick / 2),
-             p - w * (width / 2) - n * (thick / 2), p + w * (width / 2) - n * (thick / 2)]
-        secs.append(Part.makePolygon(q + [q[0]]))
-    return Part.makeLoft(secs, True, False)
-
-
-def band_path(p, n=41):
-    """Around the back of the head, below the occipital bump, ending behind each ear (lower mastoid)."""
-    out = []
-    for i in range(n):
-        t = -78 + 156 * i / (n - 1)
-        z = p["band_low"] - 4 * (abs(t) / 78) ** 2
-        out.append((t, z))
-    return out
-
-
-def ear_hook(sx):
-    """From the band end up behind the ear (over both pads) and over the top of the ear, like a glasses temple."""
-    pts = [(78, -34), (80, -26), (82, -16), (84, -6), (86, 6), (88, 18), (91, 28), (95, 35), (100, 38), (105, 37), (109, 32)]
-    return [(sx * t, z) for t, z in pts]
-
-
-# ------------------------------------------------------------------ pods
-def frame(theta, z, s):
-    p, n = surf(theta, z, s)
-    up = V(0, 0, 1) - n * n.z; up.normalize()
-    side = n.cross(up); side.normalize()       # right-handed: side x n = up (else FreeCAD flips an axis)
-    return p, n, up, side
-
-
-def placed(shape, theta, z, s, lift):
-    """Local axes: x = side, y = outward normal, z = up. lift = distance of the local origin from the skin."""
-    p, n, up, side = frame(theta, z, s)
-    pl = App.Placement(p + n * lift, App.Rotation(side, n, up, "ZXY"))
-    sh = shape.copy(); sh.Placement = pl.multiply(sh.Placement)
-    return sh
-
-
-def rounded(w, t, h, r):
+def box_at(w, t, h, center, ax_w, ax_t, ax_h):
+    ax_w = ax_t.cross(ax_h)                             # keep the frame right-handed whatever was passed
     b = Part.makeBox(w, t, h, V(-w / 2, -t / 2, -h / 2))
-    try:
-        return b.makeFillet(min(r, min(w, t, h) / 2 - 0.2), b.Edges)
-    except Exception:
-        return b
+    b.Placement = App.Placement(center, App.Rotation(ax_w, ax_t, ax_h, "ZXY"))
+    return b
 
 
-def shell(w, t, h, wall, r=4.0):
-    outer = rounded(w, t, h, r)
-    inner = rounded(w - 2 * wall, t - 2 * wall, h - 2 * wall, max(0.5, r - wall))
-    return outer.cut(inner)
+def disc_at(d, t, center, n):
+    return Part.makeCylinder(d / 2, t, center - n * (t / 2), n)
+
+
+def smoothstep(a, b, f):
+    f = max(0.0, min(1.0, f)); f = f * f * (3 - 2 * f)
+    return a + (b - a) * f
+
+
+class Body:
+    """A soft body following the skin: control skin points with (width, thickness, clearance) at each."""
+
+    def __init__(self, skin, keys, step=2.5, smooth=4, straight=None, min_gap=None):
+        np = skin.np
+        pts = [k[0] for k in keys]
+        c = Part.BSplineCurve(); c.interpolate(pts)
+        L = c.length(); n = max(12, int(L / step))
+        par = [c.parameterAtDistance(L * i / n, c.FirstParameter) for i in range(n + 1)]
+        raw = [c.value(u) for u in par]
+        kidx = [min(range(len(raw)), key=lambda i: (raw[i] - k[0]).Length) for k in keys]
+        kidx[0], kidx[-1] = 0, n
+        # skin normal at each sample: re-project with the normal of the nearest key, then smooth
+        P, N = [], []
+        for i, q in enumerate(raw):
+            j = min(range(len(keys)), key=lambda k: abs(kidx[k] - i))
+            ng = keys[j][1]
+            s, sn = skin.hit(q + ng * 40, ng * -1)
+            P.append(s if s is not None else q); N.append(sn if sn is not None else ng)
+        Ns = []
+        for i in range(len(N)):
+            a = V(0, 0, 0)
+            for j in range(max(0, i - smooth), min(len(N), i + smooth + 1)):
+                a += N[j]
+            a.normalize(); Ns.append(a)
+        Ps = []
+        for i in range(len(P)):
+            a = V(0, 0, 0); cnt = 0
+            for j in range(max(0, i - 2), min(len(P), i + 3)):
+                a += P[j]; cnt += 1
+            Ps.append(a * (1.0 / cnt))
+        # profile along the body
+        self.w, self.t, self.c = [], [], []
+        for i in range(len(Ps)):
+            k = max(kk for kk in range(len(keys)) if kidx[kk] <= i) if i < n else len(keys) - 2
+            k = min(k, len(keys) - 2)
+            f = (i - kidx[k]) / max(1, kidx[k + 1] - kidx[k])
+            self.w.append(smoothstep(keys[k][2], keys[k + 1][2], f))
+            self.t.append(smoothstep(keys[k][3], keys[k + 1][3], f))
+            self.c.append(smoothstep(keys[k][4], keys[k + 1][4], f))
+        self.skin_pts, self.normals = Ps, Ns
+        self.centre = [Ps[i] + Ns[i] * (self.c[i] + self.t[i] / 2) for i in range(len(Ps))]
+        self.kidx = kidx
+        self.straight_gap = None
+        if straight:
+            # rigid part (pod with its carrier): straight centreline and one normal, moved out until its inner
+            # face keeps min_gap from the skin everywhere
+            ia, ib = kidx[straight[0]], kidx[straight[1]]
+            na = V(0, 0, 0)
+            for i in range(ia, ib + 1):
+                na += Ns[i]
+            ca, cb = self.centre[ia], self.centre[ib]
+            ax = cb - ca; ax.normalize()
+            na = na - ax * na.dot(ax); na.normalize()
+            for _ in range(3):
+                worst = 1e9
+                for i in range(ia, ib + 1):
+                    f = (i - ia) / (ib - ia)
+                    self.centre[i] = ca * (1 - f) + cb * f
+                    Ns[i] = na
+                    side_ax = ax.cross(na)
+                    for e in (-0.45, 0, 0.45):
+                        q = self.centre[i] - na * (self.t[i] / 2) + side_ax * (e * self.w[i])
+                        g = skin.gap(q, na)
+                        if g is not None:
+                            worst = min(worst, g)
+                if min_gap is None or worst >= min_gap - 0.05:
+                    break
+                ca, cb = ca + na * (min_gap - worst), cb + na * (min_gap - worst)
+            self.straight_gap = worst
+            self.straight_ends = (ia, ib)
+            self.straight_axes = (ax, na)
+            # blend into the curved parts over 8 samples on each side (no kink into the skin)
+            for side_, rng in ((ia, range(ia - 1, max(-1, ia - 9), -1)), (ib, range(ib + 1, min(n + 1, ib + 9)))):
+
+                for k_, i in enumerate(rng):
+                    f = 1 - (k_ + 1) / 9.0
+                    orig = Ps[i] + Ns[i] * (self.c[i] + self.t[i] / 2)
+                    lift = (self.centre[side_] - (Ps[side_] + na * (self.c[side_] + self.t[side_] / 2))).dot(na)
+                    self.centre[i] = orig + Ns[i] * max(0.0, lift) * f
+        self.axes = []
+        for i, cc in enumerate(self.centre):
+            if straight and self.straight_ends[0] <= i <= self.straight_ends[1]:
+                ax_, na_ = self.straight_axes                 # rigid part: every section square to its axis
+                b_ = ax_.cross(na_); b_.normalize()
+                self.axes.append((ax_, na_, b_))
+                continue
+            tg = self.centre[min(i + 1, n)] - self.centre[max(i - 1, 0)]
+            nn = Ns[i]
+            if straight:
+                # turn the sections gradually into the rigid part's orientation over 10 samples, so a tilted
+                # section never reaches into the straight part with its edges
+                ia, ib = self.straight_ends
+                dist = ia - i if i < ia else i - ib
+                if dist <= 10:
+                    f = 1 - dist / 11.0
+                    ax_, na_ = self.straight_axes
+                    tg.normalize(); tg = tg * (1 - f) + ax_ * f
+                    nn = nn * (1 - f) + na_ * f; nn.normalize()
+            tg = tg - nn * tg.dot(nn); tg.normalize()
+            b = tg.cross(nn); b.normalize()
+            self.axes.append((tg, nn, b))
+
+    def solid(self, every=1):
+        secs = []
+        idx = list(range(0, len(self.centre), every))
+        if idx[-1] != len(self.centre) - 1:
+            idx.append(len(self.centre) - 1)
+        for i in idx:
+            tg, nn, b = self.axes[i]
+            r = self.t[i] / 2 if self.w[i] < 16 else 3.2     # wide parts: rounded slab (like a phone), not a pill
+            secs.append(rr_wire(self.w[i], self.t[i], self.centre[i], b, nn, r))
+        # smooth (B-spline) lofts through many sections can oscillate wildly; sections are 2.5 mm apart, so a
+        # ruled loft is just as smooth to the eye and always stays between its sections
+        return Part.makeLoft(secs, True, True)
+
+    def inner_face_points(self):
+        """Points on the skin-side face (centre, both edges) for clearance checks."""
+        out = []
+        for i in range(len(self.centre)):
+            tg, nn, b = self.axes[i]
+            base = self.centre[i] - nn * (self.t[i] / 2)
+            for e in (-0.42, 0, 0.42):
+                out.append((base + b * (e * self.w[i]), nn))
+        return out
 
 
 # ------------------------------------------------------------------ build
 def build(doc):
+    import numpy as np
     p = params(doc)
-    s = p["head_scale"]
     for o in list(doc.Objects):
         if o.Name != "Params":
             doc.removeObject(o.Name)
-    groups = {g: doc.addObject("App::DocumentObjectGroup", g) for g in
-              ("Head", "Band", "Pads", "Pod_left_electronics", "Pod_right_battery", "Inside")}
+    skin = Skin(HEAD_STL)
+    G = {g: doc.addObject("App::DocumentObjectGroup", g) for g in
+         ("Headform", "Body", "Electrodes", "Controls", "Inside")}
+    gui = App.GuiUp
 
     def add(name, shape, group, color, transp=0):
-        o = doc.addObject("Part::Feature", name)
-        o.Shape = shape
-        groups[group].addObject(o)
-        if App.GuiUp:
-            o.ViewObject.ShapeColor = color
-            o.ViewObject.Transparency = transp
+        o = doc.addObject("Part::Feature", name); o.Shape = shape; G[group].addObject(o)
+        if gui:
+            o.ViewObject.ShapeColor = color; o.ViewObject.Transparency = transp
+            o.ViewObject.Deviation = 0.03; o.ViewObject.DisplayMode = "Shaded"
         return o
 
-    add("Head", head(s), "Head", (0.91, 0.80, 0.71), 0)
+    head = doc.addObject("Mesh::Feature", "Headform_NIOSH_medium"); head.Mesh = skin.mesh; G["Headform"].addObject(head)
+    if gui:
+        head.ViewObject.ShapeColor = (0.87, 0.72, 0.62); head.ViewObject.Lighting = "Two side"
 
-    # band + crown strap
-    add("Band", strip(band_path(p), p["band_width"], p["band_thick"], s, 0.6), "Band", (0.06, 0.45, 0.50))
-    if p["top_strap"] >= 0.5:
-        crown = [(90 * (i / 20 * 2 - 1), 0) for i in range(21)]
-        pts = []
-        for t, _ in crown:                                     # over the top, ear to ear
-            a = math.radians(t)
-            pts.append(V(HEAD["r"][0] * s * math.sin(a) * 1.01, HEAD["c"].y * s - 10,
-                         HEAD["c"].z * s + HEAD["r"][2] * s * math.cos(a) * 1.01))
-        secs = []
-        for i, q in enumerate(pts):
-            d = pts[min(i + 1, len(pts) - 1)] - pts[max(i - 1, 0)]; d.normalize()
-            w = V(0, 1, 0) * (p["band_width"] / 2)
-            nn = d.cross(V(0, 1, 0)); nn.normalize(); nn = nn * (p["band_thick"] / 2)
-            secs.append(Part.makePolygon([q + w + nn, q - w + nn, q - w - nn, q + w - nn, q + w + nn]))
-        add("Crown_strap", Part.makeLoft(secs, True, False), "Band", (0.06, 0.45, 0.50))
+    pd, pt, sq = p["pad_d"], p["pad_t"], p["pad_squeeze"]
+    cp = pt - sq                                        # module inner face above the skin
+    hd, mw, mt = p["hook_d"], p["mod_w"], p["mod_t"]
+    W, PL, PT, PG = p["pod_w"], p["pod_len"], p["pod_t"], p["pod_gap"]
+    report, geo = {}, {"sides": {}}
+    sides = {}
 
-    # ear arms with the pads (upper / lower mastoid) and the bias electrode at the back
-    pad = Part.makeCylinder(p["pad_d"] / 2, 3.0, V(0, 0, 0), V(0, 1, 0))
-    for sx, side_name in ((-1, "L"), (1, "R")):
-        add(f"Ear_hook_{side_name}", strip(ear_hook(sx), 12.0, 2.5, s, 3.0), "Band", (0.06, 0.45, 0.50))
-        for nm, (t, z) in (("top", (sx * 84, -6)), ("bottom", (sx * 80, -26))):
-            add(f"Pad_{side_name}_{nm}", placed(pad, t, z, s, 0.0), "Pads", (0.55, 0.62, 0.64))
-    add("Bias_electrode", placed(Part.makeCylinder(8, 2.0, V(0, 0, 0), V(0, 1, 0)), 0, p["band_low"], s, 0.0),
-        "Pads", (0.55, 0.62, 0.64))
+    for sx, s_ in ((1, "R"), (-1, "L")):
+        nm = "right" if sx > 0 else "left"
+        et = V(*LM[f"ear_top_{nm}"])
+        mu, ml = V(*LM[f"mastoid_upper_{nm}"]), V(*LM[f"mastoid_lower_{nm}"])
+        keys = []
+        # ear hook: tip on the temple in front of the ear top, over the ear root, down into the crease behind it
+        hw_ = p["hook_w"]
+        for (dy, dz, w) in ((16, 0, hw_ * 0.75), (9, 6, hw_), (0, 8, hw_), (-9, 6, hw_), (-16, -2, hw_ * 1.1)):
+            q, n = skin.towards(V(et.x * 0.8, et.y + dy, et.z + dz), sx * 90)
+            keys.append((q, n, w, hd if w >= hd else w, 1.0))
+        # electrode module on the mastoid: upper pad, lower pad, third position (bias right / blank left)
+        pads = [mu, ml, ml + V(0, -1, -17)]
+        q, n = skin.towards(mu + V(0, 0, 12), sx * 75); keys.append((q, n, mw * 0.65, mt * 0.9, cp))
+        pad_pts = []
+        for lmk in pads:
+            q, n = skin.towards(lmk, sx * 75); keys.append((q, n, mw, mt, cp)); pad_pts.append((q, n))
+        # transition, then the pod on the side of the neck
+        q, n = skin.around(sx * (p["pod_angle"] + 5), p["pod_z"] + PL / 2 + 6)
+        PTs = PT if sx > 0 else p["podL_t"]
+        keys.append((q, n, (mw + W) / 2, (mt + PTs) / 2, (cp + PG) / 2))
+        for (dz, w, t, c) in ((-PL / 2 + 1, W, PTs, PG), (0, W, PTs, PG),
+                              (PL / 2 - 1, W, PTs, PG), (PL / 2 + 3, W * 0.7, PTs * 0.75, PG), (PL / 2 + 6, W * 0.3, PTs * 0.45, PG + 1)):
+            q, n = skin.around(sx * p["pod_angle"], p["pod_z"] - dz); keys.append((q, n, w, t, c))
+        body = Body(skin, keys, straight=(10, 12), min_gap=PG)
+        sides[s_] = (body, pad_pts)
+        report[f"pod_straight_min_gap_mm_{s_}"] = round(body.straight_gap, 1)
+        report[f"pod_straight_length_mm_{s_}"] = round((body.centre[body.straight_ends[1]] - body.centre[body.straight_ends[0]]).Length, 1)
+        add(f"Side_body_{s_}", body.solid(), "Body", BODY)
+        # pads (+ stainless snap studs moulded into the module)
+        names = ("top", "bottom", "bias" if sx > 0 else None)
+        for (q, n), pn in zip(pad_pts, names):
+            if pn is None:
+                add(f"Blank_cap_{s_}", disc_at(10, 0.8, q + n * (cp + 0.4), n), "Electrodes", INNER)
+                continue
+            d = pd if pn != "bias" else 14.0
+            add(f"Pad_{s_}_{pn}", disc_at(d, pt, q + n * (pt / 2 - sq), n), "Electrodes", (0.72, 0.85, 0.90))
+            add(f"Snap_{s_}_{pn}", disc_at(8.0, 1.2, q + n * (cp + 0.6), n), "Electrodes", (0.78, 0.78, 0.80))
+        geo["sides"][s_] = {
+            "pads": [[list(q), list(n)] for q, n in pad_pts],
+            "hook_seat": [list(k[0]) for k in keys[1:4]],
+            "pod_centre": list(skin.around(sx * p["pod_angle"], p["pod_z"])[0]),
+            "inner_face": [[list(a), list(b)] for a, b in body.inner_face_points()[::3]],
+        }
 
-    # safety clasp: magnetic, opens under a strong pull
-    clasp = rounded(14, 5, p["band_width"] + 2, 2)
-    add("Safety_clasp", placed(clasp, 0, p["band_low"], s, 2.6 + p["band_thick"]), "Band", (0.25, 0.27, 0.29))
+    # nape spring band: from inside the right pod around the nape into the left pod
+    bkeys = []
+    for (th, z, c, w, t) in ((72, p["pod_z"] + 6, PG + PT / 2 - 1, p["band_w"], p["band_t"]),
+                             (60, p["band_z"] - 2, p["neck_gap"] + 1, p["band_w"], p["band_t"]),
+                             (35, p["band_z"], p["neck_gap"], p["band_w"], p["band_t"]),
+                             (0, p["band_z"], p["neck_gap"], p["band_w"], p["band_t"]),
+                             (-35, p["band_z"], p["neck_gap"], p["band_w"], p["band_t"]),
+                             (-60, p["band_z"] - 2, p["neck_gap"] + 1, p["band_w"], p["band_t"]),
+                             (-72, p["pod_z"] + 6, PG + PT / 2 - 1, p["band_w"], p["band_t"])):
+        q, n = skin.around(th if th != 72 and th != -72 else math.copysign(p["pod_angle"], th), z)
+        bkeys.append((q, n, w, t, c))
+    band = Body(skin, bkeys, step=3.0)
+    add("Nape_spring_band", band.solid(), "Body", BODY)
+    i0 = len(band.centre) // 2
+    tg, nn, b = band.axes[i0]
+    add("Breakaway_clasp_magnetic", box_at(14, p["band_t"] + 1.6, p["band_w"] + 2.5, band.centre[i0], tg, nn, b),
+        "Body", (0.55, 0.57, 0.60))
+    add("Nitinol_wire_band", Body(skin, [(k[0], k[1], 1.4, 1.4, k[4] + k[3] / 2 - 0.7) for k in bkeys], step=3.0).solid(),
+        "Inside", (0.75, 0.75, 0.78))
+    geo["band_centreline"] = [list(c) for c in band.centre]
+    geo["band_pod_fraction"] = [band.kidx[1] / len(band.centre), band.kidx[-2] / len(band.centre)]
 
-    # pods (enclosures), slightly lifted so the band passes under them
-    tL, tR = p["podL_t"], p["podR_t"]
-    lift = 0.8 + p["band_thick"]
-    podL = placed(shell(p["podL_w"], tL, p["podL_h"], p["wall"]), -p["pod_angle"], p["pod_z"], s, lift + tL / 2)
-    podR = placed(shell(p["podR_w"], tR, p["podR_h"], p["wall"]), p["pod_angle"], p["pod_z"] - 2, s, lift + tR / 2)
-    add("Pod_left", podL, "Pod_left_electronics", (0.85, 0.30, 0.25), 55)
-    add("Pod_right", podR, "Pod_right_battery", (0.85, 0.30, 0.25), 55)
+    # pods: carriers and contents (placed in the local frame of the body at the pod centre)
+    def pod_frame(body, PT):
+        """Pod centre on the skin side and its axes: the middle of the straight (rigid) part of the body."""
+        ia, ib = body.straight_ends
+        i = (ia + ib) // 2
+        tg, nn, b = body.axes[i]
+        mid = (body.centre[ia] + body.centre[ib]) * 0.5
+        return mid - nn * (PG + PT / 2), tg, nn, b, i
 
-    # left pod contents: board + main chips, button, LED
-    yb = lift + p["wall"] + 1.0
-    L = lambda shape, dy: placed(shape, -p["pod_angle"], p["pod_z"], s, yb + dy)  # noqa: E731
-    add("PCB", L(Part.makeBox(p["pcb_w"], 1.0, p["pcb_h"], V(-p["pcb_w"] / 2, 0, -p["pcb_h"] / 2)), 0), "Inside", (0.10, 0.45, 0.20))
-    add("BLE_module_nRF52840", L(Part.makeBox(10, 2.2, 15, V(-11, 0, -2)), 1.0), "Inside", (0.75, 0.75, 0.78))
-    add("EEG_ADS1299_4", L(Part.makeBox(10, 1.2, 10, V(2, 0, 2)), 1.0), "Inside", (0.12, 0.12, 0.12))
-    add("IMU_ICM42688", L(Part.makeBox(3, 0.9, 2.5, V(4, 0, -9)), 1.0), "Inside", (0.12, 0.12, 0.12))
-    add("Flash_8MB", L(Part.makeBox(5, 1.0, 6, V(8, 0, -9)), 1.0), "Inside", (0.12, 0.12, 0.12))
-    add("Clock_crystal", L(Part.makeBox(3.2, 1.0, 2.5, V(2, 0, -13)), 1.0), "Inside", (0.80, 0.80, 0.80))
-    add("Button", placed(Part.makeCylinder(3.5, 2.0, V(0, 0, 0), V(0, 1, 0)), -p["pod_angle"], p["pod_z"] + 8, s, lift + tL), "Pod_left_electronics", (0.2, 0.2, 0.2))
-    add("LED", placed(Part.makeCylinder(1.5, 1.0, V(0, 0, 0), V(0, 1, 0)), -p["pod_angle"], p["pod_z"] - 8, s, lift + tL), "Pod_left_electronics", (0.2, 0.9, 0.3))
+    contents, cavities, carriers = {}, [], {}
+    for s_ in ("R", "L"):
+        body, _ = sides[s_]
+        PT = p["pod_t"] if s_ == "R" else p["podL_t"]
+        sp, tg, nn, b, i = pod_frame(body, PT)
+        floor = sp + nn * (PG + p["skin_sil"] + p["wall"])           # inner floor of the carrier
+        inner_h = PT - 2 * (p["skin_sil"] + p["wall"])
+        car_c = sp + nn * (PG + PT / 2)
+        cw, cl = W - 2 * (p["skin_sil"] + 1.5), p["bat_len"] + 2 * p["wall"] + 1.0
+        outer = box_at(cw, inner_h + 2 * p["wall"], cl, car_c, b, nn, tg)
+        inner = box_at(cw - 2 * p["wall"], inner_h, cl - 2 * p["wall"], car_c, b, nn, tg)
+        add(f"Carrier_{s_}", outer.cut(inner), "Inside", (0.85, 0.85, 0.88), 80)
+        carriers[s_] = (outer, (cw, inner_h + 2 * p["wall"], cl))
+        cavities.append(inner.Volume)
+        if s_ == "R":
+            bat = box_at(p["bat_w"], p["bat_t"], p["bat_len"], floor + nn * (p["bat_t"] / 2 + 0.2), b, nn, tg)
+            add("Battery_LiPo_700mAh_603040", bat, "Inside", (0.86, 0.70, 0.25))
+            contents["R"] = bat
+            add("Charge_protect_board", box_at(14, 0.8, 4, floor + nn * (p["bat_t"] + 0.8) - tg * (p["bat_len"] / 2 - 3), b, nn, tg),
+                "Inside", (0.07, 0.38, 0.17))
+            for k in (-1, 1):                                          # magnetic charging contacts, outer face low
+                add(f"Charge_contact_{k:+d}", disc_at(3.0, 0.6, car_c + nn * (PT / 2 - 0.2) + tg * (PL / 2 - 9) + b * (4 * k), nn),
+                    "Controls", (0.85, 0.68, 0.20))
+        else:
+            pcb_c = floor + nn * 0.6
+            pcb = box_at(cw - 2 * p["wall"] - 1, 0.8, cl - 2 * p["wall"] - 1, pcb_c, b, nn, tg)
+            add("PCB_4layer_0.8mm", pcb, "Inside", (0.07, 0.38, 0.17))
+            contents["L"] = (pcb, (cw - 2 * p["wall"] - 1, 0.8, cl - 2 * p["wall"] - 1))
 
-    # right pod contents: battery, charging board, magnetic pogo contacts
-    R = lambda shape, dy: placed(shape, p["pod_angle"], p["pod_z"] - 2, s, lift + p["wall"] + 0.5 + dy)  # noqa: E731
-    add("Battery_700mAh", R(Part.makeBox(p["bat_w"], p["bat_t"], p["bat_h"], V(-p["bat_w"] / 2, 0, -p["bat_h"] / 2)), 0), "Inside", (0.95, 0.75, 0.20))
-    for i in range(4):
-        add(f"Charge_pin_{i}", placed(Part.makeCylinder(1.2, 1.0, V(0, 0, 0), V(0, 1, 0)),
-                                      p["pod_angle"] + 7, p["pod_z"] - 22 + i * 4, s, lift + tR), "Pod_right_battery", (0.85, 0.70, 0.20))
+            def part(name, dx, dz, w, t, h, col=(0.10, 0.10, 0.11)):
+                add(name, box_at(w, t, h, pcb_c + nn * (0.4 + t / 2) + b * dx + tg * dz, b, nn, tg), "Inside", col)
+            part("BLE_nRF52840_module", -5, 10, 10, 2.2, 15, (0.78, 0.78, 0.80))
+            part("EEG_ADS1299_4", 5, -5, 10, 1.2, 10)
+            part("IMU_ICM42688P", -7, -8, 3, 0.9, 2.5)
+            part("Flash_8MB", -7, -13, 4, 0.6, 4)
+            part("Boost_LDO_parts", 6, 9, 6, 1.0, 5)
+            part("Antenna_keepout_zone", -5, 16.5, 10, 0.1, 3, (0.9, 0.3, 0.3))
+            add("Button", box_at(7, 1.2, 4, car_c + nn * (PT / 2 + 0.2) + tg * 6, b, nn, tg), "Controls", INNER)
+            add("LED_lightpipe", disc_at(1.8, 0.6, car_c + nn * (PT / 2 - 0.1) - tg * 4, nn), "Controls", (0.30, 0.90, 0.45))
+        add(f"Flex_cable_{s_}", Body(skin, [(body.skin_pts[k], body.normals[k], 4.0, 0.2, body.c[k] + body.t[k] / 2)
+                                          for k in body.kidx[4:]], step=3.0).solid(), "Inside", (0.85, 0.55, 0.15))
     doc.recompute()
-    return p
+
+    # ---------------------------------------------------------------- checks
+    def inside_pct(body_sh, part, w, t, h):
+        """Share of the box part's outline points that lie inside the body's cross-section, checked on 9 cuts
+        square to the part's long axis (FreeCAD's isInside is unreliable on ruled lofts)."""
+        rot = part.Placement.Rotation
+        X, Y, Z = rot.multVec(V(1, 0, 0)), rot.multVec(V(0, 1, 0)), rot.multVec(V(0, 0, 1))
+        c = part.BoundBox.Center
+        tot = ins = 0
+        for k in range(9):
+            o = c + Z * ((-h / 2 + 0.5) + (h - 1.0) * k / 8)      # 0.5 mm in from the ends (corners are rounded)
+            wires = body_sh.slice(Z, o.dot(Z))
+            polys = [[((q - o).dot(X), (q - o).dot(Y)) for q in wr.discretize(80)] for wr in wires]
+            polys = [pl_ + [pl_[0]] for pl_ in polys]                 # close each outline
+            for (u, v) in ((sx_ * w / 2 + 1.1e-3, sy_ * t / 2 + 1.3e-3) for sx_ in (-1, -0.5, 0, 0.5, 1) for sy_ in (-1, 1)):
+                tot += 1
+                for poly in polys:
+                    inside = False
+                    for j in range(len(poly) - 1):
+                        (x1, y1), (x2, y2) = poly[j], poly[j + 1]
+                        if (y1 > v) != (y2 > v) and u < x1 + (v - y1) * (x2 - x1) / (y2 - y1):
+                            inside = not inside
+                    if inside:
+                        ins += 1
+                        break
+        return round(100.0 * ins / tot, 1)
+
+    report["pad_pressure_mmHg"] = round(p["clamp_N"] / 2 / (math.pi * (pd / 2) ** 2) * 1e6 / 133.3, 1)
+    sideR, sideL = doc.getObject("Side_body_R").Shape, doc.getObject("Side_body_L").Shape
+    bat_room = (p["pod_t"] - 2 * (p["skin_sil"] + p["wall"])) - 0.2 - p["bat_t"]
+    report["battery_swelling_room_mm"] = round(bat_room, 2)
+    report["battery_inside_body_pct"] = inside_pct(sideR, contents["R"], p["bat_w"], p["bat_t"], p["bat_len"])
+    for s_, sh in (("R", sideR), ("L", sideL)):
+        report[f"carrier_inside_body_pct_{s_}"] = inside_pct(sh, carriers[s_][0], *carriers[s_][1])
+    report["board_inside_body_pct"] = inside_pct(sideL, contents["L"][0], *contents["L"][1])
+    for s_, (body, _) in sides.items():
+        pts_ = body.inner_face_points()
+        g = [(skin.gap(a, b), k // 3, a) for k, (a, b) in enumerate(pts_) if k % 2 == 0]
+        g = [x for x in g if x[0] is not None]
+        worst = min(g, key=lambda x: x[0])
+        report[f"min_skin_gap_mm_side_{s_}"] = round(worst[0], 1)
+    g = [(skin.gap(a, b), a) for a, b in band.inner_face_points()[::2]]
+    g = [x for x in g if x[0] is not None]
+    worst = min(g, key=lambda x: x[0])
+    report["min_skin_gap_mm_band"] = round(worst[0], 1)
+
+    def shape_pts(sh):
+        return np.array([[v.x, v.y, v.z] for v in sh.tessellate(0.8)[0]])
+    sk = skin.t.reshape(-1, 3)
+    sk = sk[sk[:, 2] > -110]
+    y_back, x_r, x_l, sink = sk[:, 1].min(), sk[:, 0].max(), sk[:, 0].min(), 20.0
+    for nm, sh in (("side_R", sideR), ("side_L", sideL), ("band", doc.getObject("Nape_spring_band").Shape)):
+        q = shape_pts(sh)
+        report[f"pillow_back_mm_{nm}"] = round(max(0.0, (y_back + sink) - q[:, 1].min()), 1)
+        report[f"pillow_side_mm_{nm}"] = round(max(0.0, q[:, 0].max() - (x_r - sink), (x_l + sink) - q[:, 0].min()), 1)
+    # weight: silicone + carriers by volume, parts by catalogue mass
+    vol_soft = sideR.Volume + sideL.Volume + doc.getObject("Nape_spring_band").Shape.Volume
+    cav = sum(cavities)                                                # carrier insides: parts + air
+    m = (vol_soft - cav) * 1.15e-3 + 13.5 + 3.0 + 1.0 + 2.0          # silicone/PC + battery, board+parts, wire, pads
+    report["weight_g_est"] = round(m, 0)
+    report["head"] = f"NIOSH {HEAD}, circumference {LM['head_circumference_mm']} mm"
+    # sizing numbers (compared across heads in the sizing study)
+    pr, pl = sides["R"][1][0][0], sides["L"][1][0][0]
+    et = V(*LM["ear_top_right"])
+    report["size_pad_spread_mm"] = round((pr - pl).Length, 1)
+    report["size_ear_top_to_upper_pad_mm"] = [round(pr.y - et.y, 1), round(pr.z - et.z, 1)]
+    report["size_band_length_mm"] = round(sum((band.centre[i + 1] - band.centre[i]).Length for i in range(len(band.centre) - 1)), 0)
+    report["size_pod_to_upper_pad_mm"] = round((V(*geo["sides"]["R"]["pod_centre"]) - pr).Length, 1)
+    geo["weight_g"] = report["weight_g_est"]
+    geo["params"] = p
+    if HEAD == "medium":
+        json.dump(report, open(os.path.join(HERE, "headband_checks.json"), "w"), indent=1)
+        json.dump(geo, open(os.path.join(HERE, "headform", "device_geometry.json"), "w"))
+    else:
+        json.dump(report, open(os.path.join(HERE, "headform", f"headband_checks_{HEAD}.json"), "w"), indent=1)
+    return p, report
 
 
 def pictures(doc):
     import FreeCADGui as Gui
     v = Gui.ActiveDocument.ActiveView
-    Gui.SendMsgToActiveView("ViewFit")
-    # the head looks to +y, FreeCAD's "front" camera looks from -y: so viewFront shows the BACK of the head
-    shots = [("back", v.viewFront), ("left_side", v.viewLeft), ("right_side", v.viewRight)]
-    for name, f in shots:
-        f(); Gui.SendMsgToActiveView("ViewFit")
-        v.saveImage(os.path.join(HERE, f"headband_{name}.png"), 1600, 1300, "White")
 
-    def look_from(d):
-        z = V(*d); z.normalize()                         # camera axis, towards the viewer
-        up = V(0, 0, 1)
-        y = up - z * up.dot(z); y.normalize()
-        x = y.cross(z)
+    def look_from(d, name, w=1700, h=1400):
+        z = V(*d); z.normalize(); up = V(0, 0, 1)
+        y = up - z * up.dot(z); y.normalize(); x = y.cross(z)
         v.setCameraOrientation(App.Rotation(x, y, z, "ZYX"))
         Gui.SendMsgToActiveView("ViewFit")
+        v.saveImage(os.path.join(HERE, f"headband_{name}.png"), w, h, "White")
 
-    look_from((-0.55, -0.75, 0.35)); v.saveImage(os.path.join(HERE, "headband_back_left.png"), 1600, 1300, "White")
-    look_from((0.55, -0.75, 0.1)); v.saveImage(os.path.join(HERE, "headband_back_right.png"), 1600, 1300, "White")
-    # inside: pods transparent, close-up of the left pod
+    look_from((-0.45, -0.85, 0.2), "back_left")          # first picture twice: the view is not ready the first time
+    look_from((-0.45, -0.85, 0.2), "back_left")
+    look_from((0.0, -1.0, 0.05), "back")
+    look_from((1.0, -0.1, 0.05), "right_side")
+    look_from((0.55, 0.6, 0.3), "front_right")
     for o in doc.Objects:
-        if o.Name in ("Pod_left", "Pod_right") and hasattr(o, "ViewObject"):
+        if o.Name.startswith("Side_body") or o.Name == "Nape_spring_band":
             o.ViewObject.Transparency = 75
-    look_from((-0.75, -0.6, 0.0))
-    v.saveImage(os.path.join(HERE, "headband_inside_left.png"), 1600, 1300, "White")
+    look_from((-0.9, -0.4, 0.05), "inside_left")
+    look_from((0.9, -0.4, 0.05), "inside_right")
 
 
 def main():
     doc = App.ActiveDocument if (App.ActiveDocument and App.ActiveDocument.getObject("Params")) else None
     if doc is None:
         doc = App.openDocument(DOC_FILE) if os.path.exists(DOC_FILE) else App.newDocument("EpiProtHeadband")
-    p = build(doc)
-    doc.saveAs(DOC_FILE)
+    p, report = build(doc)
+    if HEAD == "medium":
+        doc.saveAs(DOC_FILE)
+    App.Console.PrintMessage(f"EpiProt headband v3 checks: {report}\n")
     if App.GuiUp:
         import FreeCADGui as Gui
         Gui.ActiveDocument = Gui.getDocument(doc.Name)
         if os.environ.get("EPIPROT_SHOTS") == "1":
             pictures(doc)
             os._exit(0)
-    App.Console.PrintMessage(f"EpiProt headband rebuilt with {p}\n")
 
 
 main()

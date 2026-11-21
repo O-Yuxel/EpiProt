@@ -9,15 +9,16 @@ been measured on a real device. Sources are marked: **[DS]** datasheet, **[EST]*
 | | Choice |
 |---|---|
 | Job | Measure and send. The phone runs detection, alarms and storage. |
-| Electrodes | 4 semi-dry hydrogel pads behind the ears + 1 bias electrode at the nape |
+| Electrodes | 4 semi-dry hydrogel pads behind the ears (mastoids) + 1 bias electrode under the right pads |
 | EEG front-end | TI ADS1299-4: 4 channels, 24-bit, EEG-grade (1 µV noise) |
 | Sample rate | Exactly 256 samples/s per channel, the model's rate |
 | Movement | TDK ICM-42688-P, 3-axis accelerometer + 3-axis gyroscope, exactly 25 Hz (clock locked to the radio crystal) |
 | Radio / processor | Raytac MDBT50Q module (Nordic nRF52840), Bluetooth LE 5, pre-certified |
 | Backup memory | 8 MB flash, about 40 minutes when the phone is out of reach |
-| Battery | 700 mAh rechargeable LiPo, about 2 days, magnetic charging |
+| Battery | 700 mAh rechargeable LiPo (603040: 6 x 30 x 40 mm), about 2 days, magnetic charging |
+| Wearing | Two one-piece side bodies (ear hook + electrode module + pod) joined by a beta-titanium spring band at the nape; 58 g; sizes M and L (D16) |
 | Data rate | About 3.7 KB/s ([PROTOCOL.md](PROTOCOL.md)) |
-| Parts cost | About $59–76 per headband [EST] |
+| Parts cost | About $60–77 per headband [EST] |
 
 ## Design decisions and why
 
@@ -42,6 +43,11 @@ rejected when they would not change the result.
 | D13 | **ICM-42688-P motion sensor with its clock locked to the radio crystal, instead of BMI270** (found with the simulator) | A motion sensor with its own internal clock (BMI270, and the ICM-42688-P's own clock is only ±1 % accurate) does not sample exactly 25 times per second, so the phone has to shift samples onto the model's 25 Hz grid. In the simulator with real seizure recordings this distorted exactly the movement features that carry the convulsion signature (3–12 Hz shaking): typical error 0.57 (log scale) in the 8–12 Hz band. The ICM-42688-P accepts an external clock (CLKIN); the nRF52840 feeds it 32.000 kHz made from its own crystal, so the sensor samples at exactly 25 Hz and no shifting is needed. Typical error drops to 0.03–0.04, about 15 times smaller (2 patients, 15 min each). Cost: ~+$2, ~+0.7 mA. |
 | D14 | **Movement converted to the SeizeIT2 "group B" scale on the phone** (found in the training data) | SeizeIT2 recorded movement with two device settings, a factor 3 apart (1 g = 0.5 or 0.167 units; gyroscope ~365 or ~1016 °/s per unit), measured from the data itself. 43 of the 55 tonic-clonic seizures the model learned from are in group B, so the headband's g and °/s are converted to that scale. Tool: `python -m epiprot.headband.calibration`. |
 | D15 | **Contact check every 10 minutes**, so the phone knows when a pad must be replaced (found with the simulator) | A semi-dry pad dries out slowly. While it dries the signal gets noisier, but it still looks like EEG, so neither the phone's signal check nor the lead-off detection notices until contact is completely lost. Until then noisy data go to the model unnoticed (risk of false alarms and of missed seizures). Every 10 minutes the EEG chip passes a tiny current (6 nA) through each electrode for 2 s and measures its contact impedance; those 2 s of EEG are flagged and not used by the model (0.3 % of the data). Above 150 kOhm the phone asks the patient to replace that pad. In the simulator a pad drying over 40 minutes was reported 36 minutes before contact was lost. Uses a built-in function of the ADS1299; no extra parts. |
+
+| D16 | **One-piece side bodies + spring band at the nape, built on real heads** (replaces the elastic band) | An elastic band cannot press the pads reliably and the pods hung on cables. Now each side is one moulded body: ear hook over the ear root, electrode module on the mastoid, pod on the side of the neck; a thin spring band joins the two pods around the nape (like a bone-conduction sports headset). Modelled on the NIOSH digital headforms (5 head shapes, 527–565 mm circumference). Numbers below are calculated, not measured. |
+| D17 | **Beta-titanium spring wire 1.3 mm** (nickel-free), not nitinol or steel (found with `cad/headform/mechanics.py`) | The pads sit ~57 mm above the band, so the band carries a large bending moment. For 1.5 N per side, every nitinol wire went past its linear limit (450 MPa) while the band is opened to put it on, and every steel wire past its yield (1100 MPa); then the force on the head becomes unpredictable or the band bends for good. Beta-titanium 1.3 mm stays at 815 MPa (allowable 900). It is also nickel-free (nickel allergy is common) and proven in orthodontic wires and eyewear frames. The ear hooks get a separate, thinner 1.0 mm wire so they let go at ~5 N each. |
+| D18 | **Pod positions calculated against the pillow** (`cad/headform/pod_placement_study.py`) | Positions tested on the real head with a pillow 20 mm deep: pods at 76° from the back centre, 64 mm below the ear centre touch the pillow by 0 mm lying on the back and lying on the side. |
+| D19 | **Battery size corrected to 603040 + 0.6 mm swelling room** | The first model used a 603450 cell, which is ~1000 mAh; 700 mAh is the 603040. LiPo cells swell up to ~10 % of their thickness over their life, so the carrier leaves 0.6 mm above the cell. |
 
 ## Electrodes and channels
 
@@ -153,12 +159,58 @@ Well within Bluetooth LE. Packet format: [PROTOCOL.md](PROTOCOL.md).
 - Medical-grade silicone band.
 - A real product would be tested against IEC 60601-1 and IEC 60601-1-11 (home use). Not done here.
 
-## Mechanical
+## Mechanical (3D model: `cad/`, decisions D16–D19)
 
-Soft elastic band around the back of the head, above the ears. Two small arms behind the ears
-carry the pad studs. The electronics pod sits at the back of the head near the neck (about
-45 × 30 × 14 mm with the battery). Total weight target under 40 g [EST]. One button, one LED.
-Sweat-resistant, not for showering.
+Each side is one soft body: **ear hook** (6 x 4 mm, flat underside on the ear root) → **electrode module** on
+the mastoid (upper + lower 18 mm pad; on the right also the 14 mm bias pad; same mould both sides, a blank cap
+on the left) → **pod** on the side of the neck (right: battery, left: electronics; 34 x 50 mm, 10 / 7 mm thick).
+A **beta-titanium spring band** (5.5 x 4 mm silicone over a 1.3 mm wire) joins the pods around the nape and
+presses the pads; a **magnetic clasp** at the back opens at 5 N. Inside each pod a rigid carrier (two halves,
+snapped together, then overmoulded) holds the cell or the board. The flex cable runs inside the body and band.
+
+**Calculated on the NIOSH headforms** (`cad/headband_checks.json`, `cad/headform/mechanics_results.json`):
+
+| Check | Result |
+|---|---|
+| Battery, carrier, board inside the body | 100 % |
+| Closest point to the skin (hook / band / pods) | 0.9 / 2.4 / 2.5 mm: nothing presses except the pads |
+| Pad pressure (medium head) | 22 mmHg (skin limit ~32 mmHg) |
+| Ear-root pressure, all weight on the hooks | 19.5 mmHg |
+| Weight | 58 g [EST] |
+| Pillow, lying on the back | pods 0 mm, nape band 1.7 mm |
+| Pillow, lying on the side | pods 0 mm; module and hook behind and over the ear ~14 mm (like a glasses temple) |
+| Clamping force on 5 heads with one size | 1.32–1.59 N; large head 2.37 N, so it needs size L |
+| Sizes | **M** fits small, medium, long-narrow (band 118–123 mm); **L** fits large and short-wide (band 137–189 mm, pads ~10 mm lower and further back). The model rebuilds itself for any head (`EPIPROT_HEAD=...`) |
+
+**Staying on.** It can only come off if hooks or band are forced over the ear or the back of the head:
+down = carried by both hooks; forward = band behind the neck; backward/up = both hooks must lift (10.8 N);
+sideways = far hook must lift (5.9 N, the weakest). Inertial load of the 58 g device: walking 0.85 N, running or
+convulsion (3 g) 1.7 N, safety factor 3.4; fall with the head hitting the bed (6 g) 3.4 N, factor 1.7. The clasp
+(5 N) stays shut under all of these (largest pull 1.7 N) but opens before a snag can drag the hooks off the
+ears (10.8 N). The band is open at the front: it cannot form a loop around the neck.
+
+**Scenarios and material choices**
+
+| Scenario | Risk | Answer in the design |
+|---|---|---|
+| Sweat, rain, washing the face | water in the electronics, corrosion | carriers sealed and overmoulded (IP67 target); gold-plated charging contacts; 316L steel pad snaps |
+| Nickel allergy | rash | no nitinol: nickel-free beta-titanium, fully inside silicone; skin touches only medical-grade silicone (ISO 10993) and the pads |
+| Lying on the back / side | pressure, pain, waking up | pods placed by calculation (0 mm pillow contact); thin band at the nape; module and hook in soft silicone (Shore 30A) |
+| Convulsion, fall | device flies off, data lost; part breaks | stays on up to 3 g with factor 3.4; clasp holds; PC carriers; protected LiPo with swelling room |
+| Snag on a bed rail or a hand | pull on the ears or neck | clasp opens at 5 N; open at the front, no loop around the neck |
+| Bent, sat on, children | permanent bend, broken cable | wire stays below its yield even when opened to put on; flex cable in a serpentine layout on the band's neutral axis |
+| Hair | bad contact | pads on the mastoid behind the ear, where there is almost no hair |
+| Glasses | hook and temple on the same ear root | flat 4 mm hook sits next to a temple; to be checked on people |
+| Pad change, charging | handling | snap-on pads; magnetic pogo contacts at the bottom of the battery pod |
+| MRI, X-ray | metal | take the headband off (not MRI-safe) |
+
+**Manufacturing.** Production: injection-moulded PC carriers, beta-titanium wire bent and inserted, liquid
+silicone overmould. Prototype: carriers 3D-printed (PA12 or tough resin; `cad/export/carrier_*.stl`), wire bent
+cold (beta-titanium needs no heat treatment, unlike nitinol), silicone cast in 3D-printed moulds made from
+`cad/export/side_body_*.stl` / `nape_band.stl` (or a direct TPU 85A print for a fit test).
+
+**Not verified (needs a real prototype):** signal quality of the pads on the mastoid, the clamping force with a
+force gauge, comfort overnight, the fit on real people (the NIOSH heads have no hair or glasses).
 
 ## Cost estimate [EST]
 
@@ -172,8 +224,8 @@ Sweat-resistant, not for showering.
 | LiPo 700 mAh | 3 |
 | Shielded cables, strain relief | 2 |
 | Circuit board and assembly | 5–7 |
-| Band, pod housing, snap studs, charging cable | 6–9 |
-| **Total** | **~59–76** |
+| Beta-titanium wire, carriers, silicone overmould, snap studs, clasp magnets, charging cable | 7–10 |
+| **Total** | **~60–77** |
 | Running cost: semi-dry pads | a few pads every few days |
 
 ## Open points

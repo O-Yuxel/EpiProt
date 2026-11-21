@@ -1,0 +1,981 @@
+{
+"sink_mm": 20.0,
+"results": {
+"right_battery": [
+{
+"angle": 35,
+"z": -35,
+"back_mm": 19.5,
+"side_mm": 0.0
+},
+{
+"angle": 35,
+"z": -30,
+"back_mm": 21.3,
+"side_mm": 0.0
+},
+{
+"angle": 35,
+"z": -25,
+"back_mm": 22.8,
+"side_mm": 0.0
+},
+{
+"angle": 35,
+"z": -20,
+"back_mm": 23.9,
+"side_mm": 0.0
+},
+{
+"angle": 35,
+"z": -15,
+"back_mm": 24.7,
+"side_mm": 0.0
+},
+{
+"angle": 35,
+"z": -10,
+"back_mm": 25.7,
+"side_mm": 0.0
+},
+{
+"angle": 35,
+"z": -5,
+"back_mm": 26.5,
+"side_mm": 0.0
+},
+{
+"angle": 35,
+"z": 0,
+"back_mm": 27.4,
+"side_mm": 0.0
+},
+{
+"angle": 35,
+"z": 5,
+"back_mm": 27.9,
+"side_mm": 0.0
+},
+{
+"angle": 40,
+"z": -35,
+"back_mm": 18.2,
+"side_mm": 0.0
+},
+{
+"angle": 40,
+"z": -30,
+"back_mm": 19.5,
+"side_mm": 0.0
+},
+{
+"angle": 40,
+"z": -25,
+"back_mm": 21.0,
+"side_mm": 0.0
+},
+{
+"angle": 40,
+"z": -20,
+"back_mm": 22.0,
+"side_mm": 0.0
+},
+{
+"angle": 40,
+"z": -15,
+"back_mm": 22.6,
+"side_mm": 0.0
+},
+{
+"angle": 40,
+"z": -10,
+"back_mm": 23.5,
+"side_mm": 0.0
+},
+{
+"angle": 40,
+"z": -5,
+"back_mm": 24.4,
+"side_mm": 0.0
+},
+{
+"angle": 40,
+"z": 0,
+"back_mm": 25.2,
+"side_mm": 0.0
+},
+{
+"angle": 40,
+"z": 5,
+"back_mm": 25.8,
+"side_mm": 0.0
+},
+{
+"angle": 45,
+"z": -35,
+"back_mm": 16.0,
+"side_mm": 0.0
+},
+{
+"angle": 45,
+"z": -30,
+"back_mm": 17.5,
+"side_mm": 0.0
+},
+{
+"angle": 45,
+"z": -25,
+"back_mm": 18.4,
+"side_mm": 0.0
+},
+{
+"angle": 45,
+"z": -20,
+"back_mm": 19.2,
+"side_mm": 0.0
+},
+{
+"angle": 45,
+"z": -15,
+"back_mm": 20.2,
+"side_mm": 0.0
+},
+{
+"angle": 45,
+"z": -10,
+"back_mm": 20.7,
+"side_mm": 0.0
+},
+{
+"angle": 45,
+"z": -5,
+"back_mm": 21.5,
+"side_mm": 0.0
+},
+{
+"angle": 45,
+"z": 0,
+"back_mm": 22.3,
+"side_mm": 0.0
+},
+{
+"angle": 45,
+"z": 5,
+"back_mm": 23.1,
+"side_mm": 0.0
+},
+{
+"angle": 50,
+"z": -35,
+"back_mm": 13.3,
+"side_mm": 0.0
+},
+{
+"angle": 50,
+"z": -30,
+"back_mm": 14.4,
+"side_mm": 0.0
+},
+{
+"angle": 50,
+"z": -25,
+"back_mm": 15.7,
+"side_mm": 0.0
+},
+{
+"angle": 50,
+"z": -20,
+"back_mm": 16.4,
+"side_mm": 0.0
+},
+{
+"angle": 50,
+"z": -15,
+"back_mm": 16.9,
+"side_mm": 1.2
+},
+{
+"angle": 50,
+"z": -10,
+"back_mm": 17.6,
+"side_mm": 2.1
+},
+{
+"angle": 50,
+"z": -5,
+"back_mm": 18.2,
+"side_mm": 2.8
+},
+{
+"angle": 50,
+"z": 0,
+"back_mm": 18.8,
+"side_mm": 3.2
+},
+{
+"angle": 50,
+"z": 5,
+"back_mm": 19.7,
+"side_mm": 3.1
+},
+{
+"angle": 55,
+"z": -35,
+"back_mm": 10.7,
+"side_mm": 0.0
+},
+{
+"angle": 55,
+"z": -30,
+"back_mm": 11.5,
+"side_mm": 0.0
+},
+{
+"angle": 55,
+"z": -25,
+"back_mm": 12.1,
+"side_mm": 1.5
+},
+{
+"angle": 55,
+"z": -20,
+"back_mm": 12.7,
+"side_mm": 3.0
+},
+{
+"angle": 55,
+"z": -15,
+"back_mm": 13.7,
+"side_mm": 4.1
+},
+{
+"angle": 55,
+"z": -10,
+"back_mm": 14.2,
+"side_mm": 5.1
+},
+{
+"angle": 55,
+"z": -5,
+"back_mm": 14.8,
+"side_mm": 5.6
+},
+{
+"angle": 55,
+"z": 0,
+"back_mm": 15.2,
+"side_mm": 6.1
+},
+{
+"angle": 55,
+"z": 5,
+"back_mm": 16.0,
+"side_mm": 6.2
+},
+{
+"angle": 60,
+"z": -35,
+"back_mm": 7.5,
+"side_mm": 1.2
+},
+{
+"angle": 60,
+"z": -30,
+"back_mm": 8.1,
+"side_mm": 2.6
+},
+{
+"angle": 60,
+"z": -25,
+"back_mm": 8.6,
+"side_mm": 4.1
+},
+{
+"angle": 60,
+"z": -20,
+"back_mm": 9.4,
+"side_mm": 5.5
+},
+{
+"angle": 60,
+"z": -15,
+"back_mm": 9.9,
+"side_mm": 6.9
+},
+{
+"angle": 60,
+"z": -10,
+"back_mm": 10.7,
+"side_mm": 7.7
+},
+{
+"angle": 60,
+"z": -5,
+"back_mm": 11.0,
+"side_mm": 8.4
+},
+{
+"angle": 60,
+"z": 0,
+"back_mm": 11.4,
+"side_mm": 8.7
+},
+{
+"angle": 60,
+"z": 5,
+"back_mm": 12.0,
+"side_mm": 9.0
+},
+{
+"angle": 65,
+"z": -35,
+"back_mm": 4.3,
+"side_mm": 3.6
+},
+{
+"angle": 65,
+"z": -30,
+"back_mm": 4.9,
+"side_mm": 4.9
+},
+{
+"angle": 65,
+"z": -25,
+"back_mm": 5.1,
+"side_mm": 6.4
+},
+{
+"angle": 65,
+"z": -20,
+"back_mm": 5.7,
+"side_mm": 7.6
+},
+{
+"angle": 65,
+"z": -15,
+"back_mm": 6.3,
+"side_mm": 8.8
+},
+{
+"angle": 65,
+"z": -10,
+"back_mm": 6.7,
+"side_mm": 9.9
+},
+{
+"angle": 65,
+"z": -5,
+"back_mm": 6.9,
+"side_mm": 10.6
+},
+{
+"angle": 65,
+"z": 0,
+"back_mm": 7.1,
+"side_mm": 11.1
+},
+{
+"angle": 65,
+"z": 5,
+"back_mm": 7.5,
+"side_mm": 11.5
+},
+{
+"angle": 70,
+"z": -35,
+"back_mm": 1.1,
+"side_mm": 5.5
+},
+{
+"angle": 70,
+"z": -30,
+"back_mm": 1.4,
+"side_mm": 6.7
+},
+{
+"angle": 70,
+"z": -25,
+"back_mm": 1.8,
+"side_mm": 8.0
+},
+{
+"angle": 70,
+"z": -20,
+"back_mm": 2.2,
+"side_mm": 9.1
+},
+{
+"angle": 70,
+"z": -15,
+"back_mm": 2.4,
+"side_mm": 10.4
+},
+{
+"angle": 70,
+"z": -10,
+"back_mm": 2.7,
+"side_mm": 11.6
+},
+{
+"angle": 70,
+"z": -5,
+"back_mm": 2.6,
+"side_mm": 12.5
+},
+{
+"angle": 70,
+"z": 0,
+"back_mm": 2.6,
+"side_mm": 13.1
+},
+{
+"angle": 70,
+"z": 5,
+"back_mm": 2.7,
+"side_mm": 13.7
+},
+{
+"angle": 75,
+"z": -35,
+"back_mm": 0.0,
+"side_mm": 7.0
+},
+{
+"angle": 75,
+"z": -30,
+"back_mm": 0.0,
+"side_mm": 8.2
+},
+{
+"angle": 75,
+"z": -25,
+"back_mm": 0.0,
+"side_mm": 9.4
+},
+{
+"angle": 75,
+"z": -20,
+"back_mm": 0.0,
+"side_mm": 10.7
+},
+{
+"angle": 75,
+"z": -15,
+"back_mm": 0.0,
+"side_mm": 11.9
+},
+{
+"angle": 75,
+"z": -10,
+"back_mm": 0.0,
+"side_mm": 13.1
+},
+{
+"angle": 75,
+"z": -5,
+"back_mm": 0.0,
+"side_mm": 14.0
+},
+{
+"angle": 75,
+"z": 0,
+"back_mm": 0.0,
+"side_mm": 14.9
+},
+{
+"angle": 75,
+"z": 5,
+"back_mm": 0.0,
+"side_mm": 15.9
+}
+],
+"left_electronics": [
+{
+"angle": 35,
+"z": -35,
+"back_mm": 13.9,
+"side_mm": 0.0
+},
+{
+"angle": 35,
+"z": -30,
+"back_mm": 15.5,
+"side_mm": 0.0
+},
+{
+"angle": 35,
+"z": -25,
+"back_mm": 17.5,
+"side_mm": 0.0
+},
+{
+"angle": 35,
+"z": -20,
+"back_mm": 19.0,
+"side_mm": 0.0
+},
+{
+"angle": 35,
+"z": -15,
+"back_mm": 20.0,
+"side_mm": 0.0
+},
+{
+"angle": 35,
+"z": -10,
+"back_mm": 21.3,
+"side_mm": 0.0
+},
+{
+"angle": 35,
+"z": -5,
+"back_mm": 22.4,
+"side_mm": 0.0
+},
+{
+"angle": 35,
+"z": 0,
+"back_mm": 23.4,
+"side_mm": 0.0
+},
+{
+"angle": 35,
+"z": 5,
+"back_mm": 24.4,
+"side_mm": 0.0
+},
+{
+"angle": 40,
+"z": -35,
+"back_mm": 12.2,
+"side_mm": 0.0
+},
+{
+"angle": 40,
+"z": -30,
+"back_mm": 13.9,
+"side_mm": 0.0
+},
+{
+"angle": 40,
+"z": -25,
+"back_mm": 15.5,
+"side_mm": 0.0
+},
+{
+"angle": 40,
+"z": -20,
+"back_mm": 16.8,
+"side_mm": 0.0
+},
+{
+"angle": 40,
+"z": -15,
+"back_mm": 18.0,
+"side_mm": 0.0
+},
+{
+"angle": 40,
+"z": -10,
+"back_mm": 18.9,
+"side_mm": 0.0
+},
+{
+"angle": 40,
+"z": -5,
+"back_mm": 19.9,
+"side_mm": 0.0
+},
+{
+"angle": 40,
+"z": 0,
+"back_mm": 20.9,
+"side_mm": 0.0
+},
+{
+"angle": 40,
+"z": 5,
+"back_mm": 21.8,
+"side_mm": 0.0
+},
+{
+"angle": 45,
+"z": -35,
+"back_mm": 10.3,
+"side_mm": 0.0
+},
+{
+"angle": 45,
+"z": -30,
+"back_mm": 11.5,
+"side_mm": 0.0
+},
+{
+"angle": 45,
+"z": -25,
+"back_mm": 13.0,
+"side_mm": 0.0
+},
+{
+"angle": 45,
+"z": -20,
+"back_mm": 14.4,
+"side_mm": 0.0
+},
+{
+"angle": 45,
+"z": -15,
+"back_mm": 15.1,
+"side_mm": 0.0
+},
+{
+"angle": 45,
+"z": -10,
+"back_mm": 15.7,
+"side_mm": 0.0
+},
+{
+"angle": 45,
+"z": -5,
+"back_mm": 16.7,
+"side_mm": 0.0
+},
+{
+"angle": 45,
+"z": 0,
+"back_mm": 17.8,
+"side_mm": 0.0
+},
+{
+"angle": 45,
+"z": 5,
+"back_mm": 18.7,
+"side_mm": 0.0
+},
+{
+"angle": 50,
+"z": -35,
+"back_mm": 7.5,
+"side_mm": 0.0
+},
+{
+"angle": 50,
+"z": -30,
+"back_mm": 8.8,
+"side_mm": 0.0
+},
+{
+"angle": 50,
+"z": -25,
+"back_mm": 10.0,
+"side_mm": 0.0
+},
+{
+"angle": 50,
+"z": -20,
+"back_mm": 11.2,
+"side_mm": 0.0
+},
+{
+"angle": 50,
+"z": -15,
+"back_mm": 11.8,
+"side_mm": 0.0
+},
+{
+"angle": 50,
+"z": -10,
+"back_mm": 12.7,
+"side_mm": 0.0
+},
+{
+"angle": 50,
+"z": -5,
+"back_mm": 13.4,
+"side_mm": 0.0
+},
+{
+"angle": 50,
+"z": 0,
+"back_mm": 14.2,
+"side_mm": 0.0
+},
+{
+"angle": 50,
+"z": 5,
+"back_mm": 15.1,
+"side_mm": 0.0
+},
+{
+"angle": 55,
+"z": -35,
+"back_mm": 4.8,
+"side_mm": 0.0
+},
+{
+"angle": 55,
+"z": -30,
+"back_mm": 5.6,
+"side_mm": 0.0
+},
+{
+"angle": 55,
+"z": -25,
+"back_mm": 6.5,
+"side_mm": 0.0
+},
+{
+"angle": 55,
+"z": -20,
+"back_mm": 7.6,
+"side_mm": 0.0
+},
+{
+"angle": 55,
+"z": -15,
+"back_mm": 8.3,
+"side_mm": 0.0
+},
+{
+"angle": 55,
+"z": -10,
+"back_mm": 9.2,
+"side_mm": 0.0
+},
+{
+"angle": 55,
+"z": -5,
+"back_mm": 10.0,
+"side_mm": 0.0
+},
+{
+"angle": 55,
+"z": 0,
+"back_mm": 10.6,
+"side_mm": 0.0
+},
+{
+"angle": 55,
+"z": 5,
+"back_mm": 11.3,
+"side_mm": 0.0
+},
+{
+"angle": 60,
+"z": -35,
+"back_mm": 1.7,
+"side_mm": 0.0
+},
+{
+"angle": 60,
+"z": -30,
+"back_mm": 2.5,
+"side_mm": 0.0
+},
+{
+"angle": 60,
+"z": -25,
+"back_mm": 3.1,
+"side_mm": 0.0
+},
+{
+"angle": 60,
+"z": -20,
+"back_mm": 4.1,
+"side_mm": 0.0
+},
+{
+"angle": 60,
+"z": -15,
+"back_mm": 4.8,
+"side_mm": 0.0
+},
+{
+"angle": 60,
+"z": -10,
+"back_mm": 5.4,
+"side_mm": 0.0
+},
+{
+"angle": 60,
+"z": -5,
+"back_mm": 6.1,
+"side_mm": 0.0
+},
+{
+"angle": 60,
+"z": 0,
+"back_mm": 6.8,
+"side_mm": 0.0
+},
+{
+"angle": 60,
+"z": 5,
+"back_mm": 7.4,
+"side_mm": 0.0
+},
+{
+"angle": 65,
+"z": -35,
+"back_mm": 0.0,
+"side_mm": 0.0
+},
+{
+"angle": 65,
+"z": -30,
+"back_mm": 0.0,
+"side_mm": 0.0
+},
+{
+"angle": 65,
+"z": -25,
+"back_mm": 0.0,
+"side_mm": 0.0
+},
+{
+"angle": 65,
+"z": -20,
+"back_mm": 0.4,
+"side_mm": 0.0
+},
+{
+"angle": 65,
+"z": -15,
+"back_mm": 1.1,
+"side_mm": 0.0
+},
+{
+"angle": 65,
+"z": -10,
+"back_mm": 1.6,
+"side_mm": 0.0
+},
+{
+"angle": 65,
+"z": -5,
+"back_mm": 2.0,
+"side_mm": 0.0
+},
+{
+"angle": 65,
+"z": 0,
+"back_mm": 2.6,
+"side_mm": 0.0
+},
+{
+"angle": 65,
+"z": 5,
+"back_mm": 2.9,
+"side_mm": 0.0
+},
+{
+"angle": 70,
+"z": -35,
+"back_mm": 0.0,
+"side_mm": 0.0
+},
+{
+"angle": 70,
+"z": -30,
+"back_mm": 0.0,
+"side_mm": 0.0
+},
+{
+"angle": 70,
+"z": -25,
+"back_mm": 0.0,
+"side_mm": 0.0
+},
+{
+"angle": 70,
+"z": -20,
+"back_mm": 0.0,
+"side_mm": 0.0
+},
+{
+"angle": 70,
+"z": -15,
+"back_mm": 0.0,
+"side_mm": 0.0
+},
+{
+"angle": 70,
+"z": -10,
+"back_mm": 0.0,
+"side_mm": 0.0
+},
+{
+"angle": 70,
+"z": -5,
+"back_mm": 0.0,
+"side_mm": 0.0
+},
+{
+"angle": 70,
+"z": 0,
+"back_mm": 0.0,
+"side_mm": 0.0
+},
+{
+"angle": 70,
+"z": 5,
+"back_mm": 0.0,
+"side_mm": 0.0
+},
+{
+"angle": 75,
+"z": -35,
+"back_mm": 0.0,
+"side_mm": 0.0
+},
+{
+"angle": 75,
+"z": -30,
+"back_mm": 0.0,
+"side_mm": 0.0
+},
+{
+"angle": 75,
+"z": -25,
+"back_mm": 0.0,
+"side_mm": 0.0
+},
+{
+"angle": 75,
+"z": -20,
+"back_mm": 0.0,
+"side_mm": 0.0
+},
+{
+"angle": 75,
+"z": -15,
+"back_mm": 0.0,
+"side_mm": 0.0
+},
+{
+"angle": 75,
+"z": -10,
+"back_mm": 0.0,
+"side_mm": 0.0
+},
+{
+"angle": 75,
+"z": -5,
+"back_mm": 0.0,
+"side_mm": 0.0
+},
+{
+"angle": 75,
+"z": 0,
+"back_mm": 0.0,
+"side_mm": 0.0
+},
+{
+"angle": 75,
+"z": 5,
+"back_mm": 0.0,
+"side_mm": 0.0
+}
+]
+}
+}

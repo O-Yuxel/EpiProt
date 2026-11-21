@@ -17,3 +17,4 @@ Thumbs.db
 .vscode/
 .idea/
 *.FCBak
+device-firmware/cad/export/*.step
