@@ -33,6 +33,12 @@ import org.epiprot.phone.protocol.PhoneMessage
 import org.epiprot.phone.protocol.PinResult
 import org.epiprot.phone.protocol.SensorBatch
 
+
+/** Semi-dry pads last several days (HARDWARE.md D1); the contact check warns earlier if one dries out. */
+private const val PAD_DAYS = 5
+/** One set of pads: L-top, L-bottom, R-top, R-bottom and the small bias pad. */
+private const val PADS_PER_SET = 5
+
 class EpiProtPhoneApp : Application() {
     val monitor by lazy { PhoneMonitor(this) }
 
@@ -165,6 +171,34 @@ class PhoneMonitor(private val app: Context) {
     fun disconnectHeadband() {
         hbLink.disconnect(); hbAckJob?.cancel()
         turnedOff("disconnected")
+    }
+
+    // ---------------------------------------------------------------- pads (semi-dry, changed every few days)
+    /**
+     * The patient put on new pads: remember the day, take one set (4 pads + the small bias pad) from the spare
+     * pads and measure the contact at once.
+     */
+    fun padsChanged(nowMs: Long = System.currentTimeMillis()) {
+        settings.padChangedMs = nowMs
+        if (settings.padStock >= 0) settings.padStock = (settings.padStock - PADS_PER_SET).coerceAtLeast(0)
+        settings.padReminderMs = 0
+        org.epiprot.phone.service.PhoneAlerts.fixed(app, "pads_change_due")
+        requestContactCheck()
+    }
+
+    /** At most one reminder a day: pads older than [PAD_DAYS] days, or fewer than two sets of spare pads. */
+    private fun checkPads(nowMs: Long) {
+        val s = settings
+        if (s.padChangedMs == 0L || nowMs - s.padReminderMs < 24 * 3_600_000L) return
+        val days = ((nowMs - s.padChangedMs) / (24 * 3_600_000L)).toInt()
+        var shown = false
+        if (days >= PAD_DAYS) {
+            org.epiprot.phone.service.PhoneAlerts.warning(app, "pads_change_due", "none", "$days", urgent = false); shown = true
+        }
+        if (s.padStock in 0 until 2 * PADS_PER_SET) {
+            org.epiprot.phone.service.PhoneAlerts.warning(app, "pads_stock_low", "none", "${s.padStock}", urgent = false); shown = true
+        }
+        if (shown) s.padReminderMs = nowMs
     }
 
     /** A seizure added by hand (seizure diary); see EventLog.addManualEvent. */
@@ -375,6 +409,7 @@ class PhoneMonitor(private val app: Context) {
                 try {
                     if (now - lastBatteryMs > 60_000 && !engine.demo) {      // the phone's own battery, once a minute
                         lastBatteryMs = now
+                        checkPads(now)
                         val bm = app.getSystemService(android.os.BatteryManager::class.java)
                         engine.onDeviceBattery("phone", bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY),
                             bm.isCharging, now)

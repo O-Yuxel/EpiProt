@@ -37,7 +37,7 @@ object PhoneAlerts {
         val what = when {
             warnId == 0 -> code.replace('_', ' ')
             code.startsWith("pad_") -> c.getString(warnId, padNames(c, detail))
-            code.endsWith("battery_low") || code.endsWith("battery_critical") -> c.getString(warnId, detail)
+            code.endsWith("battery_low") || code.endsWith("battery_critical") || code.startsWith("pads_") -> c.getString(warnId, detail)
             code == "headband_off" -> c.getString(when (detail) {
                 "disconnected" -> R.string.warn_headband_disconnected
                 "unpaired" -> R.string.warn_headband_unpaired

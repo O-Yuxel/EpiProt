@@ -53,6 +53,18 @@ class Settings(context: Context) {
         get() = p.getInt("cg_volume", -1)
         set(v) = p.edit().putInt("cg_volume", v).apply()
 
+    /** Pads: when they were last changed (0 = never told) and how many spare pads are left (-1 = not told). */
+    var padChangedMs: Long
+        get() = p.getLong("pad_changed", 0)
+        set(v) = p.edit().putLong("pad_changed", v).apply()
+    var padStock: Int
+        get() = p.getInt("pad_stock", -1)
+        set(v) = p.edit().putInt("pad_stock", v).apply()
+    /** Last time a pad reminder was shown (at most one a day). */
+    var padReminderMs: Long
+        get() = p.getLong("pad_reminder", 0)
+        set(v) = p.edit().putLong("pad_reminder", v).apply()
+
     /** History and Settings open only after the phone's own screen lock / fingerprint (if the phone has one). */
     var appLock: Boolean
         get() = p.getBoolean("app_lock", true)

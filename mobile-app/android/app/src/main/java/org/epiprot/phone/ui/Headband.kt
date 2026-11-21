@@ -217,6 +217,31 @@ internal fun HeadbandPage(m: PhoneMonitor, activity: MainActivity) {
             style = MaterialTheme.typography.bodySmall, color = C.InkSoft)
     }
 
+    // pad changes and spare pads (reminders: PhoneMonitor.checkPads)
+    var padVersion by remember { mutableStateOf(0) }
+    val changedMs = remember(padVersion) { m.settings.padChangedMs }
+    var stock by remember(padVersion) { mutableStateOf(m.settings.padStock) }
+    EpiCard {
+        CardHeader(Icons.Rounded.Refresh, stringResource(R.string.pads_title))
+        val days = if (changedMs > 0) ((now - changedMs) / 86_400_000L).toInt() else -1
+        InfoRow(stringResource(R.string.pads_changed), when {
+            days < 0 -> stringResource(R.string.pads_never)
+            days == 0 -> stringResource(R.string.pads_today)
+            else -> stringResource(R.string.pads_days_ago, days)
+        })
+        if (days >= 5) Text(stringResource(R.string.pads_due), color = C.Amber, style = MaterialTheme.typography.bodySmall)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.pads_stock), Modifier.weight(1f), color = C.InkSoft)
+            TextButton({ stock = (if (stock < 0) 0 else stock - 1).coerceAtLeast(0); m.settings.padStock = stock }) { Text("−", color = C.TealDark) }
+            Text(if (stock < 0) "–" else "$stock", color = C.Ink)
+            TextButton({ stock = (if (stock < 0) 0 else stock) + 1; m.settings.padStock = stock }) { Text("+", color = C.TealDark) }
+            TextButton({ stock = (if (stock < 0) 0 else stock) + 30; m.settings.padStock = stock }) { Text("+30", color = C.TealDark) }
+        }
+        if (stock in 0 until 10) Text(stringResource(R.string.pads_low), color = C.Amber, style = MaterialTheme.typography.bodySmall)
+        PrimaryButton(stringResource(R.string.pads_changed_button)) { m.padsChanged(); padVersion++ }
+        Text(stringResource(R.string.pads_help), color = C.InkSoft, style = MaterialTheme.typography.bodySmall)
+    }
+
     EpiCard {
         CardHeader(Icons.Rounded.Refresh, stringResource(R.string.hb_signals))
         SignalRow(stringResource(R.string.hb_brain), if (ok) st.quality["brain"] else null)

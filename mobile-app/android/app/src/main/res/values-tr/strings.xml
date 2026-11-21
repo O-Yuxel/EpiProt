@@ -576,4 +576,17 @@
     <string name="cg_alarm_sos">%1$s yardım istiyor</string>
     <string name="kind_help">Yardım çağrısı (saat)</string>
     <string name="rep_kind_help">Yardım çağrısı</string>
+    <!-- pedler: değişim ve yedek pedler -->
+    <string name="pads_title">Pedler</string>
+    <string name="pads_changed">Son değişim</string>
+    <string name="pads_never">henüz kaydedilmedi</string>
+    <string name="pads_today">bugün</string>
+    <string name="pads_days_ago">%1$d gün önce</string>
+    <string name="pads_due">Yeni ped zamanı (5 günde bir, ya da uygulama bir pedin kuruduğunu söylerse daha erken).</string>
+    <string name="pads_stock">Yedek ped</string>
+    <string name="pads_low">2 takımdan az kaldı: yeni ped sipariş edin.</string>
+    <string name="pads_changed_button">Yeni pedleri taktım</string>
+    <string name="pads_help">Bir takım = 5 ped (kulak arkalarına 4 + küçük olan). Düğmeye basınca yedeklerden bir takım düşülür ve temas hemen ölçülür.</string>
+    <string name="warn_pads_change_due">Pedler %1$s gün önce değiştirildi. Beyin sinyali temiz kalsın diye yeni ped takın.</string>
+    <string name="warn_pads_stock_low">Yalnızca %1$s yedek ped kaldı. Yakında yeni ped sipariş edin.</string>
 </resources>

@@ -586,4 +586,17 @@
     <string name="cg_alarm_sos">%1$s asks for help</string>
     <string name="kind_help">Call for help (watch)</string>
     <string name="rep_kind_help">Call for help</string>
+    <!-- pads: changes and spare pads -->
+    <string name="pads_title">Pads</string>
+    <string name="pads_changed">Last changed</string>
+    <string name="pads_never">not recorded yet</string>
+    <string name="pads_today">today</string>
+    <string name="pads_days_ago">%1$d days ago</string>
+    <string name="pads_due">Time for new pads (every 5 days, or earlier when the app says a pad is drying).</string>
+    <string name="pads_stock">Spare pads</string>
+    <string name="pads_low">Fewer than 2 sets left: order new pads.</string>
+    <string name="pads_changed_button">I put on new pads</string>
+    <string name="pads_help">One set = 5 pads (4 behind the ears + the small one). Tapping the button takes one set from the spare pads and measures the contact right away.</string>
+    <string name="warn_pads_change_due">The pads were changed %1$s days ago. Put on new pads so the brain signal stays clear.</string>
+    <string name="warn_pads_stock_low">Only %1$s spare pads left. Order new pads soon.</string>
 </resources>
