@@ -156,6 +156,25 @@ other settings needs no app change (rule P1).
    and the phone connects by itself whenever the band is on. "Unpair headband" in the app (UNPAIR)
    removes the bond on both sides (new phone or new band).
 
+### Status light (D22)
+
+One RGB light on the left pod, behind the neck: the patient sees it in a mirror or a caregiver sees it. Short
+flashes only, so it does not disturb sleep and costs almost no battery.
+
+| What you see | Meaning |
+|---|---|
+| no light | switched off (or battery completely empty) |
+| green, 3 flashes | switching on |
+| green, one short flash every 10 s | working and connected to the phone |
+| yellow, one flash every 2 s | on, but not connected to the phone (phone far, Bluetooth off, app closed) |
+| blue, fast flashing | pairing mode (button held 2 s), waiting for the phone |
+| red, one flash every 10 s | battery low (below 15 %): charge soon |
+| red, one flash every 2 s | battery almost empty (2 % or less): charge now |
+| yellow, steady (on the charger) | charging |
+| green, steady (on the charger) | fully charged |
+| red, 3 fast flashes, then a pause, repeating | fault (a sensor does not work): restart; if it stays, contact support |
+| white, fast flashing for 5 s | "Find my headband" from the app (IDENTIFY) |
+
 ### Switching on and off (D20)
 
 - **On:** the band switches on when it is taken off the charger (or button held 2 s) and connects by itself.

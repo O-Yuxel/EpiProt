@@ -451,10 +451,10 @@
     <string name="hb_link_pairing">şifre bekleniyor…</string>
     <string name="hb_pair_title">Kafa bandını eşleştir</string>
     <string name="hb_pair_step1">1. Kafa bandını açın (şarjdan çıkarın).</string>
-    <string name="hb_pair_step2">2. Sol poddaki tuşa ışık hızlı yanıp sönene kadar 2 saniye basın.</string>
+    <string name="hb_pair_step2">2. Sol poddaki tuşa ışık mavi yanıp sönene kadar 2 saniye basın.</string>
     <string name="hb_pair_step3">3. "Kafa bandını eşleştir"e dokunun ve kutudaki kılavuzda yazan 6 haneli kodu girin.</string>
     <string name="hb_pair">Kafa bandını eşleştir</string>
-    <string name="hb_pair_failed">Eşleştirme olmadı. Kodu ve ışığın hızlı yanıp söndüğünü kontrol edip tekrar deneyin.</string>
+    <string name="hb_pair_failed">Eşleştirme olmadı. Kodu ve ışığın mavi yanıp söndüğünü kontrol edip tekrar deneyin.</string>
     <string name="hb_pair_test">Test kafa bandı: kodsuz bağlan</string>
     <string name="hb_auto_note">Telefon, kafa bandı açık olduğu sürece ona kendiliğinden bağlanır.</string>
     <string name="hb_off_note">Kafa bandı kapatıldı. Tekrar açtığınızda kendiliğinden bağlanır.</string>
@@ -589,4 +589,6 @@
     <string name="pads_help">Bir takım = 5 ped (kulak arkalarına 4 + küçük olan). Düğmeye basınca yedeklerden bir takım düşülür ve temas hemen ölçülür.</string>
     <string name="warn_pads_change_due">Pedler %1$s gün önce değiştirildi. Beyin sinyali temiz kalsın diye yeni ped takın.</string>
     <string name="warn_pads_stock_low">Yalnızca %1$s yedek ped kaldı. Yakında yeni ped sipariş edin.</string>
+    <!-- kafa bandımı bul -->
+    <string name="hb_identify">Kafa bandımı bul (ışık beyaz yanıp söner)</string>
 </resources>

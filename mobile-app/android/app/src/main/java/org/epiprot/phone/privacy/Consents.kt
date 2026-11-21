@@ -125,7 +125,7 @@ data class ConsentState(
 
     companion object {
         /** Increase when the notice or a consent text changes: everybody sees the setup again. */
-        const val TEXT_VERSION = 3          // 2: country / region choice; 3: signals around alarms
+        const val TEXT_VERSION = 4          // 2: country / region choice; 3: signals around alarms; 4: tonic-clonic only, who must not use it
 
         fun normalize(number: String) = number.filter { it.isDigit() || it == '+' }
     }

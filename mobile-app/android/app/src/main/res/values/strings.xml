@@ -461,10 +461,10 @@
     <string name="hb_link_pairing">waiting for the passkey…</string>
     <string name="hb_pair_title">Pair your headband</string>
     <string name="hb_pair_step1">1. Switch the headband on (take it off the charger).</string>
-    <string name="hb_pair_step2">2. Hold the button on the left pod for 2 seconds, until the light blinks fast.</string>
+    <string name="hb_pair_step2">2. Hold the button on the left pod for 2 seconds, until the light flashes blue.</string>
     <string name="hb_pair_step3">3. Tap "Pair headband" and type the 6-digit code from the user manual in the box.</string>
     <string name="hb_pair">Pair headband</string>
-    <string name="hb_pair_failed">Pairing did not work. Check the code and that the light blinks fast, then try again.</string>
+    <string name="hb_pair_failed">Pairing did not work. Check the code and that the light flashes blue, then try again.</string>
     <string name="hb_pair_test">Test headband: connect without code</string>
     <string name="hb_auto_note">The phone connects to the headband by itself whenever it is on.</string>
     <string name="hb_off_note">Headband switched off. It connects by itself when you switch it on again.</string>
@@ -599,4 +599,6 @@
     <string name="pads_help">One set = 5 pads (4 behind the ears + the small one). Tapping the button takes one set from the spare pads and measures the contact right away.</string>
     <string name="warn_pads_change_due">The pads were changed %1$s days ago. Put on new pads so the brain signal stays clear.</string>
     <string name="warn_pads_stock_low">Only %1$s spare pads left. Order new pads soon.</string>
+    <!-- find my headband -->
+    <string name="hb_identify">Find my headband (light flashes white)</string>
 </resources>

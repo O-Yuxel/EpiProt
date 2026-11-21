@@ -136,6 +136,9 @@ class HeadbandLink(private val ctx: Context, private val listener: Listener) {
     /** Measure the pads' contact now (e.g. right after new pads). */
     fun requestContactCheck() = write(byteArrayOf(0x07))
 
+    /** "Find my headband": its light flashes white for 5 s (IDENTIFY). */
+    fun identify() = write(byteArrayOf(0x05))
+
     // ------------------------------------------------------------------ scanning
 
     private val scanCallback = object : ScanCallback() {

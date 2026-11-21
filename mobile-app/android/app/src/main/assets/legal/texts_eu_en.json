@@ -80,6 +80,8 @@
   "limits": [
     "EpiProt is a research prototype. It is not an approved medical device.",
     "It can MISS seizures. It can raise an alarm when there is no seizure.",
+    "EpiProt is made to detect only big convulsive (tonic-clonic) seizures. It does not detect other kinds, such as absences or short jerks.",
+    "Ask your doctor before use, and do not use it: if you wear a behind-the-ear hearing aid or a cochlear implant; if you have a vagus nerve stimulator (VNS) or another implanted device; if you have a wound, eczema or a silicone allergy behind the ear; for children under 6. Take the headband off before an MRI or X-ray.",
     "It does not replace your doctor's treatment or supervision by a caregiver. Do not change your medication or your doctor's advice.",
     "It works only while the headband and the watch are worn, charged and connected to the phone. SMS work without internet, but not without mobile network.",
     "In an emergency, call 112 (or your local emergency number) without waiting."

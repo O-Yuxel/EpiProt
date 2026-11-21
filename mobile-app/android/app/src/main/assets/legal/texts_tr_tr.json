@@ -79,6 +79,8 @@
   "limits": [
     "EpiProt bir araştırma prototipidir. Onaylı bir tıbbi cihaz değildir.",
     "Bazı nöbetleri KAÇIRABİLİR. Nöbet olmadığı halde alarm verebilir.",
+    "EpiProt yalnızca büyük kasılmalı (tonik-klonik) nöbetleri algılamak için yapıldı. Dalma, kısa kasılma gibi diğer nöbet türlerini algılamaz.",
+    "Kullanmadan önce doktorunuza danışın, şu durumlarda kullanmayın: kulak arkası işitme cihazı ya da koklear implant takıyorsanız; vagus sinir uyarıcısı (VNS) ya da başka bir implant cihazınız varsa; kulak arkasında yara, egzama ya da silikona alerjiniz varsa; 6 yaşından küçük çocuklarda. MR ve röntgen çekiminden önce kafa bandını çıkarın.",
     "Doktorunun tedavisinin ve bakıcı gözetiminin yerine geçmez. İlaçlarını ve doktorunun önerilerini değiştirme.",
     "Yalnızca kafa bandı ve saat takılı, şarjlı ve telefona bağlıyken çalışır. Telefonda internet olmasa da SMS gider, ama şebeke yoksa gitmeyebilir.",
     "Acil bir durumda beklemeden 112'yi ara."

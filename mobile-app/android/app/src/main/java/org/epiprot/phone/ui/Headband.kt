@@ -134,6 +134,7 @@ internal fun HeadbandPage(m: PhoneMonitor, activity: MainActivity) {
             }
             if (link == L.CONNECTED) {
                 SoftButton(stringResource(R.string.hb_check_now)) { m.requestContactCheck() }
+                SoftButton(stringResource(R.string.hb_identify)) { m.identifyHeadband() }
                 SoftButton(stringResource(R.string.hb_disconnect)) { confirm = Confirm.DISCONNECT }
             } else if (link == L.IDLE) {
                 PrimaryButton(stringResource(R.string.hb_connect)) {

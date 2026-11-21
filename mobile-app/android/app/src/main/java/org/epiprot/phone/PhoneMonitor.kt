@@ -233,6 +233,7 @@ class PhoneMonitor(private val app: Context) {
     }
 
     fun requestContactCheck() = hbLink.requestContactCheck()
+    fun identifyHeadband() = hbLink.identify()
     private var loop: Job? = null
     private var demoJob: Job? = null
 
