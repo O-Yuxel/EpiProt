@@ -297,7 +297,9 @@ class PhoneMonitor(private val app: Context) {
         loop = scope.launch(engineThread) {
             pipeline = org.epiprot.phone.headband.HeadbandPipeline(System.currentTimeMillis(),
                 onWindow = { w, end -> if (!engine.demo) { recorder.add(w, end); engine.onWindow(w, end) } },
-                onLateWindow = { w, end -> if (!engine.demo) engine.onLateWindow(w, end) })
+                onLateWindow = { w, end ->
+                    if (!engine.demo) { engine.onLateWindow(w, end); Log.i("EpiProt", "late headband window rebuilt, end=$end") }
+                })
             while (isActive) {
                 val now = System.currentTimeMillis()
                 try {

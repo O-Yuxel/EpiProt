@@ -73,6 +73,28 @@ class HeadbandBackfillTest {
         assertTrue(without > with)
     }
 
+    /** The test headband sends its stored packets before the first live one: they must wait for the clock. */
+    @Test
+    fun catchUpBeforeAnyLivePacketIsPlacedCorrectly() {
+        var lateEeg = 0
+        var badTime = 0
+        val sink = object : org.epiprot.phone.headband.HeadbandSink {
+            override fun eeg(firstMs: Double, uv: Array<FloatArray>, leadOff: Int) {}
+            override fun movement(tMs: Double, accG: FloatArray, gyrDps: FloatArray) {}
+            override fun lateEeg(firstMs: Double, uv: Array<FloatArray>, leadOff: Int) {
+                lateEeg++; if (firstMs < base - 60_000 || firstMs > base + 200_000) badTime++
+            }
+        }
+        val rx = HeadbandReceiver(stream.info, sink)
+        val recs = stream.records.take(800)
+        val t = base + recs.last().first
+        for ((_, b) in recs.take(400)) rx.onPacket(t, b.copyOf().also { it[1] = (it[1].toInt() or 1).toByte() })
+        assertEquals(0, lateEeg)                                    // waiting: no clock yet
+        for ((ms, b) in recs.drop(400)) rx.onPacket(base + ms, b)
+        assertTrue(lateEeg > 200)
+        assertEquals("stored packets placed on the right timeline", 0, badTime)
+    }
+
     @Test
     fun noGapNothingChanges() {
         val (t, late) = run(null, backfill = true)

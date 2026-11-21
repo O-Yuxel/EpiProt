@@ -59,6 +59,8 @@ class HeadbandReceiver(val info: P.DeviceInfo, private val sink: HeadbandSink) {
     private var lastUnwrapped = 0L
     private val clock = SlidingMin(600_000.0)
     private var contiguous = -1L
+    /** Catch-up packets that came before any live packet: the clock is not known yet, so they wait. */
+    private val waiting = ArrayList<Pair<Long, ByteArray>>()
 
     /** Highest sequence number up to which every packet arrived: what the phone confirms (ACK). */
     fun ackSeq(): Long {
@@ -70,13 +72,24 @@ class HeadbandReceiver(val info: P.DeviceInfo, private val sink: HeadbandSink) {
 
     fun onPacket(arrivalMs: Long, bytes: ByteArray) {
         val p = P.decode(bytes)
+        val catchUpFirst = p.flags and P.FLAG_CATCHUP != 0
+        if (catchUpFirst && clock.isEmpty) {               // headband clock -> phone clock comes from live packets
+            if (waiting.size < 100_000) waiting += arrivalMs to bytes
+            return
+        }
         if (!seen.add(p.seq)) { state = state.copy(duplicates = state.duplicates + 1); return }
         if (firstSeq < 0) firstSeq = p.seq
         if (p.seq > maxSeq) maxSeq = p.seq
         if (seen.size > 400_000) seen.removeAll { it < maxSeq - 300_000 }
         val tDevMs = unwrap(p.tDev) / P.TICKS_PER_S * 1000
         val catchUp = p.flags and P.FLAG_CATCHUP != 0
-        if (!catchUp) clock.add(arrivalMs.toDouble(), arrivalMs - tDevMs)
+        if (!catchUp) {
+            clock.add(arrivalMs.toDouble(), arrivalMs - tDevMs)
+            if (waiting.isNotEmpty()) {                     // first live packet: now the stored ones can be placed
+                val w = ArrayList(waiting); waiting.clear()
+                for ((a, b) in w) onPacket(a, b)
+            }
+        }
         val phoneMs = tDevMs + clock.value
         state = state.copy(lastPacketMs = arrivalMs, received = state.received + 1,
             missing = maxSeq - firstSeq + 1 - (state.received + 1))
@@ -134,6 +147,7 @@ class HeadbandReceiver(val info: P.DeviceInfo, private val sink: HeadbandSink) {
     private class SlidingMin(private val windowMs: Double) {
         private val q = ArrayDeque<Pair<Double, Double>>()
         val value: Double get() = q.firstOrNull()?.second ?: 0.0
+        val isEmpty: Boolean get() = q.isEmpty()
         fun add(t: Double, v: Double) {
             while (q.isNotEmpty() && q.last().second >= v) q.removeLast()
             q.addLast(t to v)

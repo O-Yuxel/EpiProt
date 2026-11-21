@@ -117,6 +117,10 @@ reconnecting; they used to go only to the diary.
 part) and the live watch data, and the detector replaces the stand-in values it had used during the gap
 (`HeadbandPipeline`, `Detector.backfill`; no alarm is raised for the past). Same gap replayed in software
 (`HeadbandBackfillTest`): no gap 15 s, gap without late data 85 s, **gap with late data 15 s** (20 past windows rebuilt).
+Repeated on the two phones over real Bluetooth (phone Bluetooth off ~90 s at about 200 s into the stream): the phone
+reconnected by itself, rebuilt 25 past windows from the stored data, no crash; the alarm came at about the seizure
+onset (onset time estimated to ±10 s because the log of the test phone was lost), instead of 88 s after it. This run also
+found a crash (stored packets that arrive before the first live packet were placed in 1970), fixed and covered by a test.
 
 **Test deviations:** no bonding / encryption (passkey) yet; the test band changes its Bluetooth address on every start
 (a real band keeps one).

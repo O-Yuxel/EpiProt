@@ -27,11 +27,20 @@ class HeadbandPipeline(
     private var lateTouched = false
     var lateWindows = 0
         private set
+    private var liveLastMs = Double.NaN
 
-    override fun eeg(firstMs: Double, uv: Array<FloatArray>, leadOff: Int) = live.addHeadbandEeg(firstMs, uv, leadOff)
+    /** Late data are only useful for the model's memory (last ~12 min); anything else is ignored. */
+    private fun lateUseful(t: Double) = !liveLastMs.isNaN() &&
+        t > liveLastMs - KEEP * WindowAssembler.WINDOW_MS && t < liveLastMs + 60_000
+
+    override fun eeg(firstMs: Double, uv: Array<FloatArray>, leadOff: Int) {
+        liveLastMs = if (liveLastMs.isNaN()) firstMs else maxOf(liveLastMs, firstMs)
+        live.addHeadbandEeg(firstMs, uv, leadOff)
+    }
     override fun movement(tMs: Double, accG: FloatArray, gyrDps: FloatArray) = live.addHeadMovement(tMs, accG, gyrDps)
 
     override fun lateEeg(firstMs: Double, uv: Array<FloatArray>, leadOff: Int) {
+        if (!lateUseful(firstMs)) return
         live.addHeadbandEeg(firstMs, uv, leadOff)                 // windows still open take them directly
         lateAssembler(firstMs).addHeadbandEeg(firstMs, uv, leadOff)
         lateLastMs = maxOf(lateLastMs, firstMs + uv[0].size * 1000.0 / 256)
@@ -39,6 +48,7 @@ class HeadbandPipeline(
     }
 
     override fun lateMovement(tMs: Double, accG: FloatArray, gyrDps: FloatArray) {
+        if (!lateUseful(tMs)) return
         live.addHeadMovement(tMs, accG, gyrDps)
         lateAssembler(tMs).addHeadMovement(tMs, accG, gyrDps)
         lateLastMs = maxOf(lateLastMs, tMs)
