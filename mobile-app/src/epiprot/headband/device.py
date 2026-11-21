@@ -16,11 +16,14 @@ marked in the metadata ("source_map"), so nothing downstream mistakes them for r
 from __future__ import annotations
 
 import csv
+from collections import deque
 from dataclasses import asdict, dataclass, field
+from typing import Sequence
 from pathlib import Path
 
 import numpy as np
 
+from . import faults as F
 from . import protocol as P
 from .calibration import Seizeit2Scale, group_of
 from .edf import read_edf
@@ -40,6 +43,17 @@ class HardwareConfig:
     imu_odr_error: float = 0.004         # free-running sensor clock error (BMI270-style), fraction [EST]
     imu_noise_lsb: float = 2.0           # motion sensor noise, raw LSB RMS [EST]
     conn_interval_ms: float = 45.0       # Bluetooth connection interval
+    reconnect_s: float = 1.5             # advertising + phone scan + encrypted reconnect [EST]
+    in_flight_s: float = 0.3             # packets sent but not yet confirmed when the link drops [EST]
+    catchup_bytes_per_s: float = 40_000  # spare Bluetooth throughput for stored data [EST]
+    store_bytes: int = 8 * 1024 * 1024 + 96 * 1024   # 8 MB flash + RAM buffer
+    start_battery_pct: float = 80.0
+    bias_off_mains_uv: float = 300.0     # mains hum reaching the channels without bias drive [EST]
+    contact_check_every_s: float = 600.0 # contact check (D15): every 10 min ...
+    contact_check_s: float = 2.0         # ... for 2 s
+    contact_current_na: float = 6.0      # ADS1299 lead-off excitation current [DS option]
+    fresh_pad_kohm: float = 20.0         # semi-dry pad on skin [EST]
+    lost_contact_kohm: float = 1000.0    # above this the lead-off comparator reports no contact [EST]
     seed: int = 0
 
 
@@ -104,30 +118,97 @@ def channel_map(eeg: dict[str, np.ndarray]):
     raise ValueError(f"unknown EEG montage {sorted(eeg)}")
 
 
-def simulate(src: Source, cfg: HardwareConfig = HardwareConfig(), info: P.DeviceInfo = P.DeviceInfo()):
-    """Returns (records, meta): records = [(arrival_ms on the phone clock, packet bytes)], in arrival order."""
+def simulate(src: Source, cfg: HardwareConfig = HardwareConfig(), info: P.DeviceInfo = P.DeviceInfo(),
+             faults: Sequence = ()):
+    """Returns (records, meta): records = [(arrival_ms on the phone clock, packet bytes)], in arrival order.
+    faults: see faults.py."""
     rng = np.random.default_rng(cfg.seed)
     c1, c2, c3, source_map, pair = channel_map(src.eeg_uv)
     n_eeg = (len(c1) // P.EEG_N) * P.EEG_N
+    eeg_dt = 1.0 / (EEG_FS * (1 + cfg.eeg_clock_ppm * 1e-6))                 # true seconds per sample
+    t_eeg = np.arange(n_eeg) * eeg_dt
 
-    # electrode potentials (L-bottom as 0 V reference), DC offsets, the 4 differential channels
-    ltop, lbot = c1[:n_eeg], np.zeros(n_eeg)
-    rtop = ltop - c2[:n_eeg]
-    rbot = rtop - c3[:n_eeg]
+    # electrode potentials (L-bottom as 0 V reference) + DC offsets; index as faults.ELECTRODES
+    el = np.zeros((5, n_eeg))
+    el[0] = c1[:n_eeg]
+    el[2] = el[0] - c2[:n_eeg]
+    el[3] = el[2] - c3[:n_eeg]
     off = rng.normal(0, cfg.electrode_offset_mv * 1000, 4)                    # µV
-    ltop, lbot, rtop, rbot = ltop + off[0], lbot + off[1], rtop + off[2], rbot + off[3]
-    ch = np.stack([ltop - lbot, ltop - rtop, rtop - rbot, lbot - rbot], 1)
+    el[:4] += off[:, None]
+    lead = np.zeros(n_eeg, np.uint8)
+    mains = np.zeros(n_eeg)
+    z = np.full((5, n_eeg), cfg.fresh_pad_kohm)                               # contact impedance, kOhm
+
+    def span(a, d):
+        return (t_eeg >= a) & (t_eeg < a + d)
+
+    def lose_contact(i, m):
+        lead[m] |= 1 << i
+        z[i, m] = np.inf
+        if i == 4:                    # bias lost: mains hum is no longer cancelled
+            mains[m] = cfg.bias_off_mains_uv
+        else:                         # lead-off current drives the input to the rail
+            el[i, m] = 2 * FULL_SCALE_UV
+
+    for f in faults:
+        if isinstance(f, F.ElectrodeOff):
+            lose_contact(F.electrode_index(f.electrode), span(f.start_s, f.dur_s))
+        elif isinstance(f, F.PadDrying):
+            i = F.electrode_index(f.electrode)
+            m = span(f.start_s, f.ramp_s)
+            frac = (t_eeg[m] - f.start_s) / f.ramp_s
+            z[i, m] = cfg.fresh_pad_kohm + (cfg.lost_contact_kohm - cfg.fresh_pad_kohm) * frac
+            if i < 4:
+                el[i, m] += rng.normal(0, 1, m.sum()) * f.max_noise_uv * frac
+            lose_contact(i, span(f.start_s + f.ramp_s, f.dur_s - f.ramp_s))
+        elif isinstance(f, F.LooseCable):
+            i = F.electrode_index(f.electrode)
+            for b0 in rng.uniform(f.start_s, f.start_s + f.dur_s, rng.poisson(f.bursts_per_s * f.dur_s)):
+                lose_contact(i, span(b0, f.burst_s))
+
+    # contact checks: the EEG chip drives a small 64 Hz current (fDR/4) through every electrode and
+    # measures the voltage; the EEG of those 2 s is flagged and not used by the model
+    checks = [t for t in np.arange(5.0, n_eeg * eeg_dt - cfg.contact_check_s, cfg.contact_check_every_s)]
+    in_check = np.zeros(n_eeg, bool)
+    for t0 in checks:
+        m = span(t0, cfg.contact_check_s)
+        in_check |= m
+        tone = np.sin(2 * np.pi * EEG_FS / 4 * t_eeg[m])
+        for i in range(4):
+            zi = np.where(np.isfinite(z[i, m]), z[i, m], 0.0)
+            el[i, m] += cfg.contact_current_na * 1e-9 * zi * 1e3 * 1e6 * tone          # nA x kOhm -> µV
+    ch = np.stack([el[0] - el[1], el[0] - el[2], el[2] - el[3], el[1] - el[3]], 1)
+    if mains.any():
+        ph = rng.uniform(0, 2 * np.pi, 4)
+        k = rng.uniform(0.5, 1.5, 4)
+        ch += mains[:, None] * k * np.sin(2 * np.pi * 50 * t_eeg[:, None] + ph)
     ch += rng.normal(0, cfg.adc_noise_uv, ch.shape)
     ch = np.clip(ch, -FULL_SCALE_UV, FULL_SCALE_UV)
     codes = np.clip(np.round(ch * 1000 / info.eeg_lsb_nv), P.INT24_MIN, P.INT24_MAX).astype(np.int32)
+    sat = (np.abs(codes) >= P.INT24_MAX).any(1)
 
-    eeg_dt = 1.0 / (EEG_FS * (1 + cfg.eeg_clock_ppm * 1e-6))                 # true seconds per sample
+    # device state over time
+    charging = [(f.start_s, f.start_s + f.dur_s) for f in faults if isinstance(f, F.Charging)]
+    empty = min([f.empty_s for f in faults if isinstance(f, F.BatteryRunsOut)], default=np.inf)
+    imu_dead = min([f.start_s for f in faults if isinstance(f, F.MotionSensorFailure)], default=np.inf)
+    batt = next((f for f in faults if isinstance(f, F.BatteryRunsOut)), None)
+
+    def is_charging(t):
+        return any(a <= t < b for a, b in charging)
+
+    def eeg_on(t):
+        return not is_charging(t) and t < empty
+
+    def pct(t):
+        if batt is not None:
+            return max(0.0, batt.start_pct * (1 - t / batt.empty_s))
+        return max(0.0, cfg.start_battery_pct - t / 3600 * 100 / 48)
+
     rtc = lambda t: np.round(np.asarray(t) * (1 + cfg.rtc_ppm * 1e-6) * P.TICKS_PER_S).astype(np.int64)
-    events = []                                                               # (ready time s, order, builder)
-    for p in range(n_eeg // P.EEG_N):
-        k = p * P.EEG_N
-        events.append((( k + P.EEG_N) * eeg_dt, 0, ("eeg", k)))
-
+    events = []                                                               # (ready time s, order, what)
+    for k in range(0, n_eeg, P.EEG_N):
+        if eeg_on(t_eeg[k]):
+            events.append(((k + P.EEG_N) * eeg_dt, 0, ("eeg", k)))
     mov = None
     if src.acc is not None:
         dur = len(src.acc[0]) / MOV_FS
@@ -144,36 +225,98 @@ def simulate(src: Source, cfg: HardwareConfig = HardwareConfig(), info: P.Device
         raw = np.clip(np.round(raw + rng.normal(0, cfg.imu_noise_lsb, raw.shape)), -32768, 32767).astype(np.int16)
         mov = (t_imu, raw)
         for j in range(0, len(t_imu), P.MOV_N):
-            events.append((t_imu[j + P.MOV_N - 1] + 1e-3, 1, ("mov", j)))
-    dur_s = n_eeg * eeg_dt
-    for s in range(int(dur_s)):
+            if eeg_on(t_imu[j]) and t_imu[j] < imu_dead:
+                events.append((t_imu[j + P.MOV_N - 1] + 1e-3, 1, ("mov", j)))
+    for s in range(int(min(n_eeg * eeg_dt, empty))):
         events.append((float(s) + 1e-4, 2, ("status", s)))
+    for t0 in checks:
+        if eeg_on(t0):
+            events.append((t0 + cfg.contact_check_s + 1e-3, 3, ("contact", t0)))
     events.sort(key=lambda e: (e[0], e[1]))
 
-    # Bluetooth: a packet leaves at the next connection event, plus radio / stack delay
+    # Bluetooth link: live packets leave at the next connection event. While disconnected the headband
+    # stores everything not confirmed by the phone (RAM + flash, oldest overwritten when full) and,
+    # after reconnecting, sends the store with the catch-up flag next to the live packets.
+    downs = sorted((f.start_s, f.start_s + f.dur_s + cfg.reconnect_s) for f in faults if isinstance(f, F.Disconnect))
     phase = rng.uniform(0, cfg.conn_interval_ms)
-    records, last = [], 0.0
+    records = []                                                              # (arrival ms, ready s, bytes)
+    store = deque()
+    store_bytes, flash_full, dropped, catchup, last = 0, False, 0, 0, 0.0
+    cur_down = None
+
+    def live(t_ready, b):
+        nonlocal last
+        ms = t_ready * 1000
+        ev = phase + np.ceil((ms - phase) / cfg.conn_interval_ms) * cfg.conn_interval_ms
+        last = max(last, ev + rng.uniform(2, 12))
+        records.append((last, t_ready, b))
+
     for seq, (t_ready, _, (kind, k)) in enumerate(events):
+        down = next(((a, b) for a, b in downs if a <= t_ready < b), None)
+        if down is not None and cur_down is None:
+            # link lost: packets still in flight were never confirmed, so they stay in the store
+            cut = down[0] - cfg.in_flight_s
+            moved = [r for r in records if r[1] is not None and r[1] >= cut]
+            records = [r for r in records if not (r[1] is not None and r[1] >= cut)]
+            for r in moved:
+                store.append(P.decode(r[2]))
+                store_bytes += len(r[2])
+        if down is None and cur_down is not None:
+            # reconnected: send the store at the catch-up rate, live packets keep flowing in between
+            t = cur_down[1] * 1000
+            while store:
+                p = store.popleft()
+                p.flags |= P.FLAG_CATCHUP
+                b = P.encode(p)
+                t += len(b) / cfg.catchup_bytes_per_s * 1000
+                records.append((t + rng.uniform(2, 12), None, b))
+                catchup += 1
+            store_bytes, flash_full = 0, False
+        cur_down = down
+
         if kind == "eeg":
-            pkt = P.EegPacket(seq, k, int(rtc(k * eeg_dt)), codes[k:k + P.EEG_N])
+            pkt = P.EegPacket(seq, k, int(rtc(k * eeg_dt)), codes[k:k + P.EEG_N],
+                              int(np.bitwise_or.reduce(lead[k:k + P.EEG_N])),
+                              P.FLAG_CONTACT_CHECK if in_check[k:k + P.EEG_N].any() else 0)
+        elif kind == "contact":
+            j = min(n_eeg - 1, int((k + cfg.contact_check_s / 2) / eeg_dt))
+            zz = z[:, j] * (1 + rng.normal(0, 0.05, 5))                       # measurement error [EST]
+            vals = tuple(P.Z_UNKNOWN if not np.isfinite(v) or v >= cfg.lost_contact_kohm
+                         else int(round(max(v, 0))) for v in zz)
+            pkt = P.ContactPacket(seq, int(rtc(k + cfg.contact_check_s)), vals)
         elif kind == "mov":
             t_imu, raw = mov
             pkt = P.MovPacket(seq, int(rtc(t_imu[k])), raw[k:k + P.MOV_N])
         else:
-            pct = max(0, 100 - k // 1728)                                     # ~2 days for 100 %
-            pkt = P.StatusPacket(seq, int(rtc(k)), 3700 + 4 * pct, pct, uptime_s=k)
-        ms = t_ready * 1000
-        ev = phase + np.ceil((ms - phase) / cfg.conn_interval_ms) * cfg.conn_interval_ms
-        arr = max(last, ev + rng.uniform(2, 12))
-        last = arr
-        records.append((arr, P.encode(pkt)))
+            m = (t_eeg >= k - 1) & (t_eeg < k)
+            pc = pct(k)
+            state = ((P.ST_STREAMING if eeg_on(k) else 0) | (P.ST_CHARGER | P.ST_CHARGING if is_charging(k) else 0)
+                     | (P.ST_LOW_BATTERY if pc < 15 else 0))
+            err = ((P.ERR_EEG_SATURATION if sat[m].any() else 0) | (P.ERR_IMU_CHIP if k >= imu_dead else 0)
+                   | (P.ERR_FLASH_FULL if flash_full else 0))
+            pkt = P.StatusPacket(seq, int(rtc(k)), int(3500 + 7 * pc), int(round(pc)), state,
+                                 int(np.bitwise_or.reduce(lead[m])) if m.any() else 0, 30, len(store), err, k)
+        b = P.encode(pkt)
+        if down is None:
+            live(t_ready, b)
+        else:
+            store.append(pkt)
+            store_bytes += len(b)
+            while store_bytes > cfg.store_bytes:
+                x = store.popleft()
+                store_bytes -= len(P.encode(x))
+                dropped += 1
+                flash_full = True
 
+    records.sort(key=lambda r: r[0])
     meta = {**src.meta, "source_map": source_map, "training_pair": pair,
             "movement": None if src.scale is None else {"units_per_g": src.scale.units_per_g,
                                                        "units_per_dps": src.scale.units_per_dps},
             "config": asdict(cfg), "electrode_offsets_uv": off.tolist(),
+            "faults": [{"type": type(f).__name__, **asdict(f)} for f in faults],
+            "dropped_when_store_full": dropped, "catchup_packets": catchup, "never_sent": len(store),
             "eeg_samples": int(n_eeg), "device_info": info.encode().hex()}
-    return records, meta
+    return [(r[0], r[2]) for r in records], meta
 
 
 def write_stream(path: str | Path, records, meta) -> None:

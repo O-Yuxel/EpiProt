@@ -11,6 +11,8 @@ from . import protocol as P
 from .calibration import TRAINING, Seizeit2Scale
 
 WRAP = 1 << 32
+PADS = ["L-top", "L-bottom", "R-top", "R-bottom", "bias"]
+REPLACE_PAD_KOHM = 150.0     # "replace this pad" above this contact impedance [EST]
 
 
 def _unwrap(t: np.ndarray) -> np.ndarray:
@@ -38,19 +40,38 @@ class Receiver:
         self.eeg: list[P.EegPacket] = []
         self.mov: list[P.MovPacket] = []
         self.status: list[P.StatusPacket] = []
+        self.contact: list[P.ContactPacket] = []
         self.arrival: dict[int, float] = {}
         self.t_dev: dict[int, int] = {}
+        self.duplicates = 0
+        self.catchup = 0
 
     def feed(self, arrival_ms: float, data: bytes) -> None:
         p = P.decode(data)
+        if p.seq in self.arrival:          # sent twice (lost confirmation): keep the first copy
+            self.duplicates += 1
+            return
+        self.catchup += bool(p.flags & P.FLAG_CATCHUP)
         self.arrival[p.seq], self.t_dev[p.seq] = arrival_ms, p.t_dev
-        (self.eeg if isinstance(p, P.EegPacket) else self.mov if isinstance(p, P.MovPacket) else self.status).append(p)
+        {P.EegPacket: self.eeg, P.MovPacket: self.mov, P.StatusPacket: self.status,
+         P.ContactPacket: self.contact}[type(p)].append(p)
 
     def missing_seq(self) -> list[int]:
         s = np.array(sorted(self.arrival))
         if len(s) == 0:
             return []
         return sorted(set(range(int(s[0]), int(s[-1]) + 1)) - set(s.tolist()))
+
+    # ---- pads --------------------------------------------------------------------------------
+    def pad_warnings(self, replace_kohm: float = REPLACE_PAD_KOHM) -> list[tuple[float, str, int]]:
+        """(headband seconds, electrode, impedance kOhm or Z_UNKNOWN) for every contact check that found a
+        pad to replace: impedance above replace_kohm, or no contact at all."""
+        out = []
+        for p in self.contact:
+            for name, v in zip(PADS, p.impedance_kohm):
+                if v == P.Z_UNKNOWN or v > replace_kohm:
+                    out.append((p.t_dev / P.TICKS_PER_S, name, v))
+        return out
 
     # ---- EEG -------------------------------------------------------------------------------
     def eeg_uv(self) -> tuple[int, np.ndarray]:
@@ -61,6 +82,8 @@ class Receiver:
         for i, p in zip(idx, self.eeg):
             c = p.codes.astype(np.float64)
             c[(p.codes <= P.INT24_MIN) | (p.codes >= P.INT24_MAX)] = np.nan
+            if p.flags & P.FLAG_CONTACT_CHECK:                         # contact check: not for the model
+                c[:] = np.nan
             out[:, i - first:i - first + len(c)] = c.T * self.info.eeg_lsb_nv / 1000
         return first, out
 

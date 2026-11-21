@@ -67,8 +67,10 @@ def test_eeg_reaches_phone_unchanged_except_amplifier_noise():
     assert rx.missing_seq() == []
     first, eeg = rx.eeg_uv()
     n = eeg.shape[1]
+    flagged = np.isnan(eeg[0])                           # contact check (D15): 2 s every 10 min, not for the model
+    assert abs(flagged.sum() / 256 - 2.0) < 0.1          # one check in 60 s, ~2 s (whole packets)
     for ch, lab in zip(meta["training_pair"], ["BTEleft SD", "CROSStop SD"]):
-        d = eeg[ch - 1] - src.eeg_uv[lab][:n]
+        d = (eeg[ch - 1] - src.eeg_uv[lab][:n])[~flagged]
         d -= d.mean()                                    # electrode DC offset (constant)
         assert np.sqrt(np.mean(d ** 2)) < 0.25           # 0.2 µV noise + 0.05 µV steps
 
@@ -106,3 +108,71 @@ def test_gyro_scale_is_recovered_from_gravity_rotation():
     k, used = gyro_units_per_rad_s(acc, gyr, fs)
     assert used > 200
     assert abs(k / (57.2958 * GROUP_B.units_per_dps) - 1) < 0.05
+
+
+# ---- faults -------------------------------------------------------------------------------------
+from epiprot.headband import faults as F
+
+
+def _decoded(records):
+    return [(ms, P.decode(b)) for ms, b in records]
+
+
+def test_disconnect_loses_nothing_and_marks_catch_up_data():
+    src = _synthetic_source(seconds=120)
+    rec, meta = simulate(src, HardwareConfig(), faults=[F.Disconnect(30, 20)])
+    rx = _receive(rec, meta)
+    assert rx.missing_seq() == [] and meta["dropped_when_store_full"] == 0
+    assert rx.catchup > 0
+    late = [p for ms, p in _decoded(rec) if p.flags & P.FLAG_CATCHUP]
+    assert all(ms >= 50_000 for ms, p in _decoded(rec) if p.flags & P.FLAG_CATCHUP)
+    assert min(p.seq for p in late) < max(p.seq for p in late)
+
+
+def test_full_store_drops_only_the_oldest_and_reports_it():
+    src = _synthetic_source(seconds=120)
+    cfg = HardwareConfig(store_bytes=20 * 3800)          # ~20 s of data
+    rec, meta = simulate(src, cfg, faults=[F.Disconnect(30, 40)])
+    rx = _receive(rec, meta)
+    lost = rx.missing_seq()
+    assert len(lost) == meta["dropped_when_store_full"] > 0
+    assert lost == list(range(lost[0], lost[0] + len(lost)))          # one block: the oldest
+    assert any(p.errors & P.ERR_FLASH_FULL for _, p in _decoded(rec) if isinstance(p, P.StatusPacket))
+
+
+def test_electrode_off_saturates_its_channels_and_sets_contact_bits():
+    src = _synthetic_source(seconds=60)
+    rec, meta = simulate(src, HardwareConfig(), faults=[F.ElectrodeOff("L-top", 20, 10)])
+    rx = _receive(rec, meta)
+    first, eeg = rx.eeg_uv()
+    m = slice(int(21 * 256), int(29 * 256))
+    assert np.isnan(eeg[0, m]).all() and np.isnan(eeg[1, m]).all()   # channels 1, 2 use L-top
+    assert np.isfinite(eeg[2, m]).all() and np.isfinite(eeg[3, m]).all()
+    assert any(p.lead_off & P.LEAD_LTOP for p in rx.eeg)
+
+
+def test_charging_stops_measuring_but_status_continues():
+    src = _synthetic_source(seconds=60)
+    rec, meta = simulate(src, HardwareConfig(), faults=[F.Charging(20, 20)])
+    rx = _receive(rec, meta)
+    t = np.array([p.sample_index / 256 for p in rx.eeg])
+    assert not ((t > 20.1) & (t < 39.9)).any()
+    assert any(s.state & P.ST_CHARGER for s in rx.status if 20 <= s.uptime_s < 40)
+
+
+def test_contact_packet_round_trip():
+    c = P.ContactPacket(11, 999, (20, 35, P.Z_UNKNOWN, 140, 18))
+    b = P.encode(c)
+    assert len(b) == P.CONTACT_SIZE == 20 and P.decode(b) == c
+
+
+def test_drying_pad_is_reported_before_contact_is_lost():
+    src = _synthetic_source(seconds=1300)
+    cfg = HardwareConfig(contact_check_every_s=120)
+    rec, meta = simulate(src, cfg, faults=[F.PadDrying("R-bottom", 100, 1000, 1200)])
+    rx = _receive(rec, meta)
+    warn = rx.pad_warnings()
+    assert warn and all(name == "R-bottom" for _, name, _ in warn)
+    assert warn[0][0] < 1100                                          # before contact is lost
+    fresh = [p for p in rx.contact if p.t_dev / P.TICKS_PER_S < 100]
+    assert fresh and max(fresh[0].impedance_kohm) < 30

@@ -9,9 +9,11 @@ from dataclasses import dataclass
 
 import numpy as np
 
-PROTOCOL_MAJOR, PROTOCOL_MINOR = 1, 0
-TYPE_EEG, TYPE_MOV, TYPE_STATUS = 0x01, 0x02, 0x03
+PROTOCOL_MAJOR, PROTOCOL_MINOR = 1, 1
+TYPE_EEG, TYPE_MOV, TYPE_STATUS, TYPE_CONTACT = 0x01, 0x02, 0x03, 0x04
 FLAG_CATCHUP = 0x01
+FLAG_CONTACT_CHECK = 0x02     # EEG measured during a contact check: not for the model
+Z_UNKNOWN = 0xFFFF            # contact packet: no contact / not measurable
 TICKS_PER_S = 32768                      # headband crystal clock (t_dev)
 
 EEG_N, EEG_CH = 16, 4                    # samples per channel per packet, channels
@@ -23,11 +25,13 @@ _EEG = struct.Struct("<BBIIIBB")         # header + sample_index, t_dev, n, lead
 _MOV = struct.Struct("<BBIIB")           # header + t_dev, n
 _STATUS = struct.Struct("<BBIIHBBBbIHI")
 _INFO = struct.Struct("<BB3s8sHBfBHfB")
+_CONTACT = struct.Struct("<BBII5H")   # header + t_dev, impedance kOhm per electrode
 
 EEG_SIZE = _EEG.size + EEG_N * EEG_CH * 3     # 208
 MOV_SIZE = _MOV.size + MOV_N * 6 * 2          # 71
 STATUS_SIZE = _STATUS.size                    # 26
 INFO_SIZE = _INFO.size                        # 28
+CONTACT_SIZE = _CONTACT.size                  # 20
 
 # status state bits
 ST_CHARGING, ST_CHARGER, ST_STREAMING, ST_LOW_BATTERY = 1, 2, 4, 8
@@ -68,6 +72,16 @@ class StatusPacket:
     unconfirmed: int = 0
     errors: int = 0
     uptime_s: int = 0
+    flags: int = 0
+
+
+@dataclass
+class ContactPacket:
+    """Result of a contact check: skin contact impedance per electrode (L-top, L-bottom, R-top,
+    R-bottom, bias) in kOhm; Z_UNKNOWN = no contact."""
+    seq: int
+    t_dev: int
+    impedance_kohm: tuple[int, int, int, int, int]
     flags: int = 0
 
 
@@ -120,6 +134,8 @@ def encode(p) -> bytes:
     if isinstance(p, StatusPacket):
         return _STATUS.pack(TYPE_STATUS, p.flags, p.seq & 0xFFFFFFFF, p.t_dev & 0xFFFFFFFF, p.battery_mv,
                             p.battery_pct, p.state, p.lead_off, p.temp_c, p.unconfirmed, p.errors, p.uptime_s)
+    if isinstance(p, ContactPacket):
+        return _CONTACT.pack(TYPE_CONTACT, p.flags, p.seq & 0xFFFFFFFF, p.t_dev & 0xFFFFFFFF, *p.impedance_kohm)
     raise TypeError(type(p))
 
 
@@ -136,4 +152,7 @@ def decode(b: bytes):
     if t == TYPE_STATUS:
         _, fl, seq, td, mv, pct, st, lo, tc, un, err, up = _STATUS.unpack(b[:STATUS_SIZE])
         return StatusPacket(seq, td, mv, pct, st, lo, tc, un, err, up, fl)
+    if t == TYPE_CONTACT:
+        _, fl, seq, td, *z = _CONTACT.unpack(b[:CONTACT_SIZE])
+        return ContactPacket(seq, td, tuple(z), fl)
     raise ValueError(f"unknown packet type {t:#x}")

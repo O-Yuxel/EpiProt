@@ -41,6 +41,7 @@ rejected when they would not change the result.
 | D12 | **No processing on the headband** | The phone already runs the model and has the watch data; the headband stays simple, which means fewer things that can go wrong. |
 | D13 | **ICM-42688-P motion sensor with its clock locked to the radio crystal, instead of BMI270** (found with the simulator) | A motion sensor with its own internal clock (BMI270, and the ICM-42688-P's own clock is only ±1 % accurate) does not sample exactly 25 times per second, so the phone has to shift samples onto the model's 25 Hz grid. In the simulator with real seizure recordings this distorted exactly the movement features that carry the convulsion signature (3–12 Hz shaking): typical error 0.57 (log scale) in the 8–12 Hz band. The ICM-42688-P accepts an external clock (CLKIN); the nRF52840 feeds it 32.000 kHz made from its own crystal, so the sensor samples at exactly 25 Hz and no shifting is needed. Typical error drops to 0.03–0.04, about 15 times smaller (2 patients, 15 min each). Cost: ~+$2, ~+0.7 mA. |
 | D14 | **Movement converted to the SeizeIT2 "group B" scale on the phone** (found in the training data) | SeizeIT2 recorded movement with two device settings, a factor 3 apart (1 g = 0.5 or 0.167 units; gyroscope ~365 or ~1016 °/s per unit), measured from the data itself. 43 of the 55 tonic-clonic seizures the model learned from are in group B, so the headband's g and °/s are converted to that scale. Tool: `python -m epiprot.headband.calibration`. |
+| D15 | **Contact check every 10 minutes**, so the phone knows when a pad must be replaced (found with the simulator) | A semi-dry pad dries out slowly. While it dries the signal gets noisier, but it still looks like EEG, so neither the phone's signal check nor the lead-off detection notices until contact is completely lost. Until then noisy data go to the model unnoticed (risk of false alarms and of missed seizures). Every 10 minutes the EEG chip passes a tiny current (6 nA) through each electrode for 2 s and measures its contact impedance; those 2 s of EEG are flagged and not used by the model (0.3 % of the data). Above 150 kOhm the phone asks the patient to replace that pad. In the simulator a pad drying over 40 minutes was reported 36 minutes before contact was lost. Uses a built-in function of the ADS1299; no extra parts. |
 
 ## Electrodes and channels
 
@@ -65,8 +66,9 @@ Using channels 3 and 4 as replacements needs a small change in the phone app; it
 the phone integration step.
 
 **Pads:** semi-dry hydrogel pads click onto the band's snap studs and are pressed onto the skin by
-the band. The patient replaces them every few days. When a pad dries out, the EEG chip's lead-off
-detection and the phone's signal check notice it and the phone asks the patient to replace the pad.
+the band. The patient replaces them every few days. A contact check every 10 minutes (D15) measures
+each pad's contact impedance; above 150 kOhm the phone asks the patient to replace that pad, before
+the signal is lost.
 
 ## EEG front-end: TI ADS1299-4
 

@@ -1,6 +1,6 @@
 # EpiProt headband: Bluetooth LE protocol
 
-**Status:** specification, version 1. Hardware: see [HARDWARE.md](HARDWARE.md).
+**Status:** specification, version 1.1 (1.1 adds the contact check). Hardware: see [HARDWARE.md](HARDWARE.md).
 
 ## Summary
 
@@ -46,8 +46,8 @@ All numbers are little-endian. Every packet starts with the same 6-byte header:
 
 | Offset | Size | Field |
 |---|---|---|
-| 0 | 1 | `type`: 0x01 EEG, 0x02 movement, 0x03 status |
-| 1 | 1 | `flags`: bit 0 = catch-up (stored) data, bits 1–7 reserved (0) |
+| 0 | 1 | `type`: 0x01 EEG, 0x02 movement, 0x03 status, 0x04 contact check |
+| 1 | 1 | `flags`: bit 0 = catch-up (stored) data, bit 1 = EEG measured during a contact check (not for the model), bits 2–7 reserved (0) |
 | 2 | 4 | `seq`: packet number, +1 for every packet of any type, never reused within a session |
 
 ### EEG packet (type 0x01), 208 bytes, 16 per second
@@ -95,6 +95,19 @@ the right ear, y to the front, z up, when the band is worn.
 | 20 | 2 | Error bits: 0 EEG saturation in the last second, 1 motion-sensor FIFO overflow, 2 flash full (oldest data overwritten), 3 restarted after watchdog, 4 restarted after low voltage, 5 EEG chip not responding, 6 motion sensor not responding |
 | 22 | 4 | Uptime, seconds |
 
+### Contact check packet (type 0x04), 20 bytes, every 10 minutes
+
+Every 10 minutes the EEG chip sends a tiny 64 Hz current (6 nA) through each electrode for 2 s and
+measures the contact impedance (HARDWARE.md, D15). The EEG packets of those 2 s carry flag bit 1 and
+the phone leaves them out of detection. The result follows in one packet:
+
+| Offset | Size | Field |
+|---|---|---|
+| 6 | 4 | `t_dev` at the end of the check |
+| 10 | 10 | Contact impedance in kOhm, u16 each: L-top, L-bottom, R-top, R-bottom, bias. 0xFFFF = no contact |
+
+The phone asks the patient to replace a pad when its impedance is above 150 kOhm or it has no contact.
+
 ## Commands on the Control characteristic
 
 | Byte 0 | Command | Payload | Effect |
@@ -105,6 +118,7 @@ the right ear, y to the front, z up, when the band is worn.
 | 0x04 | RESEND | `from_seq` u32, `to_seq` u32 | Send these packets again (after a gap the phone noticed) |
 | 0x05 | IDENTIFY | none | Blink the LED for 5 s, so the patient can tell which band is connected |
 | 0x06 | STATUS | none | Send a status packet now |
+| 0x07 | CONTACT_CHECK | none | Run a contact check now (e.g. right after the patient replaced pads) |
 
 The phone sends ACK every 5 seconds.
 
@@ -112,7 +126,7 @@ The phone sends ACK every 5 seconds.
 
 | Field | Size | Value in version 1 |
 |---|---|---|
-| Protocol version, major / minor | 1 + 1 | 1 / 0 |
+| Protocol version, major / minor | 1 + 1 | 1 / 1 |
 | Firmware version | 3 | major, minor, patch |
 | Serial number | 8 | |
 | EEG sample rate, Hz | 2 | 256 |

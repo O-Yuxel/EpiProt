@@ -54,6 +54,46 @@ python -m epiprot.headband.imu_clock_study --raw-dir /raw sub-115 sub-058
 python -m epiprot.headband.calibration --raw-dir /raw        # SeizeIT2 movement scale groups (D14)
 ```
 
+### Fault scenarios
+
+`python -m epiprot.headband.fault_study --raw-dir /raw --sub sub-115 --out epiprot_results/headband/faults`
+runs one hour of a real recording with one fault each and replays the phone: a 5 s window is judged only with
+the packets that arrived in time, and the phone's sensor-health rules (`epiprot.app.health`) decide the warnings.
+
+| Fault | Phone warning (today) | With contact bits (planned) | Data |
+|---|---|---|---|
+| Phone out of range 10 min | headband missing, after 90 s | same | nothing lost: 13 240 stored packets sent after reconnecting |
+| Phone out of range 45 min | headband missing, after 90 s | same | oldest ~7 min lost (store holds ~38 min), reported by the headband |
+| Pad dries out over 40 min | brain signal weak, once contact is lost | same | **"replace pad" from the contact check (D15) 36 min earlier** |
+| Pad falls off (L-top) | brain signal weak, after 95 s | same | backup channels 3 and 4 stay fully usable |
+| Loose cable | **none** | brain signal weak, after 95 s | bad samples are marked and left out |
+| Bias electrode off | **none** | brain signal weak, after 90 s | mains hum raises 30–60 Hz power ~3000 times |
+| Charging | headband missing, after 90 s | same | headband reports "charging" |
+| Motion sensor fails | head movement missing, after 90 s | same | headband reports the sensor error |
+| Battery runs out | headband missing, after 90 s | same | low battery reported first |
+
+**Decided with the user for the phone integration step:**
+- **Every headband warning is shown on the watch**: replace pad, electrode contact lost, brain signal weak,
+  headband missing, battery low, charging, motion sensor error.
+- **The phone shows the headband's live state** (like the heart-rate status for the watch): connection, battery,
+  contact of each pad, brain signal and head movement arriving or not, last contact check.
+- **Night mode on the watch** (time range set once on the phone, e.g. 23:00–07:00; can also be switched on the watch):
+  - the seizure alarm always vibrates (the patient must be able to cancel a false alarm, "Are you OK?" checks must work);
+  - warnings that mean detection is not working still vibrate: headband missing, brain signal lost,
+    battery about to run out (< 30 min);
+  - non-urgent warnings are shown without vibration: replace pad, battery low, charging;
+  - when night mode ends the watch vibrates once softly and shows a summary of the silent warnings.
+
+**For the phone integration step** (found here):
+1. Use the contact (lead-off) bits for the brain-signal check; without them a loose cable or a lost bias electrode
+   goes unnoticed while the data are bad.
+2. Switch the model to backup channels 3 + 4 when channel 1 or 2 loses contact.
+3. Show "headband charging" instead of "headband missing" when the status says so.
+4. Ignore packets received twice (same sequence number); send catch-up packets to the diary, not to detection.
+5. Movement: convert to the SeizeIT2 group-B scale (D14) and place samples in their 25 Hz slots (D13).
+6. Show "replace the pad behind the left ear (lower)" when a contact check reports a pad above 150 kOhm (D15),
+   and leave EEG flagged as "contact check" out of detection.
+
 ## Why the model is not on the headband (yet)
 
 The model needs data from both the headband and the watch, the raw data for the event log go to the phone
