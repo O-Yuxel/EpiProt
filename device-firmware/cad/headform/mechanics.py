@@ -24,7 +24,7 @@ import os
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SIZES = ["small", "medium", "large", "longnarrow", "shortwide"]
+SIZES = ["child", "small", "medium", "large", "longnarrow", "shortwide"]   # child = small scaled to 505 mm (approximation)
 G = 9.81
 
 # materials (typical datasheet values; nitinol: superelastic Ti-50.8Ni, austenite at skin temperature)
@@ -208,7 +208,7 @@ def main():
 
     print("band free length per side %.0f mm" % res["band_free_length_mm_per_side"])
     for o in opts:
-        print("%-13s d=%.1f  k=%.3f N/mm  preload %5.1f mm  force S/M/L/LN/SW %s  donning %4.0f MPa (%.2f%%) %s" % (
+        print(("%-13s d=%.1f  k=%.3f N/mm  preload %5.1f mm  force " + "/".join(SIZES) + " %s  donning %4.0f MPa (%.2f%%) %s") % (
             o["material"], o["wire_mm"], o["k_N_per_mm"], o["preload_mm_per_side"],
             "/".join("%.2f" % v for v in o["force_N"].values()), o["donning_stress_MPa"], o["donning_strain_pct"],
             "ok" if o["stress_ok"] else "TOO HIGH"))

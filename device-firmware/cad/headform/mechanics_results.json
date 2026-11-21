@@ -7,6 +7,7 @@
    "k_N_per_mm": 0.0171,
    "preload_mm_per_side": 87.7,
    "force_N": {
+    "child": 1.46,
     "small": 1.51,
     "medium": 1.5,
     "large": 1.67,
@@ -24,6 +25,7 @@
    "k_N_per_mm": 0.0355,
    "preload_mm_per_side": 42.3,
    "force_N": {
+    "child": 1.41,
     "small": 1.51,
     "medium": 1.5,
     "large": 1.86,
@@ -41,6 +43,7 @@
    "k_N_per_mm": 0.0489,
    "preload_mm_per_side": 30.7,
    "force_N": {
+    "child": 1.38,
     "small": 1.52,
     "medium": 1.5,
     "large": 2.0,
@@ -58,6 +61,7 @@
    "k_N_per_mm": 0.0657,
    "preload_mm_per_side": 22.8,
    "force_N": {
+    "child": 1.34,
     "small": 1.52,
     "medium": 1.5,
     "large": 2.17,
@@ -75,6 +79,7 @@
    "k_N_per_mm": 0.0866,
    "preload_mm_per_side": 17.3,
    "force_N": {
+    "child": 1.29,
     "small": 1.53,
     "medium": 1.5,
     "large": 2.38,
@@ -92,6 +97,7 @@
    "k_N_per_mm": 0.1121,
    "preload_mm_per_side": 13.4,
    "force_N": {
+    "child": 1.23,
     "small": 1.54,
     "medium": 1.5,
     "large": 2.64,
@@ -109,6 +115,7 @@
    "k_N_per_mm": 0.1796,
    "preload_mm_per_side": 8.4,
    "force_N": {
+    "child": 1.07,
     "small": 1.57,
     "medium": 1.5,
     "large": 3.33,
@@ -126,6 +133,7 @@
    "k_N_per_mm": 0.2737,
    "preload_mm_per_side": 5.5,
    "force_N": {
+    "child": 0.84,
     "small": 1.6,
     "medium": 1.5,
     "large": 4.29,
@@ -143,6 +151,7 @@
    "k_N_per_mm": 0.0299,
    "preload_mm_per_side": 50.1,
    "force_N": {
+    "child": 1.43,
     "small": 1.51,
     "medium": 1.5,
     "large": 1.81,
@@ -160,6 +169,7 @@
    "k_N_per_mm": 0.0621,
    "preload_mm_per_side": 24.2,
    "force_N": {
+    "child": 1.35,
     "small": 1.52,
     "medium": 1.5,
     "large": 2.13,
@@ -177,6 +187,7 @@
    "k_N_per_mm": 0.0855,
    "preload_mm_per_side": 17.5,
    "force_N": {
+    "child": 1.29,
     "small": 1.53,
     "medium": 1.5,
     "large": 2.37,
@@ -194,6 +205,7 @@
    "k_N_per_mm": 0.115,
    "preload_mm_per_side": 13.0,
    "force_N": {
+    "child": 1.22,
     "small": 1.54,
     "medium": 1.5,
     "large": 2.67,
@@ -211,6 +223,7 @@
    "k_N_per_mm": 0.1515,
    "preload_mm_per_side": 9.9,
    "force_N": {
+    "child": 1.14,
     "small": 1.56,
     "medium": 1.5,
     "large": 3.05,
@@ -228,6 +241,7 @@
    "k_N_per_mm": 0.1962,
    "preload_mm_per_side": 7.6,
    "force_N": {
+    "child": 1.03,
     "small": 1.57,
     "medium": 1.5,
     "large": 3.5,
@@ -245,6 +259,7 @@
    "k_N_per_mm": 0.3143,
    "preload_mm_per_side": 4.8,
    "force_N": {
+    "child": 0.75,
     "small": 1.62,
     "medium": 1.5,
     "large": 4.71,
@@ -262,6 +277,7 @@
    "k_N_per_mm": 0.479,
    "preload_mm_per_side": 3.1,
    "force_N": {
+    "child": 0.35,
     "small": 1.68,
     "medium": 1.5,
     "large": 6.39,
@@ -279,6 +295,7 @@
    "k_N_per_mm": 0.0572,
    "preload_mm_per_side": 26.2,
    "force_N": {
+    "child": 1.36,
     "small": 1.52,
     "medium": 1.5,
     "large": 2.08,
@@ -296,6 +313,7 @@
    "k_N_per_mm": 0.1186,
    "preload_mm_per_side": 12.7,
    "force_N": {
+    "child": 1.22,
     "small": 1.54,
     "medium": 1.5,
     "large": 2.71,
@@ -313,6 +331,7 @@
    "k_N_per_mm": 0.1633,
    "preload_mm_per_side": 9.2,
    "force_N": {
+    "child": 1.11,
     "small": 1.56,
     "medium": 1.5,
     "large": 3.17,
@@ -330,6 +349,7 @@
    "k_N_per_mm": 0.2197,
    "preload_mm_per_side": 6.8,
    "force_N": {
+    "child": 0.97,
     "small": 1.58,
     "medium": 1.5,
     "large": 3.74,
@@ -347,6 +367,7 @@
    "k_N_per_mm": 0.2895,
    "preload_mm_per_side": 5.2,
    "force_N": {
+    "child": 0.81,
     "small": 1.61,
     "medium": 1.5,
     "large": 4.45,
@@ -364,6 +385,7 @@
    "k_N_per_mm": 0.3748,
    "preload_mm_per_side": 4.0,
    "force_N": {
+    "child": 0.6,
     "small": 1.64,
     "medium": 1.5,
     "large": 5.32,
@@ -381,6 +403,7 @@
    "k_N_per_mm": 0.6003,
    "preload_mm_per_side": 2.5,
    "force_N": {
+    "child": 0.06,
     "small": 1.73,
     "medium": 1.5,
     "large": 7.62,
@@ -398,6 +421,7 @@
    "k_N_per_mm": 0.9149,
    "preload_mm_per_side": 1.6,
    "force_N": {
+    "child": -0.7,
     "small": 1.84,
     "medium": 1.5,
     "large": 10.83,
@@ -416,6 +440,7 @@
   "k_N_per_mm": 0.0855,
   "preload_mm_per_side": 17.5,
   "force_N": {
+   "child": 1.29,
    "small": 1.53,
    "medium": 1.5,
    "large": 2.37,
@@ -428,6 +453,7 @@
   "stress_ok": true
  },
  "pad_pressure_mmHg": {
+  "child": 19.0,
   "small": 22.6,
   "medium": 22.1,
   "large": 34.9,
@@ -436,6 +462,23 @@
  },
  "pad_pressure_note": "left side (2 pads, the higher one); right side has 3 pads: x0.77",
  "fit_one_size": {
+  "child": {
+   "circumference_mm": 505.0,
+   "R": {
+    "pad_off_mastoid_mm": [
+     11.5,
+     11.3
+    ],
+    "min_body_skin_gap_mm": 0.7
+   },
+   "L": {
+    "pad_off_mastoid_mm": [
+     11.4,
+     10.4
+    ],
+    "min_body_skin_gap_mm": -2.6
+   }
+  },
   "small": {
    "circumference_mm": 527.0,
    "R": {
@@ -523,6 +566,20 @@
   }
  },
  "sizing_per_head": {
+  "child": {
+   "size_band_length_mm": 114.0,
+   "size_pad_spread_mm": 127.5,
+   "size_ear_top_to_upper_pad_mm": [
+    -18.5,
+    -7.2
+   ],
+   "size_pod_to_upper_pad_mm": 75.0,
+   "min_skin_gap_mm_side_R": 0.9,
+   "min_skin_gap_mm_band": 2.8,
+   "battery_inside_body_pct": 100.0,
+   "pillow_back_mm_side_R": 0.0,
+   "pillow_side_mm_side_R": 16.5
+  },
   "small": {
    "size_band_length_mm": 118.0,
    "size_pad_spread_mm": 132.7,

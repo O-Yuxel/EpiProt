@@ -12,6 +12,8 @@ Writes, next to this script:
 
 Usage: python device-firmware/cad/headform/prepare_headform.py <path to "<size> with base.stl"> <size>
   sizes used: small, medium, large, longnarrow, shortwide (NIH 3D entry 3DPX-015142, same licence)
+  child: the small headform scaled to a 505 mm head circumference (about 6-8 years), an approximation:
+         python prepare_headform.py "small with base.stl" child 0.958
 """
 import json
 import os
@@ -41,12 +43,15 @@ def write_stl(path, tris):
         f.write(rec.tobytes())
 
 
-def main(src, size="medium"):
+def main(src, size="medium", scale=1.0):
     t = read_stl(src)
     if np.ptp(t[..., 1]) < 50:                             # the medium file is in inches, the others in mm
         t = t * 25.4
     # NIOSH file: y = up, z = forward (nose at +z), x = lateral. Patient's right = forward x up = -x.
     t = np.stack([-t[..., 0], t[..., 2], t[..., 1]], axis=-1)
+    # child size: a uniformly scaled adult head (approximation: real children have a larger cranium for their
+    # face and a shorter neck); NIOSH has no child headforms
+    t = t * scale
     v = np.unique(t.reshape(-1, 3), axis=0)
     xc = (v[:, 0].min() + v[:, 0].max()) / 2              # the headform is symmetric: centre it sideways
     t[..., 0] -= xc
@@ -131,4 +136,4 @@ def main(src, size="medium"):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else "medium")
+    main(sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else "medium", float(sys.argv[3]) if len(sys.argv) > 3 else 1.0)

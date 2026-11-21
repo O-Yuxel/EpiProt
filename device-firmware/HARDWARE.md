@@ -16,7 +16,7 @@ been measured on a real device. Sources are marked: **[DS]** datasheet, **[EST]*
 | Radio / processor | Raytac MDBT50Q module (Nordic nRF52840), Bluetooth LE 5, pre-certified |
 | Backup memory | 8 MB flash, about 40 minutes when the phone is out of reach |
 | Battery | 700 mAh rechargeable LiPo (603040: 6 x 30 x 40 mm), about 2 days, magnetic charging |
-| Wearing | Two one-piece side bodies (ear hook + electrode module + pod) joined by a beta-titanium spring band at the nape; 58 g; sizes M and L (D16) |
+| Wearing | Two one-piece side bodies (ear hook + electrode module + pod) joined by a beta-titanium spring band at the nape; 58 g; sizes S (children from about 6 years), M and L (D16, D21) |
 | Data rate | About 3.7 KB/s ([PROTOCOL.md](PROTOCOL.md)) |
 | Parts cost | About $60–77 per headband [EST] |
 
@@ -48,6 +48,7 @@ rejected when they would not change the result.
 | D17 | **Beta-titanium spring wire 1.3 mm** (nickel-free), not nitinol or steel (found with `cad/headform/mechanics.py`) | The pads sit ~57 mm above the band, so the band carries a large bending moment. For 1.5 N per side, every nitinol wire went past its linear limit (450 MPa) while the band is opened to put it on, and every steel wire past its yield (1100 MPa); then the force on the head becomes unpredictable or the band bends for good. Beta-titanium 1.3 mm stays at 815 MPa (allowable 900). It is also nickel-free (nickel allergy is common) and proven in orthodontic wires and eyewear frames. The ear hooks get a separate, thinner 1.0 mm wire so they let go at ~5 N each. |
 | D18 | **Pod positions calculated against the pillow** (`cad/headform/pod_placement_study.py`) | Positions tested on the real head with a pillow 20 mm deep: pods at 76° from the back centre, 64 mm below the ear centre touch the pillow by 0 mm lying on the back and lying on the side. |
 | D19 | **Battery size corrected to 603040 + 0.6 mm swelling room** | The first model used a 603450 cell, which is ~1000 mAh; 700 mAh is the 603040. LiPo cells swell up to ~10 % of their thickness over their life, so the carrier leaves 0.6 mm above the cell. |
+| D21 | **Child size S** (decided with the user) | The phone app supports patients under 13, so the headband must fit children too. NIOSH has no child heads, so the small adult head was scaled to a 505 mm circumference (about 6–8 years; an approximation: children have a larger skull for their face and a shorter neck). On it the M size does not fit (pads 11 mm off the mastoid, the left body 2.6 mm into the skin); the model rebuilt for this head fits: everything inside, 0.9 mm closest gap, no pillow contact for the pods, nape band 114 mm (M: 118–123). Same parts and battery; clamping force set to 1.2 N for children (18 mmHg). The 58 g is the same as for adults: a lighter version with a smaller battery is a possible later step. Not for children under 6. |
 | D20 | **Switched off only in the phone app, never by the button** (decided with the user) | The worst failure is a band that switches off while the patient sleeps: a pillow or a convulsion can press a button. So the band switches on by itself off the charger and connects by itself; it is switched off only in the app (with a confirmation) or by the charger. The single, recessed button is only for pairing. The watch says at once when detection is off because of this. Details: PROTOCOL.md "Switching on and off". |
 
 ## Electrodes and channels
@@ -187,7 +188,11 @@ snapped together, then overmoulded) holds the cell or the board. The flex cable 
 | Pillow, lying on the back | pods 0 mm, nape band 1.7 mm |
 | Pillow, lying on the side | pods 0 mm; module and hook behind and over the ear ~14 mm (like a glasses temple) |
 | Clamping force on 5 heads with one size | 1.32–1.59 N; large head 2.37 N, so it needs size L |
-| Sizes | **M** fits small, medium, long-narrow (band 118–123 mm); **L** fits large and short-wide (band 137–189 mm, pads ~10 mm lower and further back). The model rebuilds itself for any head (`EPIPROT_HEAD=...`) |
+| Sizes | **S** fits the child head (505 mm, band 114 mm); **M** fits small, medium, long-narrow (band 118–123 mm); **L** fits large and short-wide (band 137–189 mm, pads ~10 mm lower and further back). The model rebuilds itself for any head (`EPIPROT_HEAD=...`) |
+
+**Choosing the size** (user manual): measure the head circumference just above the eyebrows and the ears:
+under 52 cm → S, 52–56 cm → M, over 56 cm → L. Then check on the head: with the hooks resting on the ears, the pads
+must sit on the bone just behind the ear, not on the ear and not on the neck; if not, try the other size.
 
 **Staying on.** It can only come off if hooks or band are forced over the ear or the back of the head:
 down = carried by both hooks; forward = band behind the neck; backward/up = both hooks must lift (10.8 N);

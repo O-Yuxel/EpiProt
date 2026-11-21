@@ -37,7 +37,8 @@ tough resin; flex-cable slot at the top).
 ## The heads
 
 `headform/headform_<size>_mm.stl`: NIOSH anthropometric digital headforms small, medium, large, long-narrow,
-short-wide (NIOSH National Personal Protective Technology Laboratory, NPPTL), from the NIH 3D Print Exchange
+short-wide, plus `child` = the small one scaled to a 505 mm head circumference (about 6–8 years; an approximation,
+NIOSH has no child heads) (NIOSH National Personal Protective Technology Laboratory, NPPTL), from the NIH 3D Print Exchange
 entry 3DPX-015142 "NIOSH Anthropometric Digital Headforms with Base" by tprestero, licensed CC-BY.
 `headform/prepare_headform.py` converted them to mm and our axes (x = right, y = forward, z = up, 0 = between
 the auricle centres) and measured the landmarks in `landmarks_<size>.json`. The small headform's ears are
