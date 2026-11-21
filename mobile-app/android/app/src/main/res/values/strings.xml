@@ -397,4 +397,50 @@
     <string name="keep_card_title">Battery saving may stop EpiProt</string>
     <string name="keep_card_text">Allow EpiProt to run in the background so alarms are not missed.</string>
     <string name="keep_open">Fix it</string>
+
+    <!-- headband status (part 3) -->
+    <string name="hb_charging">Charging</string>
+    <string name="hb_never">No headband data yet. When the headband is on and paired it appears here.</string>
+    <string name="hb_battery_label">Battery</string>
+    <string name="hb_last_data">Last data</string>
+    <string name="hb_is_virtual">Virtual headband (demo)</string>
+    <string name="hb_pads">Pads</string>
+    <string name="hb_back_view">Seen from behind</string>
+    <string name="pad_l_top">Behind the left ear, upper</string>
+    <string name="pad_l_bottom">Behind the left ear, lower</string>
+    <string name="pad_r_top">Behind the right ear, upper</string>
+    <string name="pad_r_bottom">Behind the right ear, lower</string>
+    <string name="pad_bias">Back of the neck (bias)</string>
+    <string name="pad_state_ok">Good contact (%1$d kΩ)</string>
+    <string name="pad_state_drying">Drying – replace (%1$d kΩ)</string>
+    <string name="pad_state_none">No contact</string>
+    <string name="pad_state_unknown">Not measured yet</string>
+    <string name="hb_last_check">Last contact check: %1$s (every 10 min)</string>
+    <string name="hb_signals">Signals</string>
+    <string name="hb_brain">Brain signal</string>
+    <string name="hb_head_mov">Head movement</string>
+    <string name="sig_ok">arriving</string>
+    <string name="sig_poor">poor</string>
+    <string name="sig_missing">missing</string>
+    <string name="hb_channels">EEG channels used</string>
+    <string name="hb_channels_standard">Standard (1 + 2)</string>
+    <string name="hb_channels_backup">Backup (%1$d + %2$d)</string>
+    <string name="hb_virtual_title">Virtual headband</string>
+    <string name="hb_virtual_text">No physical headband exists yet. This plays a real tonic-clonic seizure (SeizeIT2) as the Bluetooth packets of the designed headband, through the same steps as a real one. During the demo one pad dries out and contact checks run every 2 minutes.</string>
+    <string name="hb_virtual_start">Play through the virtual headband</string>
+    <string name="hb_tap_details">Tap for details</string>
+    <string name="hb_pads_ok">All pads touch</string>
+    <string name="hb_pad_problems">%1$d pad(s) need attention</string>
+    <string name="hb_menu_sub">Connection, battery, pads, signals</string>
+    <!-- night mode -->
+    <string name="night_title">Night mode on the watch</string>
+    <string name="night_off">Off</string>
+    <string name="night_text">At night the watch shows non-urgent warnings without vibrating, so the patient can sleep.</string>
+    <string name="night_from">From</string>
+    <string name="night_to">To</string>
+    <string name="night_rules_title">What still vibrates</string>
+    <string name="night_rule_alarm">The seizure alarm and the "Are you OK?" checks: always.</string>
+    <string name="night_rule_urgent">Warnings that mean detection is not working: headband not sending, brain signal lost, battery almost empty.</string>
+    <string name="night_rule_quiet">Quiet: replace a pad, battery low, charging. They are listed on the watch.</string>
+    <string name="night_rule_summary">When night mode ends the watch vibrates once and shows a summary.</string>
 </resources>

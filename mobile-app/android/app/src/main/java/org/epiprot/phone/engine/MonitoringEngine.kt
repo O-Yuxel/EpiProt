@@ -34,6 +34,7 @@ data class EngineStatus(
     val openWarnings: List<HealthMonitor.Episode> = emptyList(),
     val demo: Boolean = false,
     val headband: HeadbandState? = null,
+    val channels: org.epiprot.phone.headband.Channels.Choice? = null,   // EEG channels of the last headband window
 )
 
 /**
@@ -84,7 +85,8 @@ class MonitoringEngine(
         }
         dispatch(flow.tick(endMs))
         status = status.copy(windows = r.index + 1, lastScore = r.score, fallback = r.fallback, noHeartRate = r.noHeartRate, quality = q,
-            heartRate = f["ecg_hr"] ?: Double.NaN, flowState = flow.state, openWarnings = openWarnings())
+            heartRate = f["ecg_hr"] ?: Double.NaN, flowState = flow.state, openWarnings = openWarnings(),
+            channels = w.channels ?: status.channels)
         return r
     }
 

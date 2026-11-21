@@ -36,6 +36,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -309,6 +310,8 @@ private fun App(m: PhoneMonitor, activity: MainActivity) {
                             route == "limits" -> LimitsPage(m)
                             route == "history" -> HistoryPage(m)
                             route == "child" -> ChildInfoPage(m)
+                            route == "headband" -> HeadbandPage(m)
+                            route == "night" -> NightPage(m)
                         }
                     }
                 }
@@ -452,10 +455,24 @@ private fun Home(m: PhoneMonitor, activity: MainActivity, openSettings: (String?
             status = if (watchOk) stringResource(R.string.connected) else stringResource(R.string.not_connected),
             extra = watch.batteryPct?.takeIf { watchOk }?.let { stringResource(R.string.battery, it) },
         )
+        val hb = st.headband
+        val hbOk = headbandConnected(hb, now)
+        val padProblems = org.epiprot.phone.headband.PadStatus.of(hb).count {
+            it.contact == org.epiprot.phone.headband.PadStatus.Contact.DRYING || it.contact == org.epiprot.phone.headband.PadStatus.Contact.NONE
+        }
         DeviceCard(
-            Modifier.weight(1f), Icons.Rounded.Face, stringResource(R.string.headband), false,
-            big = null, unit = "", status = stringResource(R.string.coming_soon),
-            extra = stringResource(R.string.headband_proto),
+            Modifier.weight(1f).clickable { openSettings("headband") }, Icons.Rounded.Face, stringResource(R.string.headband), hbOk,
+            big = hb?.batteryPct?.takeIf { hbOk && it >= 0 }?.toString(), unit = "%",
+            status = when {
+                hb?.chargerAttached == true -> stringResource(R.string.hb_charging)
+                hbOk -> stringResource(R.string.connected)
+                else -> stringResource(R.string.not_connected)
+            },
+            extra = when {
+                !hbOk -> stringResource(R.string.hb_tap_details)
+                padProblems > 0 -> stringResource(R.string.hb_pad_problems, padProblems)
+                else -> stringResource(R.string.hb_pads_ok)
+            },
         )
     }
 
@@ -586,7 +603,10 @@ private fun DemoCard(m: PhoneMonitor, demo: org.epiprot.phone.DemoProgress?) {
     EpiCard(container = C.TealSoft) {
         CardHeader(Icons.Rounded.PlayArrow, stringResource(R.string.demo_title), bubble = Color.White)
         Text(stringResource(R.string.demo_text), color = C.InkSoft, style = MaterialTheme.typography.bodyMedium)
-        if (demo == null) PrimaryButton(stringResource(R.string.demo_start), Icons.Rounded.PlayArrow) { m.startDemo() }
+        if (demo == null) {
+            PrimaryButton(stringResource(R.string.demo_start), Icons.Rounded.PlayArrow) { m.startDemo() }
+            SoftButton(stringResource(R.string.hb_virtual_start)) { m.startHeadbandDemo() }
+        }
         else {
             fun mmss(s: Double) = "%d:%02d".format((s / 60).toInt(), (s % 60).toInt())
             val frac = demo.window.toFloat() / demo.windows.coerceAtLeast(1)
@@ -657,15 +677,15 @@ private fun AlarmCard(m: PhoneMonitor, s: AlarmFlow.State, now: Long, demo: Bool
                 if (s !is AlarmFlow.State.Alarm) {
                     Text(stringResource(R.string.caregiver_here), color = Color.White.copy(alpha = 0.85f))
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Button(onClick = { m.resolveByCaregiver(true) }, modifier = Modifier.weight(1f).height(50.dp),
+                        Button(onClick = { m.resolveByCaregiver(true) }, modifier = Modifier.weight(1f).heightIn(min = 50.dp),
                             shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = C.CoralDark)) {
-                            Text(stringResource(R.string.was_seizure), fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.was_seizure), fontWeight = FontWeight.SemiBold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                         }
-                        Button(onClick = { m.resolveByCaregiver(false) }, modifier = Modifier.weight(1f).height(50.dp),
+                        Button(onClick = { m.resolveByCaregiver(false) }, modifier = Modifier.weight(1f).heightIn(min = 50.dp),
                             shape = RoundedCornerShape(16.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.2f), contentColor = Color.White)) {
-                            Text(stringResource(R.string.no_seizure), fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.no_seizure), fontWeight = FontWeight.SemiBold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                         }
                     }
                 }
@@ -809,6 +829,8 @@ private fun subTitle(route: String): String = when {
     route == "limits" -> stringResource(R.string.privacy_limits)
     route == "history" -> stringResource(R.string.privacy_history)
     route == "child" -> stringResource(R.string.privacy_child_page)
+    route == "headband" -> stringResource(R.string.headband)
+    route == "night" -> stringResource(R.string.night_title)
     else -> stringResource(R.string.privacy_consents)
 }
 
@@ -844,6 +866,12 @@ private fun SettingsMenu(m: PhoneMonitor, activity: MainActivity, open: (String)
         })) { open("messages") }
         HorizontalDivider(color = C.Line)
         MenuRow(Icons.Rounded.Email, stringResource(R.string.section_doctor), s.doctorEmail.ifBlank { stringResource(R.string.set_not_set) }) { open("doctor") }
+    }
+    MenuCard {
+        MenuRow(Icons.Rounded.Face, stringResource(R.string.headband), stringResource(R.string.hb_menu_sub)) { open("headband") }
+        HorizontalDivider(color = C.Line)
+        MenuRow(Icons.Rounded.Notifications, stringResource(R.string.night_title),
+            if (s.nightEnabled) "${hhmm(s.nightStartMin)} – ${hhmm(s.nightEndMin)}" else stringResource(R.string.night_off)) { open("night") }
     }
     MenuCard {
         val on = org.epiprot.phone.privacy.Consent.entries.count { c.has(it) }

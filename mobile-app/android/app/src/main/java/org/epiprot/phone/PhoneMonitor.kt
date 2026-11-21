@@ -41,7 +41,8 @@ class EpiProtPhoneApp : Application() {
     }
 }
 
-data class DemoProgress(val window: Int, val windows: Int, val onsetS: Double, val score: Double, val finished: Boolean)
+data class DemoProgress(val window: Int, val windows: Int, val onsetS: Double, val score: Double, val finished: Boolean,
+                        val headband: Boolean = false)
 
 data class WatchState(val lastDataMs: Long = 0, val heartRate: Float = Float.NaN, val batteryPct: Int? = null)
 
@@ -321,6 +322,59 @@ class PhoneMonitor(private val app: Context) {
             }
             endDemo()
         }
+    }
+
+    /**
+     * Virtual headband: a real seizure (SeizeIT2 sub-058) as Bluetooth packets of the designed headband
+     * (assets/demo/headband_demo.ehb, tools/make_headband_demo.py), through the same receiver, window
+     * assembler, model and alarm flow as a real headband. Fast until the alarm, then real time.
+     */
+    fun startHeadbandDemo() {
+        if (demoJob?.isActive == true) return
+        sendSettingsToWatch()
+        demoJob = scope.launch(engineThread) {
+            val stream = org.epiprot.phone.headband.HeadbandStream.parse(app.assets.open("demo/headband_demo.ehb").readBytes())
+            val onset = stream.meta.optDouble("onset_s", 600.0)
+            val total = (stream.meta.optDouble("dur_s", 900.0) / 5).toInt()
+            engine.reset(demo = true)
+            var realTime = false
+            var i = 0
+            var checkStream = 0L        // contact-check time in the stream's own clock ...
+            var checkWall = 0L          // ... and when it was replayed
+            for (step in org.epiprot.phone.headband.HeadbandReplay(stream).steps()) {
+                val now = System.currentTimeMillis()
+                when (step) {
+                    is org.epiprot.phone.headband.HeadbandReplay.Step.State -> {
+                        val s = step.state
+                        if (s.lastContactCheckMs != checkStream) { checkStream = s.lastContactCheckMs; checkWall = now }
+                        engine.onHeadbandState(s.copy(lastPacketMs = now, lastContactCheckMs = checkWall), now); publish()
+                    }
+                    is org.epiprot.phone.headband.HeadbandReplay.Step.Window -> {
+                        i++
+                        recorder.add(step.input, now)
+                        val r = engine.onWindow(step.input, now)
+                        if (r.alarm) realTime = true
+                        _demo.value = DemoProgress(i, total, onset, r.score, false, headband = true)
+                        publish()
+                        if (realTime) repeat(5) { delay(1_000); engine.tick(System.currentTimeMillis()); publish() }
+                        else delay(400)
+                    }
+                }
+            }
+            _demo.value = _demo.value?.copy(finished = true)
+            while (engine.flow.state != AlarmFlow.State.Idle) {
+                delay(1_000); engine.tick(System.currentTimeMillis()); publish()
+            }
+            endDemo()
+        }
+    }
+
+    /** Night mode of the watch (non-urgent warnings without vibration); sent to the watch at once. */
+    fun setNightMode(enabled: Boolean, startMin: Int, endMin: Int) {
+        settings.nightEnabled = enabled
+        settings.nightStartMin = startMin
+        settings.nightEndMin = endMin
+        sendSettingsToWatch()
     }
 
     fun stopDemo() {

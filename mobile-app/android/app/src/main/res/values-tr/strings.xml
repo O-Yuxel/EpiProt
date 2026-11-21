@@ -387,4 +387,50 @@
     <string name="keep_card_title">Pil tasarrufu EpiProt\'u durdurabilir</string>
     <string name="keep_card_text">Alarmlar kaçmasın diye EpiProt\'un arka planda çalışmasına izin ver.</string>
     <string name="keep_open">Düzelt</string>
+
+    <!-- kafa bandı durumu (3. parça) -->
+    <string name="hb_charging">Şarjda</string>
+    <string name="hb_never">Henüz kafa bandı verisi yok. Kafa bandı açık ve eşleşmiş olunca burada görünür.</string>
+    <string name="hb_battery_label">Pil</string>
+    <string name="hb_last_data">Son veri</string>
+    <string name="hb_is_virtual">Sanal kafa bandı (demo)</string>
+    <string name="hb_pads">Pedler</string>
+    <string name="hb_back_view">Arkadan görünüm</string>
+    <string name="pad_l_top">Sol kulak arkası, üst</string>
+    <string name="pad_l_bottom">Sol kulak arkası, alt</string>
+    <string name="pad_r_top">Sağ kulak arkası, üst</string>
+    <string name="pad_r_bottom">Sağ kulak arkası, alt</string>
+    <string name="pad_bias">Ense (referans)</string>
+    <string name="pad_state_ok">Temas iyi (%1$d kΩ)</string>
+    <string name="pad_state_drying">Kuruyor – değiştirin (%1$d kΩ)</string>
+    <string name="pad_state_none">Temas yok</string>
+    <string name="pad_state_unknown">Henüz ölçülmedi</string>
+    <string name="hb_last_check">Son temas ölçümü: %1$s (10 dakikada bir)</string>
+    <string name="hb_signals">Sinyaller</string>
+    <string name="hb_brain">Beyin sinyali</string>
+    <string name="hb_head_mov">Kafa hareketi</string>
+    <string name="sig_ok">geliyor</string>
+    <string name="sig_poor">zayıf</string>
+    <string name="sig_missing">yok</string>
+    <string name="hb_channels">Kullanılan EEG kanalları</string>
+    <string name="hb_channels_standard">Standart (1 + 2)</string>
+    <string name="hb_channels_backup">Yedek (%1$d + %2$d)</string>
+    <string name="hb_virtual_title">Sanal kafa bandı</string>
+    <string name="hb_virtual_text">Henüz fiziksel bir kafa bandı yok. Bu demo gerçek bir büyük nöbeti (SeizeIT2), tasarlanan kafa bandının Bluetooth paketleri olarak, gerçek bant ile aynı adımlardan geçirerek oynatır. Demo sırasında bir ped kurur ve temas ölçümü 2 dakikada bir yapılır.</string>
+    <string name="hb_virtual_start">Sanal kafa bandıyla oynat</string>
+    <string name="hb_tap_details">Ayrıntılar için dokunun</string>
+    <string name="hb_pads_ok">Bütün pedler temas ediyor</string>
+    <string name="hb_pad_problems">%1$d ped ilgi bekliyor</string>
+    <string name="hb_menu_sub">Bağlantı, pil, pedler, sinyaller</string>
+    <!-- gece modu -->
+    <string name="night_title">Saatte gece modu</string>
+    <string name="night_off">Kapalı</string>
+    <string name="night_text">Gece saat, acil olmayan uyarıları titremeden gösterir; hasta uyuyabilir.</string>
+    <string name="night_from">Başlangıç</string>
+    <string name="night_to">Bitiş</string>
+    <string name="night_rules_title">Gece de titreyenler</string>
+    <string name="night_rule_alarm">Nöbet alarmı ve "İyi misiniz?" kontrolleri: her zaman.</string>
+    <string name="night_rule_urgent">Tespitin çalışmadığı anlamına gelen uyarılar: kafa bandı veri göndermiyor, beyin sinyali kayboldu, pil bitmek üzere.</string>
+    <string name="night_rule_quiet">Sessiz: pedi değiştirin, pil azaldı, şarjda. Saatte listelenir.</string>
+    <string name="night_rule_summary">Gece modu bitince saat bir kez titrer ve özet gösterir.</string>
 </resources>

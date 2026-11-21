@@ -75,7 +75,7 @@ the packets that arrived in time, and the phone's sensor-health rules (`epiprot.
 **Decided with the user for the phone integration step:**
 - ✅ (phone part 2) **Every headband warning is shown on the watch**: replace pad, electrode contact lost, brain signal weak,
   headband missing, battery low, charging, motion sensor error.
-- **The phone shows the headband's live state** (like the heart-rate status for the watch): connection, battery,
+- ✅ (phone part 3) **The phone shows the headband's live state** (like the heart-rate status for the watch): connection, battery,
   contact of each pad, brain signal and head movement arriving or not, last contact check.
 - ✅ (phone part 2) **Night mode on the watch** (time range set once on the phone, e.g. 23:00–07:00; can also be switched on the watch):
   - the seizure alarm always vibrates (the patient must be able to cancel a false alarm, "Are you OK?" checks must work);
