@@ -78,7 +78,7 @@ class HeadbandReceiver(val info: P.DeviceInfo, private val sink: HeadbandSink) {
             return
         }
         if (!seen.add(p.seq)) { state = state.copy(duplicates = state.duplicates + 1); return }
-        if (firstSeq < 0) firstSeq = p.seq
+        if (firstSeq < 0 || p.seq < firstSeq) firstSeq = p.seq   // stored packets from before the first live one count too
         if (p.seq > maxSeq) maxSeq = p.seq
         if (seen.size > 400_000) seen.removeAll { it < maxSeq - 300_000 }
         val tDevMs = unwrap(p.tDev) / P.TICKS_PER_S * 1000
@@ -92,7 +92,7 @@ class HeadbandReceiver(val info: P.DeviceInfo, private val sink: HeadbandSink) {
         }
         val phoneMs = tDevMs + clock.value
         state = state.copy(lastPacketMs = arrivalMs, received = state.received + 1,
-            missing = maxSeq - firstSeq + 1 - (state.received + 1))
+            missing = maxOf(0L, maxSeq - firstSeq + 1 - (state.received + 1)))
         if (catchUp) {
             state = state.copy(catchUp = state.catchUp + 1)
             sink.catchUp(p, phoneMs)

@@ -54,6 +54,9 @@ class MainActivity : Activity() {
     @Volatile private var phone: BluetoothDevice? = null
     @Volatile private var subscribed = false
     @Volatile private var mtu = 23
+    /** "On the charger": status packets say so and the band stops measuring (EEG off on the charger, PROTOCOL.md). */
+    @Volatile private var onCharger = false
+    private var seqOut = 0L
     @Volatile private var running = false
     private var streamThread: Thread? = null
     private val sent = Semaphore(0)
@@ -67,6 +70,10 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         actionBar?.hide()
+        if (Build.VERSION.SDK_INT >= 30) window.decorView.post {      // full screen for recordings
+            window.insetsController?.hide(android.view.WindowInsets.Type.systemBars())
+            window.insetsController?.systemBarsBehavior = android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
         // presentation view on top (X-ray render + live signals), test controls and counters below
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(android.graphics.Color.rgb(16, 20, 28)) }
         band = HeadbandView(this)
@@ -76,8 +83,10 @@ class MainActivity : Activity() {
         val start0 = Button(this).apply { text = "Start · 10 min"; setOnClickListener { begin(0.0) } }
         val stop = Button(this).apply { text = "Stop"; setOnClickListener { end() } }
         val details = Button(this).apply { text = "Details" }
-        for (b in listOf(start8, start0, stop, details)) b.isAllCaps = false
-        for (b in listOf(start8, start0, stop, details)) buttons.addView(b, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        val charger = Button(this).apply { text = "Charger: off" }
+        charger.setOnClickListener { onCharger = !onCharger; charger.text = if (onCharger) "Charger: on" else "Charger: off" }
+        for (b in listOf(start8, start0, stop, charger, details)) b.isAllCaps = false
+        for (b in listOf(start8, start0, stop, charger, details)) buttons.addView(b, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         col.addView(buttons)
         status = TextView(this).apply {
             textSize = 12f; typeface = Typeface.MONOSPACE; setTextColor(android.graphics.Color.LTGRAY)
@@ -156,6 +165,8 @@ class MainActivity : Activity() {
         running = false
         streamThread?.interrupt()
         try { getSystemService(BluetoothManager::class.java).adapter.bluetoothLeAdvertiser?.stopAdvertising(advertiseCallback) } catch (e: Exception) { }
+        // like the real band switching off: drop the link, so the phone notices at once
+        phone?.let { d -> try { server?.cancelConnection(d) } catch (e: Exception) { } }
         server?.close(); server = null
         phone = null; subscribed = false
         advertising = "stopped"
@@ -221,7 +232,14 @@ class MainActivity : Activity() {
                 val due = (ms / 1000.0 - startS) * 1e9
                 val wait = (due - (System.nanoTime() - t0)) / 1e6
                 if (wait > 0) Thread.sleep(wait.toLong())
+                if (onCharger) {
+                    if (pkt[0].toInt() != 0x03) continue                       // no EEG / movement on the charger
+                    pkt[13] = (pkt[13].toInt() or 0x03).toByte()               // charging + charger attached
+                }
+                // own packet numbers, so packets the band does not make (EEG on the charger) leave no gap (PROTOCOL.md seq)
+                ByteBuffer.wrap(pkt).order(ByteOrder.LITTLE_ENDIAN).putInt(2, (seqOut++).toInt())
                 band.packet(pkt)
+                band.charging = onCharger
                 if ((ms / 1000).toInt() != streamS.toInt()) android.util.Log.i("EpiProtTestHB", "stream_s=${ms / 1000} onset_s=$onset subscribed=$subscribed stored=${store.size}")
                 streamS = ms / 1000.0
                 onsetIn = onset - streamS

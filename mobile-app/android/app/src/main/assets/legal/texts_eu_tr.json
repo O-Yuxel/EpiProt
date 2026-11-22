@@ -183,7 +183,7 @@
     },
     "sms": {
       "title": "SMS gönderme",
-      "why": "Sadece alarmda, sadece bakıcılarına SMS göndermek için. EpiProt mesajlarını OKUMAZ.",
+      "why": "Sadece alarmda, sadece bakıcılarına SMS göndermek için. EpiProt yalnızca bakıcı numaralarından gelen \"geliyorum\" cevaplarını okur, diğer mesajlarını asla okumaz.",
       "no": "Bakıcılara SMS gidemez."
     },
     "location": {

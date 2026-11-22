@@ -65,6 +65,8 @@ class HeadbandLink(private val ctx: Context, private val listener: Listener) {
     }
 
     private var lastAttemptMs = 0L
+    /** Last packet from the headband: a link that looks connected but brings nothing is restarted (see watchdog). */
+    @Volatile private var lastPacketMs = 0L
     private var failedAttempts = 0
 
     /**
@@ -76,6 +78,15 @@ class HeadbandLink(private val ctx: Context, private val listener: Listener) {
             if (!wanted) return
             val d = device
             val now = System.currentTimeMillis()
+            // connected but silent (the headband restarted without the link noticing): start over
+            if (state == State.CONNECTED && lastPacketMs > 0 && now - lastPacketMs > SILENT_MS) {
+                Log.w(TAG, "connected but no data for ${(now - lastPacketMs) / 1000} s: reconnecting")
+                lastPacketMs = 0
+                gatt?.let { try { it.disconnect(); it.close() } catch (e: Exception) { } }
+                gatt = null
+                set(State.RECONNECTING)
+                lastAttemptMs = 0
+            }
             if (state != State.CONNECTED && state != State.SCANNING && state != State.PAIRING && adapter?.isEnabled == true && now - lastAttemptMs > RETRY_MS) {
                 gatt?.let { try { it.close() } catch (e: Exception) { } }
                 gatt = null
@@ -171,6 +182,8 @@ class HeadbandLink(private val ctx: Context, private val listener: Listener) {
     // ------------------------------------------------------------------ pairing (bonding)
 
     private var bondReceiver: BroadcastReceiver? = null
+    /** The connection whose services are being discovered (only once per connection). */
+    @Volatile private var discovering: BluetoothGatt? = null
 
     private fun bond(d: BluetoothDevice) {
         device = d
@@ -191,9 +204,16 @@ class HeadbandLink(private val ctx: Context, private val listener: Listener) {
         androidx.core.content.ContextCompat.registerReceiver(ctx, r, IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED),
             androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED)      // system broadcast: still delivered
         if (!d.createBond()) { endBond(); listener.onPairResult(false, null); disconnect() }
+        else main.postDelayed(bondTimeout, BOND_TIMEOUT_MS)
+    }
+
+    /** The passkey box never appeared or nobody answered: give up instead of waiting forever ("try again"). */
+    private val bondTimeout = Runnable {
+        if (bondReceiver != null) { endBond(); listener.onPairResult(false, null); disconnect() }
     }
 
     private fun endBond() {
+        main.removeCallbacks(bondTimeout)
         bondReceiver?.let { try { ctx.unregisterReceiver(it) } catch (e: Exception) { } }
         bondReceiver = null
     }
@@ -211,6 +231,7 @@ class HeadbandLink(private val ctx: Context, private val listener: Listener) {
         override fun onConnectionStateChange(g: BluetoothGatt, status: Int, newState: Int) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 failedAttempts = 0
+                discovering = null
                 g.requestMtu(MTU)
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 g.close()
@@ -224,13 +245,16 @@ class HeadbandLink(private val ctx: Context, private val listener: Listener) {
 
         override fun onMtuChanged(g: BluetoothGatt, mtu: Int, status: Int) {
             Log.i(TAG, "MTU $mtu")
+            // some phones report the MTU twice: a second service discovery would cancel the first one's read
+            if (discovering === g) return
+            discovering = g
             g.discoverServices()
         }
 
         override fun onServicesDiscovered(g: BluetoothGatt, status: Int) {
             val info = g.getService(SERVICE)?.getCharacteristic(INFO)
             if (info == null) { Log.w(TAG, "not an EpiProt headband"); g.disconnect(); return }
-            g.readCharacteristic(info)
+            if (!g.readCharacteristic(info)) main.postDelayed({ if (gatt === g) g.readCharacteristic(info) }, 300)   // busy: once more
         }
 
         @Deprecated("API < 33")
@@ -248,11 +272,11 @@ class HeadbandLink(private val ctx: Context, private val listener: Listener) {
 
         @Deprecated("API < 33")
         override fun onCharacteristicChanged(g: BluetoothGatt, c: BluetoothGattCharacteristic) {
-            @Suppress("DEPRECATION") if (c.uuid == DATA) listener.onPacket(System.currentTimeMillis(), c.value ?: return)
+            @Suppress("DEPRECATION") if (c.uuid == DATA) { lastPacketMs = System.currentTimeMillis(); listener.onPacket(lastPacketMs, c.value ?: return) }
         }
 
         override fun onCharacteristicChanged(g: BluetoothGatt, c: BluetoothGattCharacteristic, value: ByteArray) {
-            if (c.uuid == DATA) listener.onPacket(System.currentTimeMillis(), value)
+            if (c.uuid == DATA) { lastPacketMs = System.currentTimeMillis(); listener.onPacket(lastPacketMs, value) }
         }
     }
 
@@ -294,6 +318,8 @@ class HeadbandLink(private val ctx: Context, private val listener: Listener) {
         const val MTU = 247
         const val SCAN_TIMEOUT_MS = 30_000L
         const val RECONNECT_DELAY_MS = 2_000L
+        const val BOND_TIMEOUT_MS = 90_000L
+        const val SILENT_MS = 15_000L          // the headband sends a status packet every second at least
         const val WATCHDOG_MS = 5_000L
         const val RETRY_MS = 12_000L          // a connection attempt that has not finished by then is restarted
     }

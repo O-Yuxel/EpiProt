@@ -272,7 +272,7 @@
     <string name="home_adult_title">%1$s artık reşit</string>
     <string name="home_adult_text">Gizlilik kararlarını veli verdi. 18 yaşından itibaren bu kararları hastanın kendisi vermeli: Ayarlar → Gizlilik ve onaylar → kurulumu yeniden yap.</string>
     <string name="sms_intro">EpiProt: %1$s sizi acil durum kişisi olarak ekledi. EpiProt olası bir nöbet algılarsa size SMS gelecek%2$s. Bu mesajları almak istemiyorsanız lütfen %1$s ile konuşun.</string>
-    <string name="sms_intro_with_location"> (konumla birlikte)</string>
+    <string name="sms_intro_with_location">" (konumla birlikte)"</string>
     <string name="sms_intro_no_location"></string>
 
     <!-- app lock -->
@@ -632,4 +632,6 @@
     <string name="watch_install_text">Saatiniz bu telefona bağlı ama EpiProt saat uygulaması yüklü değil. O olmadan bilekten nabız gelmez ve saatte alarm çıkmaz.</string>
     <string name="watch_install_button">Saate yükle</string>
     <string name="watch_install_opened">Saatinize bakın: Play Store EpiProt sayfasında açıldı. Orada Yükle\'ye dokunun, sonra saatte EpiProt\'u açıp sensör izinlerini verin. İş bitince bu kart kaybolur.</string>
+    <!-- kafa bandı kapalı -->
+    <string name="hb_link_off">kapalı</string>
 </resources>

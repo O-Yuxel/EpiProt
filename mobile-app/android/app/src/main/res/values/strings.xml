@@ -282,7 +282,7 @@
     <string name="home_adult_title">%1$s is now an adult</string>
     <string name="home_adult_text">A parent made the privacy decisions. From the age of 18 the patient should make them: Settings → Privacy &amp; consents → do the setup again.</string>
     <string name="sms_intro">EpiProt: %1$s has added you as an emergency contact. If EpiProt detects a possible seizure you will get an SMS%2$s. If you do not want these messages, please tell %1$s.</string>
-    <string name="sms_intro_with_location"> with the location</string>
+    <string name="sms_intro_with_location">" with the location"</string>
     <string name="sms_intro_no_location"></string>
 
     <!-- app lock -->
@@ -642,4 +642,6 @@
     <string name="watch_install_text">Your watch is connected to this phone, but the EpiProt watch app is not installed. Without it there is no heart rate from the wrist and no alarm on the watch.</string>
     <string name="watch_install_button">Install on the watch</string>
     <string name="watch_install_opened">Look at your watch: the Play Store is open on the EpiProt page. Tap Install there, then open EpiProt on the watch and allow the sensors. This card disappears when it is done.</string>
+    <!-- headband switched off -->
+    <string name="hb_link_off">switched off</string>
 </resources>

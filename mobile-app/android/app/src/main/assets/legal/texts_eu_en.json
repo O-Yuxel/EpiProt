@@ -183,7 +183,7 @@
     },
     "sms": {
       "title": "Send SMS",
-      "why": "Only in an alarm, only to your caregivers. EpiProt never READS your messages.",
+      "why": "Only in an alarm, only to your caregivers. EpiProt reads only the \"I am going\" replies from your caregivers' numbers, never your other messages.",
       "no": "No SMS can be sent to caregivers."
     },
     "location": {

@@ -178,8 +178,10 @@ object ReportPdf {
                 M, 74f, paint(10f, INK_SOFT))
             val t0 = sn.startMs; val span = sn.durationMs.toFloat().coerceAtLeast(1f)
             val traces = listOf(
-                Triple(s(R.string.rep_sig_eeg1), sn.eeg.getOrNull(0) ?: FloatArray(0), TEAL),
-                Triple(s(R.string.rep_sig_eeg2), sn.eeg.getOrNull(1) ?: FloatArray(0), TEAL),
+                // EEG: the electrodes' constant offset (thousands of µV) is removed, as in the detector, so the
+                // trace and its scale show the brain signal itself
+                Triple(s(R.string.rep_sig_eeg1), removeOffset(sn.eeg.getOrNull(0) ?: FloatArray(0), sn.durationMs), TEAL),
+                Triple(s(R.string.rep_sig_eeg2), removeOffset(sn.eeg.getOrNull(1) ?: FloatArray(0), sn.durationMs), TEAL),
                 Triple(s(R.string.rep_sig_mov), sn.movement, AMBER),
                 Triple(s(R.string.rep_sig_hr), sn.heartRate, CORAL),
             )
@@ -230,6 +232,29 @@ object ReportPdf {
     }
 
     private fun mmss(s: Long) = if (s >= 3600) "%d:%02d:%02d".format(s / 3600, s / 60 % 60, s % 60) else "%d:%02d".format(s / 60, s % 60)
+
+    /**
+     * Subtracts the running mean over about 2 s (a simple high-pass): the slow electrode offset goes, the seizure
+     * rhythm stays. Gaps (NaN) stay gaps.
+     */
+    private fun removeOffset(v: FloatArray, durationMs: Long): FloatArray {
+        if (v.isEmpty()) return v
+        val perS = v.size / (durationMs / 1000.0).coerceAtLeast(1.0)
+        val half = (perS).toInt().coerceAtLeast(1)          // window = 2 s
+        val sum = DoubleArray(v.size + 1); val cnt = IntArray(v.size + 1)
+        for (i in v.indices) {
+            val ok = v[i].isFinite()
+            sum[i + 1] = sum[i] + if (ok) v[i] else 0f
+            cnt[i + 1] = cnt[i] + if (ok) 1 else 0
+        }
+        return FloatArray(v.size) { i ->
+            if (!v[i].isFinite()) Float.NaN else {
+                val a = (i - half).coerceAtLeast(0); val b = (i + half + 1).coerceAtMost(v.size)
+                val n = cnt[b] - cnt[a]
+                if (n == 0) Float.NaN else (v[i] - (sum[b] - sum[a]) / n).toFloat()
+            }
+        }
+    }
 
     /** Min/max per pixel column (fast for long signals); gaps (NaN) are left empty. */
     private fun trace(c: Canvas, v: FloatArray, x0: Float, y0: Float, w: Float, h: Float, color: Int,

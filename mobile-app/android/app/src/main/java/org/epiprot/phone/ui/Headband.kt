@@ -128,7 +128,8 @@ internal fun HeadbandPage(m: PhoneMonitor, activity: MainActivity) {
             }
         }
         if (!st.demo && paired) {
-            InfoRow(stringResource(R.string.hb_link), stringResource(linkText(link)))
+            // switched off on purpose: not "connection lost" (the phone still connects by itself when it is on again)
+            InfoRow(stringResource(R.string.hb_link), stringResource(if (note == "off" && link != L.CONNECTED) R.string.hb_link_off else linkText(link)))
             when (note) {
                 "off" -> Text(stringResource(R.string.hb_off_note), color = C.Amber, style = MaterialTheme.typography.bodySmall)
                 "disconnected" -> Text(stringResource(R.string.hb_disconnected_note), color = C.Amber, style = MaterialTheme.typography.bodySmall)

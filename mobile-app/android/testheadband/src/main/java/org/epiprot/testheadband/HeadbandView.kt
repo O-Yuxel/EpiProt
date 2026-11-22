@@ -43,6 +43,7 @@ class HeadbandView(context: Context) : View(context) {
     @Volatile var off: String? = null      // "switched off from the app" / "unpaired"
     @Volatile var identifyUntil = 0L
     @Volatile var packetsPerS = 0
+    @Volatile var charging = false
     private var lastEegLevel = 0f
     // 0.5 Hz high-pass for the display (electrode offset removed, like the phone's filter)
     private var hpX1 = 0f; private var hpY1 = 0f; private var hpX2 = 0f; private var hpY2 = 0f
@@ -131,6 +132,8 @@ class HeadbandView(context: Context) : View(context) {
         val state = when {
             off != null -> off!!
             !running -> t("off", "kapalı")
+            charging && sending -> t("⚡ on the charger: not measuring · connected to the phone", "⚡ şarjda: ölçüm yok · telefona bağlı")
+            charging -> t("⚡ on the charger: not measuring", "⚡ şarjda: ölçüm yok")
             sending -> t("● LIVE → phone", "● CANLI → telefon") + "   $packetsPerS " + t("packets/s", "paket/sn")
             else -> t("○ no phone: measuring and storing", "○ telefon yok: ölçüyor ve saklıyor")
         }
@@ -183,7 +186,7 @@ class HeadbandView(context: Context) : View(context) {
         val (fx, fy) = px(flex[3])
         label(c, t("signal cable", "sinyal kablosu"), fx + 80 * s, fy + 40 * s, s)
         if (sending) label(c, t("radio → phone", "radyo → telefon"), ax - 330 * s, ay - 40 * s, s)
-        if (battery >= 0) c.drawText(t("battery", "pil") + " %$battery", box.right - 170 * s, box.top + 44 * s, small)
+        if (battery >= 0) c.drawText(t("battery $battery%", "pil %$battery"), box.right - 170 * s, box.top + 44 * s, small)
     }
 
     private val pill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(200, 16, 20, 28) }
