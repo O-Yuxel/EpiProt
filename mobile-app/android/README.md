@@ -3,7 +3,7 @@
 The hub of the system: receives the watch and headband data, runs the seizure detector every 5 s,
 handles alarms and sends the caregiver messages. Kotlin, Jetpack Compose (Material 3).
 
-**Status:** builds, 58 unit tests pass (including parity with the Python code). Tested on a real phone
+**Status:** builds, 74 unit tests pass, lint without errors (including parity with the Python code). Tested on a real phone
 (Xiaomi, Android 13) with the watch app on the Wear OS emulator, and with a second phone playing the headband over
 real Bluetooth LE (`device-firmware/README.md`, "Real Bluetooth test"). The demo replays a real recorded seizure →
 alarm → caregiver message with location → audit trail. Not yet tested on a real watch; the headband exists as a
@@ -26,6 +26,11 @@ design and a simulator only.
 | caregiver SMS with location, watch messages | `comm/Comm.kt` | – |
 | foreground service | `service/MonitoringService.kt` | – |
 | screens: home (status, alarm, demo), events, settings | `ui/MainActivity.kt` | – |
+| headband page: pairing, connect / disconnect / off / unpair, pads, firmware update | `ui/Headband.kt`, `headband/FirmwareUpdate.kt` | – |
+| caregiver mode: role choice, followed patients, loud alarm, "I am going" | `caregiver/`, `ui/Caregiver.kt` | – |
+| seizure diary (added by hand) | `ui/Diary.kt` | – |
+| shower mode backup timer | `alarm/ShowerWatch.kt` | – |
+| phone notifications, battery warnings | `service/PhoneAlerts.kt`, `health/DeviceBatteryAlerts.kt` | – |
 | watch message formats (copy of the watch app's file) | `protocol/Protocol.kt` | `watch-app/.../Protocol.kt` |
 
 The **unit tests** (`app/src/test`) check that the phone gives the same numbers as Python on real SeizeIT2 data

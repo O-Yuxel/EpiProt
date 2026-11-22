@@ -35,13 +35,18 @@ The brain of the system. Everything that decides runs here.
   heart rate is missing or stuck)
 - **Alarm flow:** caregiver alerted at the moment of the alarm; a 4-digit PIN cancels a false alarm and sends a
   "false alarm" message; emergency message after 5 minutes; "Are you OK?" check-ins after the seizure
-- **Sensor-health monitor:** warns on the watch when the headband or watch is not measuring properly
+- **Caregiver mode** (same app on the caregiver's phone): a loud full-screen alarm, also on silent, when the
+  patient's phone sends an EpiProt SMS; "I am going" tells the patient's watch who is coming
+- **Sensor-health monitor:** warns on the watch (and the phone) when the headband or watch is not measuring
+  properly, plus phone / watch / headband battery and pad reminders
+- **Headband:** pairing with a passkey, connect / disconnect / switch off / unpair, firmware update (simulated)
+- **Seizure diary:** seizures added by hand; seizures the device missed are shown in the doctor report
 - **Event log** on the phone (encrypted) and, with consent, the signals from 2 min before to 5 min after each alarm
 - **Doctor report** (PDF with charts and signal graphs), sent by the patient with any app when the doctor asks
 - **Consent system:** first-start setup per country (Türkiye, EU, US), separate consents, privacy centre
 
 Status: the Android app ([`mobile-app/android/`](mobile-app/android/), Kotlin) runs the full chain, verified
-against the Python code (58 unit tests, 24 h endurance test); its demo replays a real recorded seizure. Tested on a
+against the Python code (74 unit tests, 24 h endurance test); its demo replays a real recorded seizure. Tested on a
 real phone with the watch app (Wear OS emulator) and with a second phone playing the headband over real Bluetooth.
 
 ### ⌚ [`watch-app/`](watch-app/) — EpiProt watch app
@@ -50,6 +55,7 @@ A small companion app on a Wear OS watch. It measures and shows; it does not dec
 - Vibrates on an alarm and asks for the PIN (checked on the watch)
 - Shows the "Are you OK?" check-ins and the sensor warnings
 - Warns by itself when the phone is out of reach (then there are no alarms)
+- "Call for help" (5 s countdown) and shower mode (the caregiver is alerted if the patient does not come out)
 
 Status: first version (Kotlin, Compose for Wear OS) with a demo mode. Builds, unit tests pass, runs on the Wear OS
 emulator and was tested together with a real Android phone; not yet tested on a real watch.

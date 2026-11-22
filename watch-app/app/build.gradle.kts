@@ -4,6 +4,10 @@ plugins {
 }
 
 android {
+    lint {
+        // false positive: the app uses ComponentActivity.registerForActivityResult and no Fragments at all
+        disable += "InvalidFragmentVersionForActivityResult"
+    }
     namespace = "org.epiprot.watch"
     compileSdk = 36
 

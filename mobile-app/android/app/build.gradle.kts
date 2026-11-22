@@ -4,6 +4,10 @@ plugins {
 }
 
 android {
+    lint {
+        // false positive: the app uses ComponentActivity.registerForActivityResult and no Fragments at all
+        disable += "InvalidFragmentVersionForActivityResult"
+    }
     testOptions {
         unitTests.all { it.systemProperty("endurance.hours", project.findProperty("enduranceHours") ?: "2") }
     }

@@ -49,6 +49,8 @@ uzmanla (avukat, düzenleyici danışman, etik kurul) kontrol edilmelidir.
 | # | Ne yapılmalı | Neden | Öncelik |
 |---|---|---|---|
 | 4.1 | **SMS izni beyanı** (Play Console → hassas izinler; “acil durum uyarısı” istisnası). | SEND_SMS kısıtlı bir izin. Beyan kabul edilmezse uygulama yayından kaldırılır. Reddedilirse mesajı telefonun kendi SMS uygulamasıyla göndermeye geçilmeli. | 🔴 |
+| 4.1b | **SMS okuma izni beyanı** (RECEIVE_SMS): bakıcı modu ve "geliyorum" cevabı EpiProt SMS'lerini okur. | Google Play, SMS okuma iznini yalnızca kabul ettiği kullanımlarda verir; beyan reddedilirse bakıcı alarmı için bildirim tabanlı başka bir yol (ör. push) gerekir. | 🔴 |
+| 4.1c | **Hedef Android sürümünü 35'e (Android 15) çıkar** ve yeniden test et. | Google Play yeni uygulamalarda güncel hedef sürüm ister; uygulama şu an 34'ü hedefliyor. | 🔴 |
 | 4.2 | **Data safety formu** ve **sağlık uygulaması beyanı** doldur. | Google Play sağlık verisi işleyen uygulamalarda bunları zorunlu tutar. | 🔴 |
 | 4.3 | **Yayın imza anahtarını** oluştur ve güvenle sakla (telefon ve saat aynı anahtar). | Telefon ve saat aynı anahtarla imzalanmazsa birbirini bulamaz. Anahtar kaybolursa güncelleme yapılamaz. | 🔴 |
 | 4.4 | **Bağımsız güvenlik incelemesi** (kod ve sızma testi). | Sağlık verisi işleyen uygulamada güvenlik açığı hem hasta için risk hem de hukuki sorumluluktur. | 🟠 |

@@ -23,6 +23,9 @@ compileSdk 36, minSdk 30, targetSdk 34. Builds with the Java 25 bundled with And
 | After the PIN window | "Help is on the way"; the alarm can no longer be cancelled on the watch |
 | Check-ins | "Are you OK?" during recovery monitoring, answered with the PIN |
 | Sensor warnings | Shows the phone's warnings with what to do and what it means for detection; never on top of an alarm |
+| Call for help | Red button on the home screen, 5 s countdown to cancel a mistaken tap, then the phone alerts the caregivers with the location |
+| Shower mode | Timer chosen before a shower (headband off); "Are you out?" at the end; no answer in 2 min -> caregiver alerted (the phone keeps the same timer as a backup) |
+| Caregiver coming | Shows "<name> is coming" when a caregiver answered "I am going" in caregiver mode |
 | Phone lost | If the phone has not been reachable for 60 s, the watch itself warns: "Phone not connected. Seizure alarms do NOT work until this is fixed." |
 | Status | Battery, charging and on-body status to the phone once a minute |
 | Languages | English and Turkish (follows the watch language) |
