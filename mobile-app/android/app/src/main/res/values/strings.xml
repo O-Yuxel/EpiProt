@@ -637,4 +637,9 @@
     <string name="cg_other_going">%1$s is going to %2$s</string>
     <string name="sms_on_the_way">EpiProt: %1$s is on the way to %2$s (%3$s).</string>
     <string name="alarm_coming">%1$s is coming (%2$s)</string>
+    <!-- install on the watch -->
+    <string name="watch_install_title">EpiProt is not on your watch yet</string>
+    <string name="watch_install_text">Your watch is connected to this phone, but the EpiProt watch app is not installed. Without it there is no heart rate from the wrist and no alarm on the watch.</string>
+    <string name="watch_install_button">Install on the watch</string>
+    <string name="watch_install_opened">Look at your watch: the Play Store is open on the EpiProt page. Tap Install there, then open EpiProt on the watch and allow the sensors. This card disappears when it is done.</string>
 </resources>

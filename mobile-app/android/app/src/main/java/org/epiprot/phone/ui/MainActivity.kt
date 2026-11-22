@@ -1,5 +1,6 @@
 package org.epiprot.phone.ui
 
+import kotlinx.coroutines.tasks.await
 import android.Manifest
 import android.os.Build
 import android.content.Intent
@@ -463,6 +464,7 @@ private fun Home(m: PhoneMonitor, activity: MainActivity, openSettings: (String?
         Text(stringResource(R.string.home_adult_text), color = C.Ink)
         TextButton(onClick = { openSettings("privacy") }) { Text(stringResource(R.string.privacy_title), color = C.TealDark) }
     }
+    WatchInstallCard(activity)
     val pv by activity.permVersion
     if (pv >= 0 && running && activity.batteryOptimized) EpiCard(container = C.AmberSoft) {
         CardHeader(Icons.Rounded.Warning, stringResource(R.string.keep_card_title), tint = C.Amber, bubble = Color.White)
@@ -1153,3 +1155,38 @@ private fun Field(value: String, onChange: (String) -> Unit, label: String, type
         keyboardOptions = KeyboardOptions(keyboardType = type), modifier = Modifier.fillMaxWidth())
 }
 
+
+/**
+ * A watch is paired with this phone but EpiProt is not on it: the watch app comes with the same Play Store listing
+ * (same application id), so this opens the EpiProt page in the Play Store on the watch, where the patient taps Install.
+ */
+@Composable
+private fun WatchInstallCard(activity: MainActivity) {
+    var watchNode by remember { mutableStateOf<String?>(null) }
+    var opened by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            watchNode = try {
+                val nodes = com.google.android.gms.wearable.Wearable.getNodeClient(activity).connectedNodes.await()
+                val withApp = com.google.android.gms.wearable.Wearable.getCapabilityClient(activity)
+                    .getCapability(org.epiprot.phone.protocol.WATCH_CAPABILITY, com.google.android.gms.wearable.CapabilityClient.FILTER_ALL)
+                    .await().nodes.map { it.id }.toSet()
+                nodes.firstOrNull { it.id !in withApp }?.id
+            } catch (e: Exception) { null }
+            delay(15_000)
+        }
+    }
+    val node = watchNode ?: return
+    EpiCard(container = C.AmberSoft) {
+        CardHeader(Icons.Rounded.Warning, stringResource(R.string.watch_install_title), tint = C.Amber, bubble = Color.White)
+        Text(stringResource(if (opened) R.string.watch_install_opened else R.string.watch_install_text), color = C.Ink)
+        PrimaryButton(stringResource(R.string.watch_install_button)) {
+            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("market://details?id=" + activity.packageName))
+                .addCategory(android.content.Intent.CATEGORY_BROWSABLE)
+            try {
+                androidx.wear.remote.interactions.RemoteActivityHelper(activity).startRemoteActivity(intent, node)
+                opened = true
+            } catch (e: Exception) { android.util.Log.w("EpiProt", "open Play Store on watch failed", e) }
+        }
+    }
+}

@@ -627,4 +627,9 @@
     <string name="cg_other_going">%1$s, %2$s için yola çıktı</string>
     <string name="sms_on_the_way">EpiProt: %1$s, %2$s için yola çıktı (%3$s).</string>
     <string name="alarm_coming">%1$s geliyor (%2$s)</string>
+    <!-- saate yükleme -->
+    <string name="watch_install_title">EpiProt saatinizde henüz yok</string>
+    <string name="watch_install_text">Saatiniz bu telefona bağlı ama EpiProt saat uygulaması yüklü değil. O olmadan bilekten nabız gelmez ve saatte alarm çıkmaz.</string>
+    <string name="watch_install_button">Saate yükle</string>
+    <string name="watch_install_opened">Saatinize bakın: Play Store EpiProt sayfasında açıldı. Orada Yükle\'ye dokunun, sonra saatte EpiProt\'u açıp sensör izinlerini verin. İş bitince bu kart kaybolur.</string>
 </resources>

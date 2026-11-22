@@ -47,6 +47,8 @@ import java.util.concurrent.TimeUnit
 class MainActivity : Activity() {
     private val main = Handler(Looper.getMainLooper())
     private lateinit var status: TextView
+    private lateinit var band: HeadbandView
+    private var sentLastS = 0; private var sentAtTick = 0
     private var server: BluetoothGattServer? = null
     private lateinit var dataChar: BluetoothGattCharacteristic
     @Volatile private var phone: BluetoothDevice? = null
@@ -64,18 +66,25 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(40, 60, 40, 40) }
-        col.addView(TextView(this).apply { text = "EpiProt Test Headband"; textSize = 22f; setTypeface(null, Typeface.BOLD) })
-        col.addView(TextView(this).apply {
-            text = "Advertises the headband service and plays a real recorded seizure (SeizeIT2 sub-058) as headband packets. " +
-                "On the EpiProt phone: Start monitoring, then Settings → Headband → Connect headband."
-            textSize = 13f; setPadding(0, 10, 0, 20)
-        })
-        status = TextView(this).apply { textSize = 15f; typeface = Typeface.MONOSPACE }
-        val start8 = Button(this).apply { text = "Start (seizure in ~2 min)"; setOnClickListener { begin(480.0) } }
-        val start0 = Button(this).apply { text = "Start from the beginning (seizure in 10 min)"; setOnClickListener { begin(0.0) } }
+        actionBar?.hide()
+        // presentation view on top (X-ray render + live signals), test controls and counters below
+        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(android.graphics.Color.rgb(16, 20, 28)) }
+        band = HeadbandView(this)
+        col.addView(band, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
+        val buttons = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; setPadding(20, 0, 20, 0) }
+        val start8 = Button(this).apply { text = "Start · 2 min"; setOnClickListener { begin(480.0) } }
+        val start0 = Button(this).apply { text = "Start · 10 min"; setOnClickListener { begin(0.0) } }
         val stop = Button(this).apply { text = "Stop"; setOnClickListener { end() } }
-        col.addView(start8); col.addView(start0); col.addView(stop); col.addView(status)
+        val details = Button(this).apply { text = "Details" }
+        for (b in listOf(start8, start0, stop, details)) b.isAllCaps = false
+        for (b in listOf(start8, start0, stop, details)) buttons.addView(b, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        col.addView(buttons)
+        status = TextView(this).apply {
+            textSize = 12f; typeface = Typeface.MONOSPACE; setTextColor(android.graphics.Color.LTGRAY)
+            setPadding(30, 0, 30, 20); visibility = android.view.View.GONE
+        }
+        details.setOnClickListener { status.visibility = if (status.visibility == android.view.View.GONE) android.view.View.VISIBLE else android.view.View.GONE }
+        col.addView(status)
         setContentView(col)
         askPermissions()
         tick()
@@ -104,6 +113,10 @@ class MainActivity : Activity() {
             appendLine("dropped     : $dropped")
             appendLine("ACKs        : $acks (last seq $lastAck)")
         }
+        band.running = running
+        band.sending = running && phone != null && subscribed
+        band.onsetIn = onsetIn
+        if (++sentAtTick % 2 == 0) { band.packetsPerS = live + catchUp - sentLastS; sentLastS = live + catchUp }
         main.postDelayed({ tick() }, 500)
     }
 
@@ -111,8 +124,15 @@ class MainActivity : Activity() {
 
     private fun begin(startS: Double) {
         if (running) return
+        band.off = null
         val bm = getSystemService(BluetoothManager::class.java)
-        val s = bm.openGattServer(this, gattCallback) ?: run { advertising = "no GATT server"; return }
+        val s = bm?.adapter?.let { bm.openGattServer(this, gattCallback) }
+        if (s == null) {              // no Bluetooth (e.g. emulator): still "measure" and store, so the view can be shown
+            advertising = "no GATT server"
+            running = true
+            streamThread = Thread { stream(startS) }.also { it.start() }
+            return
+        }
         server = s
         val svc = BluetoothGattService(SERVICE, BluetoothGattService.SERVICE_TYPE_PRIMARY)
         dataChar = BluetoothGattCharacteristic(DATA, BluetoothGattCharacteristic.PROPERTY_NOTIFY, BluetoothGattCharacteristic.PERMISSION_READ)
@@ -164,6 +184,11 @@ class MainActivity : Activity() {
                 acks++; lastAck = ByteBuffer.wrap(value, 1, 4).order(ByteOrder.LITTLE_ENDIAN).int.toLong() and 0xFFFFFFFFL
             }
             if (responseNeeded) server?.sendResponse(device, requestId, BluetoothGatt.GATT_SUCCESS, 0, null)
+            if (c.uuid == CONTROL && value.isNotEmpty()) when (value[0].toInt()) {
+                0x05 -> band.identifyUntil = System.currentTimeMillis() + 5000          // IDENTIFY: blink 5 s
+                0x08 -> main.postDelayed({ end(); band.off = if (tr) "kapatıldı (uygulamadan)" else "switched off from the app" }, 300)
+                0x09 -> main.postDelayed({ end(); band.off = if (tr) "eşleştirme kaldırıldı, kapandı" else "unpaired, switched off" }, 300)
+            }
         }
         override fun onDescriptorWriteRequest(device: BluetoothDevice, requestId: Int, d: BluetoothGattDescriptor,
                                               preparedWrite: Boolean, responseNeeded: Boolean, offset: Int, value: ByteArray) {
@@ -196,6 +221,7 @@ class MainActivity : Activity() {
                 val due = (ms / 1000.0 - startS) * 1e9
                 val wait = (due - (System.nanoTime() - t0)) / 1e6
                 if (wait > 0) Thread.sleep(wait.toLong())
+                band.packet(pkt)
                 if ((ms / 1000).toInt() != streamS.toInt()) android.util.Log.i("EpiProtTestHB", "stream_s=${ms / 1000} onset_s=$onset subscribed=$subscribed stored=${store.size}")
                 streamS = ms / 1000.0
                 onsetIn = onset - streamS
@@ -227,6 +253,8 @@ class MainActivity : Activity() {
         if (ok) sent.tryAcquire(200, TimeUnit.MILLISECONDS)
         return ok
     }
+
+    private val tr get() = java.util.Locale.getDefault().language == "tr"
 
     companion object {
         private const val BASE = "-279b-48d0-a8ab-c8630521d53c"
