@@ -67,6 +67,7 @@ class HeadbandLink(private val ctx: Context, private val listener: Listener) {
     private var lastAttemptMs = 0L
     /** Last packet from the headband: a link that looks connected but brings nothing is restarted (see watchdog). */
     @Volatile private var lastPacketMs = 0L
+    @Volatile private var connectedMs = 0L
     private var failedAttempts = 0
 
     /**
@@ -79,7 +80,7 @@ class HeadbandLink(private val ctx: Context, private val listener: Listener) {
             val d = device
             val now = System.currentTimeMillis()
             // connected but silent (the headband restarted without the link noticing): start over
-            if (state == State.CONNECTED && lastPacketMs > 0 && now - lastPacketMs > SILENT_MS) {
+            if (state == State.CONNECTED && now - maxOf(lastPacketMs, connectedMs) > SILENT_MS) {
                 Log.w(TAG, "connected but no data for ${(now - lastPacketMs) / 1000} s: reconnecting")
                 lastPacketMs = 0
                 gatt?.let { try { it.disconnect(); it.close() } catch (e: Exception) { } }
@@ -266,6 +267,7 @@ class HeadbandLink(private val ctx: Context, private val listener: Listener) {
             onRead(g, c, value)
 
         override fun onDescriptorWrite(g: BluetoothGatt, d: BluetoothGattDescriptor, status: Int) {
+            connectedMs = System.currentTimeMillis()
             g.requestConnectionPriority(BluetoothGatt.CONNECTION_PRIORITY_BALANCED)
             set(State.CONNECTED)
         }
