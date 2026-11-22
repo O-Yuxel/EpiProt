@@ -57,7 +57,10 @@ object CaregiverMode {
     private fun addLog(c: Context, r: Received) { val s = Settings(c); s.caregiverLog = listOf(r.toJson()) + s.caregiverLog }
 
     /** The alarm on screen now (null = none). */
-    fun current(c: Context): Received? = if (Settings(c).caregiverRinging) log(c).firstOrNull() else null
+    fun current(c: Context): Received? = if (Settings(c).caregiverRinging) shown(c) else null
+
+    /** The alarm the alarm screen shows: the last one that rang (the test alarm too), else the newest message. */
+    fun shown(c: Context): Received? = Received.fromJson(Settings(c).caregiverAlarm) ?: log(c).firstOrNull()
 
     /** An incoming SMS (from [CaregiverSmsReceiver], or the "test the alarm" button). */
     fun handle(c: Context, sender: String, text: String, nowMs: Long) {
@@ -106,6 +109,7 @@ object CaregiverMode {
         channels(c)
         val s = Settings(c)
         s.caregiverRinging = true
+        s.caregiverAlarm = r.toJson()
         val am = c.getSystemService(AudioManager::class.java)
         if (s.savedAlarmVolume < 0) s.savedAlarmVolume = am.getStreamVolume(AudioManager.STREAM_ALARM)
         try { am.setStreamVolume(AudioManager.STREAM_ALARM, am.getStreamMaxVolume(AudioManager.STREAM_ALARM), 0) } catch (_: Exception) { }

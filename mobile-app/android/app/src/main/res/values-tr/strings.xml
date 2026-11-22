@@ -544,9 +544,8 @@
     <string name="cg_going">Gidiyorum – alarmı sustur</string>
     <string name="cg_open_map">Konumu aç</string>
     <string name="cg_call_patient">Hastayı ara</string>
-    <string name="cg_call_emergency">112\'yi ara</string>
-    <string name="cg_emergency_number">112</string>
-    <string name="cg_alarm_note">Nöbet sırasında: kişinin yanında kalın, onu yan yatırın, ağzına hiçbir şey koymayın, saati not edin. 5 dakikadan uzun sürerse ya da kişi kendine gelmezse 112\'yi arayın.</string>
+    <string name="cg_call_emergency">%1$s\'yi ara</string>
+    <string name="cg_alarm_note">Nöbet sırasında: kişinin yanında kalın, onu yan yatırın, ağzına hiçbir şey koymayın, saati not edin. 5 dakikadan uzun sürerse ya da kişi kendine gelmezse %1$s\'yi arayın.</string>
     <string name="cg_close">Kapat</string>
     <!-- nöbet günlüğü (elle eklenen) -->
     <string name="manual_title">Nöbet ekle</string>

@@ -54,6 +54,10 @@ class Settings(context: Context) {
     var caregiverRinging: Boolean
         get() = p.getBoolean("cg_ringing", false)
         set(v) = p.edit().putBoolean("cg_ringing", v).apply()
+    /** The alarm on the caregiver screen (also the test alarm, which is not in the log). */
+    var caregiverAlarm: String
+        get() = p.getString("cg_alarm", "") ?: ""
+        set(v) = p.edit().putString("cg_alarm", v).apply()
     var savedAlarmVolume: Int
         get() = p.getInt("cg_volume", -1)
         set(v) = p.edit().putInt("cg_volume", v).apply()

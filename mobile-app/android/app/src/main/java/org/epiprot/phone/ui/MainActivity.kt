@@ -1169,7 +1169,7 @@ private fun WatchInstallCard(activity: MainActivity) {
             watchNode = try {
                 val nodes = com.google.android.gms.wearable.Wearable.getNodeClient(activity).connectedNodes.await()
                 val withApp = com.google.android.gms.wearable.Wearable.getCapabilityClient(activity)
-                    .getCapability(org.epiprot.phone.protocol.WATCH_CAPABILITY, com.google.android.gms.wearable.CapabilityClient.FILTER_ALL)
+                    .getCapability(org.epiprot.phone.protocol.WATCH_CAPABILITY, com.google.android.gms.wearable.CapabilityClient.FILTER_REACHABLE)
                     .await().nodes.map { it.id }.toSet()
                 nodes.firstOrNull { it.id !in withApp }?.id
             } catch (e: Exception) { null }

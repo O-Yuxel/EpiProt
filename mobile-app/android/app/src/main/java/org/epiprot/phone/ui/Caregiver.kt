@@ -210,6 +210,14 @@ private fun Need(text: String, ok: Boolean, fix: () -> Unit) {
 
 /** The full-screen alarm on the caregiver's phone (also over the lock screen). */
 class CaregiverAlarmActivity : ComponentActivity() {
+    /** Emergency number of the country this phone is in (SIM network, else the phone's region): 911 in the US/Canada. */
+    private fun emergencyNumber(): String {
+        val tm = getSystemService(android.telephony.TelephonyManager::class.java)
+        val cc = (tm?.networkCountryIso?.takeIf { it.isNotBlank() } ?: tm?.simCountryIso?.takeIf { it.isNotBlank() }
+            ?: java.util.Locale.getDefault().country).uppercase()
+        return if (cc == "US" || cc == "CA") "911" else "112"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent { EpiProtTheme { AlarmScreen() } }
@@ -218,7 +226,7 @@ class CaregiverAlarmActivity : ComponentActivity() {
     @Composable
     private fun AlarmScreen() {
         var ringing by remember { mutableStateOf(org.epiprot.phone.data.Settings(this).caregiverRinging) }
-        val r = remember { CaregiverMode.log(this).firstOrNull() }
+        val r = remember { CaregiverMode.shown(this) }
         if (r == null) { finish(); return }
         val emergency = r.kind == CaregiverSms.Kind.EMERGENCY
         Column(Modifier.fillMaxSize().background(if (ringing) C.Coral else C.Background).verticalScroll(rememberScrollState())
@@ -241,11 +249,11 @@ class CaregiverAlarmActivity : ComponentActivity() {
             if (r.number.isNotBlank()) PrimaryButton(stringResource(R.string.cg_call_patient), Icons.Rounded.Call) {
                 startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:${r.number}")))
             }
-            if (emergency || r.kind == CaregiverSms.Kind.NO_ANSWER || r.kind == CaregiverSms.Kind.SHOWER) PrimaryButton(stringResource(R.string.cg_call_emergency),
+            if (emergency || r.kind == CaregiverSms.Kind.NO_ANSWER || r.kind == CaregiverSms.Kind.SHOWER) PrimaryButton(stringResource(R.string.cg_call_emergency, emergencyNumber()),
                 Icons.Rounded.Warning, color = C.CoralDark) {
-                startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:${getString(R.string.cg_emergency_number)}")))
+                startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:${emergencyNumber()}")))
             }
-            Text(stringResource(R.string.cg_alarm_note), color = if (ringing) Color.White else C.InkSoft,
+            Text(stringResource(R.string.cg_alarm_note, emergencyNumber()), color = if (ringing) Color.White else C.InkSoft,
                 style = MaterialTheme.typography.bodySmall)
             if (!ringing) SoftButton(stringResource(R.string.cg_close)) { finish() }
         }

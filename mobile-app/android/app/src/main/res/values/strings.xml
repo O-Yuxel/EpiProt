@@ -554,9 +554,8 @@
     <string name="cg_going">I am going – silence the alarm</string>
     <string name="cg_open_map">Open the location</string>
     <string name="cg_call_patient">Call the patient</string>
-    <string name="cg_call_emergency">Call emergency services (112)</string>
-    <string name="cg_emergency_number">112</string>
-    <string name="cg_alarm_note">During a seizure: stay with the person, turn them on their side, put nothing in their mouth, note the time. Call 112 if it lasts longer than 5 minutes or they do not wake up.</string>
+    <string name="cg_call_emergency">Call emergency services (%1$s)</string>
+    <string name="cg_alarm_note">During a seizure: stay with the person, turn them on their side, put nothing in their mouth, note the time. Call %1$s if it lasts longer than 5 minutes or they do not wake up.</string>
     <string name="cg_close">Close</string>
     <!-- seizure diary (added by hand) -->
     <string name="manual_title">Add a seizure</string>
