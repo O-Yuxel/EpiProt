@@ -19,3 +19,6 @@ Thumbs.db
 *.FCBak
 device-firmware/cad/export/*.step
 device-firmware/cad/render/meshes/
+
+# presentation photos and videos (large, local only)
+docs/sunum-medya/
