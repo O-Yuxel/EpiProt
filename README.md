@@ -70,6 +70,34 @@ Hardware design, Bluetooth protocol and 3D model of the headband, plus a softwar
 
 Status: designed and simulated; no physical headband is built in this project.
 
+<p align="center">
+  <img src="docs/media/readme/3d-hero.jpg" alt="EpiProt headband, 3D model on a real head scan (back view)" width="45%">
+  <img src="docs/media/readme/3d-xray.jpg" alt="Inside the side body: 3 electrode pads, flex cable, processor and Bluetooth module" width="45%">
+</p>
+<p align="center"><sub>The designed headband on a head scan, and an X-ray view of one side body: electrode pads, flex cable, processor + Bluetooth.
+More views, STL files and six head sizes: <a href="device-firmware/cad/">device-firmware/cad/</a>.</sub></p>
+
+---
+
+## See it working
+
+Recorded on real devices (a phone, a Wear OS watch, and a second phone/tablet acting as the headband over real Bluetooth).
+
+<p align="center">
+  <img src="docs/media/readme/sim-headband-seizure.gif" alt="Virtual headband replaying a real recorded seizure" width="62%">
+  <img src="docs/media/readme/phone-seizure-alarm.gif" alt="Phone app: seizure detected, PIN countdown, alarm" width="22%">
+</p>
+<p align="center"><sub>Left: the virtual headband streams a real recorded tonic-clonic seizure (EEG + movement). Right: the phone detects it, waits for the PIN on the watch, then alerts the caregiver.</sub></p>
+
+<p align="center">
+  <img src="docs/media/readme/phone-protected.jpg" alt="Phone home screen: You are protected" width="22%">
+  <img src="docs/media/readme/phone-alarm.jpg" alt="Phone seizure alarm screen" width="22%">
+  <img src="docs/media/readme/phone-history.jpg" alt="Event history and doctor report" width="22%">
+  <img src="docs/media/readme/phone-headband.jpg" alt="Headband page: battery, contact check, firmware" width="22%">
+  <img src="docs/media/readme/watch-alarm.jpg" alt="Watch: help is on the way" width="12%">
+</p>
+<p align="center"><sub>Phone: protected, alarm, history + doctor report, headband page. Watch: "Help is on the way".</sub></p>
+
 ---
 
 ## User manual (Turkish and English)
